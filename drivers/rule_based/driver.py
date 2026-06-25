@@ -28,7 +28,7 @@ STEER_LOCK: float = 0.785398  # 45° in radians
 #   physics_safe(d) = sqrt(max(0, (d - BRAKE_MARGIN) * BRAKE_DECEL_FACTOR))
 #
 # BRAKE_DECEL_FACTOR calibrated for this simulator: gives ~1 g deceleration.
-BRAKE_DECEL_FACTOR: float = 232.0
+BRAKE_DECEL_FACTOR: float = 255.0   # ~1.0 g deceleration; brakes 7-15 m later than 232
 BRAKE_MARGIN: float = 5.0           # metres of safety headroom in stopping formula
 TARGET_PHYSICS_SCALE: float = 1.20  # target = physics_safe × this → physics binds
 MAX_SPEED: float = 200.0            # absolute cap (km/h)
@@ -41,7 +41,7 @@ EDGE_SPEED_HARD: tuple[float, float] = (0.88, 100.0)
 # Braking model
 # ---------------------------------------------------------------------------
 # Maximum brake pressure by speed regime
-BRAKE_MAX_HIGH: float = 0.62   # > 140 km/h — partial; preserve steering authority
+BRAKE_MAX_HIGH: float = 0.65   # > 140 km/h — partial; preserve steering authority
 BRAKE_MAX_MED:  float = 0.78   # 90–140 km/h
 BRAKE_MAX_LOW:  float = 0.90   # < 90 km/h
 
@@ -66,7 +66,7 @@ THROTTLE_MAX_INTEGRAL: float = 1.0
 # ---------------------------------------------------------------------------
 # Traction control (TCS)
 # ---------------------------------------------------------------------------
-TCS_STEER_THRESH: float = 0.14
+TCS_STEER_THRESH: float = 0.18
 TCS_GAIN_LOW_GEAR: float = 1.45  # gears 1–2
 TCS_GAIN_MID_GEAR: float = 1.20  # gear 3
 TCS_GAIN_HIGH_GEAR: float = 0.70 # gears 4+
