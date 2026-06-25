@@ -1,0 +1,1 @@
+Files in this directory are logs of manual laps recorded with another script. Use this files only if you think that they are useful.
