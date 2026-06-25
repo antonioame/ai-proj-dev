@@ -169,8 +169,12 @@ class RuleBasedDriver(BaseDriver):
         steer = self._smooth_steer(self._compute_steering(state), state.speed)
         lookahead = self._lookahead(state)
         fwd_dist = self._fwd_dist(state)
-        target_speed = self._target_speed(state, lookahead)
-        accel, brake = self._compute_throttle_brake(state, target_speed, lookahead, fwd_dist, dt)
+        # Conservative effective lookahead: use the shorter of the wide arc and
+        # the central forward sector so that the target speed is never set by a
+        # side sensor pointing into the inside of a corner.
+        effective_lookahead = min(lookahead, fwd_dist)
+        target_speed = self._target_speed(state, effective_lookahead)
+        accel, brake = self._compute_throttle_brake(state, target_speed, fwd_dist, dt)
         accel = self._apply_tcs(steer, accel, state)
         gear = self._compute_gear(state, brake > 0.0)
 
@@ -237,15 +241,15 @@ class RuleBasedDriver(BaseDriver):
     # ------------------------------------------------------------------
 
     def _compute_throttle_brake(
-        self, state: SensorState, target: float, lookahead: float,
-        fwd_dist: float, dt: float
+        self, state: SensorState, target: float, fwd_dist: float, dt: float
     ) -> tuple[float, float]:
         speed = state.speed
         stopping_dist = speed * speed / BRAKE_DECEL_FACTOR + BRAKE_MARGIN
 
-        # PRIORITY 1 — Brake whenever the forward wall is within stopping distance.
-        # This fires even if speed < target (e.g. car aims at apex wall after corner entry).
-        if fwd_dist < stopping_dist:
+        # PRIORITY 1 — Brake when wall is within stopping distance AND we are over target.
+        # Braking while at or below target would slow the car unnecessarily.
+        if fwd_dist < stopping_dist and speed > target:
+            diff = speed - target
             if speed > 140.0:
                 max_brake = BRAKE_MAX_HIGH
             elif speed > 90.0:
@@ -255,8 +259,7 @@ class RuleBasedDriver(BaseDriver):
             steer_abs = abs(self._prev_steer)
             if steer_abs > EBD_STEER_THRESH:
                 max_brake = max(EBD_FLOOR, max_brake - (steer_abs - EBD_STEER_THRESH) * EBD_GAIN)
-            diff = max(speed - target, 0.0)
-            brake = min(max_brake, max(diff / 10.0, 0.15))
+            brake = min(max_brake, diff / 10.0)
             self._speed_integral = 0.0
             return 0.0, brake
 
