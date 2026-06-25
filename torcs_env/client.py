@@ -132,6 +132,17 @@ class TORCSClient:
             try:
                 data, _ = self._sock.recvfrom(4096)
                 break
+            except ConnectionResetError as exc:
+                # Windows raises WinError 10054 when TORCS closes the UDP port
+                # (ICMP Port Unreachable).  This typically means TORCS aborted
+                # the race because the SCR pre-connection timeout fired before
+                # the handshake, or the per-action timeout fired mid-race.
+                raise ConnectionError(
+                    "TORCS reset the connection (WinError 10054). "
+                    "The SCR server likely timed out waiting for the client. "
+                    "Ensure the driver connects and sends the first action before "
+                    "TORCS's SCR timeouts fire (~2-3 s pre-connection, ~2.85 s per-action)."
+                ) from exc
             except socket.timeout:
                 if attempt == self.max_reconnect_attempts:
                     raise TimeoutError(

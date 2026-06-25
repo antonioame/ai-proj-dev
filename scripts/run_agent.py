@@ -28,8 +28,11 @@ def load_driver(name: str) -> BaseDriver:
     if name == "rule_based":
         from drivers.rule_based.driver import RuleBasedDriver
         return RuleBasedDriver()
+    elif name == "bc_model":
+        from drivers.bc.driver import BCDriver
+        return BCDriver()
     raise ValueError(
-        f"Unknown driver '{name}'. Available: rule_based"
+        f"Unknown driver '{name}'. Available: rule_based, bc_model"
     )
 
 
@@ -117,7 +120,7 @@ def run(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run a TORCS driver agent")
-    parser.add_argument("--driver", default="rule_based", help="Driver name")
+    parser.add_argument("--driver", default="rule_based", help="Driver name: rule_based, bc_model")
     parser.add_argument("--laps", type=int, default=1)
     parser.add_argument("--host", default=None)
     parser.add_argument("--port", type=int, default=None)

@@ -10,33 +10,17 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
-# Sensor columns used as model inputs
-SENSOR_COLS = [
-    "angle", "speed", "speedY", "speedZ", "trackPos",
-    *[f"track_{i}" for i in range(19)],
-    "rpm", "gear",
-]
+# Sensor columns used as model inputs (matches old_manual_sessions_dataset schema)
+# speedX in the CSV == state.speed at inference (SCR protocol name)
+SENSOR_COLS = ["speedX", "trackPos", "angle", "rpm", "gear", "damage"]
 
 # Action columns used as model outputs
 ACTION_COLS = ["steer", "accel", "brake", "gear_out"]
 
 
 def load_csv(path: str | Path) -> pd.DataFrame:
-    """Load a recorded telemetry CSV and expand list columns."""
-    df = pd.read_csv(path)
-
-    # Expand track_0 … track_18 if stored as JSON-like column
-    if "track" in df.columns:
-        track_values = df["track"].apply(
-            lambda s: [float(x) for x in s.strip("[]").split(",")]
-        )
-        track_df = pd.DataFrame(
-            track_values.tolist(),
-            columns=[f"track_{i}" for i in range(19)],
-        )
-        df = pd.concat([df.drop(columns=["track"]), track_df], axis=1)
-
-    return df
+    """Load a recorded telemetry CSV."""
+    return pd.read_csv(path)
 
 
 class TelemetryDataset(Dataset):
