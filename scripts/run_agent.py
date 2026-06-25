@@ -66,7 +66,6 @@ def run(
 
             state = result
             action = driver.step(state)
-            client.send(action)
 
             total_steps += 1
             max_speed = max(max_speed, state.speed)
@@ -87,13 +86,17 @@ def run(
                     "brake": action.brake,
                 })
 
-            # Detect lap completion via lastLapTime update
+            # Detect lap completion; send shutdown *instead* of the normal action
+            # so TORCS receives a single clean exit signal for the final step.
             if state.lastLapTime > 0 and (not lap_times or state.lastLapTime != lap_times[-1]):
                 lap_times.append(state.lastLapTime)
                 lap_count += 1
                 logger.info("Lap %d completed in %.3f s", lap_count, state.lastLapTime)
                 if lap_count >= laps:
+                    client.send_shutdown()
                     break
+
+            client.send(action)
 
     off_track_pct = (off_track_steps / max(total_steps, 1)) * 100.0
     avg_speed = sum(lap_times) / len(lap_times) if lap_times else 0.0

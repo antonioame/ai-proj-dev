@@ -33,6 +33,7 @@ _DEFAULT_ANGLES = [-45, -38, -30, -22, -15, -10, -6, -3, -1, 0, 1, 3, 6, 10, 15,
 
 _MSG_RESTART = b"***restart***"
 _MSG_SHUTDOWN = b"***shutdown***"
+_MSG_IDENTIFIED = b"***identified***"
 
 # Sentinel values returned by receive() to signal protocol events
 RESTART = "RESTART"
@@ -86,9 +87,13 @@ class TORCSClient:
                 )
                 self._sock.sendto(init_msg, self._server_addr)
                 data, _ = self._sock.recvfrom(4096)
-                if data.startswith(b"***"):
-                    # Server sent restart/shutdown before sending a sensor frame
-                    logger.warning("Received control message during handshake: %s", data)
+                # Strip null terminators the SCR server appends
+                clean = data.rstrip(b'\x00')
+                if clean == _MSG_IDENTIFIED or clean.startswith(_MSG_IDENTIFIED):
+                    logger.info("Handshake successful (server identified client).")
+                    return
+                if clean == _MSG_RESTART or clean == _MSG_SHUTDOWN:
+                    logger.warning("Received control message during handshake: %s", clean)
                     return
                 logger.info("Handshake successful.")
                 return
@@ -158,6 +163,12 @@ class TORCSClient:
         """Ask the server to restart the race."""
         assert self._sock is not None, "Call connect() first."
         self._sock.sendto(b"(meta 1)", self._server_addr)
+
+    def send_shutdown(self) -> None:
+        """Signal the server to end the session cleanly (meta 2)."""
+        assert self._sock is not None, "Call connect() first."
+        msg = Action(meta=2).to_string().encode()
+        self._sock.sendto(msg, self._server_addr)
 
     # ------------------------------------------------------------------
     # Lap tracking
