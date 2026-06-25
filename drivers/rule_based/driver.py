@@ -97,6 +97,15 @@ GEAR_SPEED_CAPS: list[tuple[float, int]] = [
 ]
 
 # ---------------------------------------------------------------------------
+# Apex-seeking: bias track-position target toward the inside of corners
+# ---------------------------------------------------------------------------
+# Curvature is estimated from the asymmetry of the ±15°–30° sensor pairs:
+#   curvature = (left_avg − right_avg) / (left_avg + right_avg)
+# Positive curvature → track curves right → target negative trackPos (inside).
+CURVE_TRACKPOS_GAIN: float = 0.30   # scale from curvature to trackPos offset
+CURVE_TRACKPOS_MAX:  float = 0.28   # clip to keep car well clear of walls
+
+# ---------------------------------------------------------------------------
 # Startup / smoothing / recovery
 # ---------------------------------------------------------------------------
 STARTUP_STEPS: int = 80
@@ -166,9 +175,23 @@ class RuleBasedDriver(BaseDriver):
     # ------------------------------------------------------------------
 
     def _compute_steering(self, state: SensorState) -> float:
+        # Apex-seeking: estimate curve direction from outer sensor pairs
+        sensors = state.track
+        if len(sensors) >= 17:
+            # sensors[2:5] → −30°, −22°, −15° (left-of-car)
+            # sensors[14:17] → 15°, 22°, 30° (right-of-car)
+            left_avg  = (sensors[2] + sensors[3] + sensors[4]) / 3.0
+            right_avg = (sensors[14] + sensors[15] + sensors[16]) / 3.0
+            total = left_avg + right_avg
+            curvature = (left_avg - right_avg) / total if total > 1.0 else 0.0
+            # Positive curvature (left sees further) → right-hand corner → target inside (negative trackPos)
+            target_tp = max(-CURVE_TRACKPOS_MAX, min(CURVE_TRACKPOS_MAX, -curvature * CURVE_TRACKPOS_GAIN))
+        else:
+            target_tp = 0.0
+
         steer = (
             state.angle * STEER_ANGLE_GAIN
-            - state.trackPos * STEER_TRACK_GAIN
+            - (state.trackPos - target_tp) * STEER_TRACK_GAIN
         )
         return steer / STEER_LOCK
 
