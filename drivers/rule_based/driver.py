@@ -71,11 +71,16 @@ THROTTLE_MAX_INTEGRAL: float = 1.0
 # ---------------------------------------------------------------------------
 # Traction control (TCS)
 # ---------------------------------------------------------------------------
-TCS_STEER_THRESH: float = 0.14   # normalised steer above which TCS intervenes
+TCS_STEER_THRESH: float = 0.14   # normalised steer above which steer-TCS intervenes
 TCS_GAIN_LOW_GEAR: float = 1.45  # gears 1–2: high torque, needs more cut
 TCS_GAIN_MID_GEAR: float = 1.20  # gear 3
 TCS_GAIN_HIGH_GEAR: float = 0.70 # gears 4+: minimal intervention
 TCS_MIN_ACCEL: float = 0.25      # always allow some throttle
+
+# Wheel-slip TCS: ratio of rear wheel spin to expected spin before cutting throttle
+WHEEL_RADIUS: float = 0.33       # approximate TORCS wheel radius (m)
+TCS_SLIP_THRESHOLD: float = 1.25 # rear spinning 25% faster than expected → intervene
+TCS_SLIP_GAIN: float = 3.0       # throttle cut per unit of excess slip ratio
 
 # ---------------------------------------------------------------------------
 # Gear-shift RPM thresholds
@@ -163,9 +168,10 @@ class RuleBasedDriver(BaseDriver):
 
         steer = self._smooth_steer(self._compute_steering(state), state.speed)
         lookahead = self._lookahead(state)
+        fwd_dist = self._fwd_dist(state)
         target_speed = self._target_speed(state, lookahead)
-        accel, brake = self._compute_throttle_brake(state, target_speed, lookahead, dt)
-        accel = self._apply_tcs(steer, accel, state.gear)
+        accel, brake = self._compute_throttle_brake(state, target_speed, lookahead, fwd_dist, dt)
+        accel = self._apply_tcs(steer, accel, state)
         gear = self._compute_gear(state, brake > 0.0)
 
         return Action(steer=steer, accel=accel, brake=brake, gear=gear).clamp()
@@ -192,11 +198,21 @@ class RuleBasedDriver(BaseDriver):
     # ------------------------------------------------------------------
 
     def _lookahead(self, state: SensorState) -> float:
-        """Max track-sensor reading across the forward arc (sensors 5–13, ≈ ±10°)."""
+        """Max track-sensor reading across the forward arc (sensors 5–13, ≈ ±10°).
+        Used for speed target selection."""
         sensors = state.track
         if len(sensors) < 14:
             return 200.0
         return max(sensors[5:14])
+
+    def _fwd_dist(self, state: SensorState) -> float:
+        """Minimum forward-sector reading (sensors 7–11, ≈ ±3°–6°).
+        Used for braking and full-throttle decisions: must see clear road in all central
+        directions before going flat out or deferring brakes."""
+        sensors = state.track
+        if len(sensors) < 12:
+            return 200.0
+        return min(sensors[7:12])
 
     def _target_speed(self, state: SensorState, lookahead: float) -> float:
         for thresh, speed in LOOKAHEAD_SPEEDS:
@@ -221,49 +237,47 @@ class RuleBasedDriver(BaseDriver):
     # ------------------------------------------------------------------
 
     def _compute_throttle_brake(
-        self, state: SensorState, target: float, lookahead: float, dt: float
+        self, state: SensorState, target: float, lookahead: float,
+        fwd_dist: float, dt: float
     ) -> tuple[float, float]:
         speed = state.speed
+        stopping_dist = speed * speed / BRAKE_DECEL_FACTOR + BRAKE_MARGIN
 
-        # Full throttle on open road when below target
-        if lookahead >= FULL_THROTTLE_LOOKAHEAD and speed < target:
+        # PRIORITY 1 — Brake whenever the forward wall is within stopping distance.
+        # This fires even if speed < target (e.g. car aims at apex wall after corner entry).
+        if fwd_dist < stopping_dist:
+            if speed > 140.0:
+                max_brake = BRAKE_MAX_HIGH
+            elif speed > 90.0:
+                max_brake = BRAKE_MAX_MED
+            else:
+                max_brake = BRAKE_MAX_LOW
+            steer_abs = abs(self._prev_steer)
+            if steer_abs > EBD_STEER_THRESH:
+                max_brake = max(EBD_FLOOR, max_brake - (steer_abs - EBD_STEER_THRESH) * EBD_GAIN)
+            diff = max(speed - target, 0.0)
+            brake = min(max_brake, max(diff / 10.0, 0.15))
+            self._speed_integral = 0.0
+            return 0.0, brake
+
+        # PRIORITY 2 — Over target but road is clear enough to coast.
+        if speed > target:
+            diff = speed - target
+            self._speed_integral = max(
+                -THROTTLE_MAX_INTEGRAL,
+                self._speed_integral - diff * dt,
+            )
+            return 0.0, 0.0
+
+        # PRIORITY 3 — Below target and all central sensors see open road: flat out.
+        if fwd_dist >= FULL_THROTTLE_LOOKAHEAD:
             self._speed_integral = min(
                 THROTTLE_MAX_INTEGRAL,
                 self._speed_integral + (target - speed) * dt,
             )
             return 1.0, 0.0
 
-        if speed > target:
-            diff = speed - target
-            stopping_dist = speed * speed / BRAKE_DECEL_FACTOR + BRAKE_MARGIN
-
-            if lookahead < stopping_dist:
-                # Engage brakes
-                if speed > 140.0:
-                    max_brake = BRAKE_MAX_HIGH
-                elif speed > 90.0:
-                    max_brake = BRAKE_MAX_MED
-                else:
-                    max_brake = BRAKE_MAX_LOW
-
-                # EBD: back off brakes while steering
-                steer_abs = abs(self._prev_steer)
-                if steer_abs > EBD_STEER_THRESH:
-                    reduction = (steer_abs - EBD_STEER_THRESH) * EBD_GAIN
-                    max_brake = max(EBD_FLOOR, max_brake - reduction)
-
-                brake = min(max_brake, diff / 10.0)
-                self._speed_integral = 0.0
-                return 0.0, brake
-            else:
-                # Coast (over target but can scrub speed by engine drag)
-                self._speed_integral = max(
-                    -THROTTLE_MAX_INTEGRAL,
-                    self._speed_integral - diff * dt,
-                )
-                return 0.0, 0.0
-
-        # Below target on a tighter section — proportional + integral
+        # PRIORITY 4 — Below target but corner ahead: proportional + integral throttle.
         error = target - speed
         self._speed_integral = max(
             -THROTTLE_MAX_INTEGRAL,
@@ -272,19 +286,38 @@ class RuleBasedDriver(BaseDriver):
         control = THROTTLE_KP * error + THROTTLE_KI * self._speed_integral
         return min(control, 1.0), 0.0
 
-    def _apply_tcs(self, steer: float, accel: float, gear: int) -> float:
-        """Gear-aware traction control: cut throttle when steering hard."""
+    def _wheel_slip_factor(self, state: SensorState) -> float:
+        """Excess rear-wheel spin ratio (0 = no slip, positive = spinning)."""
+        if state.speed < 5.0 or len(state.wheelSpinVel) < 4:
+            return 0.0
+        speed_ms = state.speed * (1000.0 / 3600.0)
+        expected = speed_ms / WHEEL_RADIUS
+        if expected < 1.0:
+            return 0.0
+        rear_avg = (state.wheelSpinVel[2] + state.wheelSpinVel[3]) / 2.0
+        return max(0.0, rear_avg / expected - TCS_SLIP_THRESHOLD)
+
+    def _apply_tcs(self, steer: float, accel: float, state: SensorState) -> float:
+        """Combined TCS: steer-based (cornering) + wheel-slip (wheelspin)."""
+        gear = state.gear
+
+        # Steer-based cut: reduce throttle when cornering hard
         excess = abs(steer) - TCS_STEER_THRESH
-        if excess <= 0.0:
-            return accel
-        if gear <= 2:
-            gain = TCS_GAIN_LOW_GEAR
-        elif gear == 3:
-            gain = TCS_GAIN_MID_GEAR
-        else:
-            gain = TCS_GAIN_HIGH_GEAR
-        max_accel = max(TCS_MIN_ACCEL, 1.0 - excess * gain)
-        return min(accel, max_accel)
+        if excess > 0.0:
+            if gear <= 2:
+                gain = TCS_GAIN_LOW_GEAR
+            elif gear == 3:
+                gain = TCS_GAIN_MID_GEAR
+            else:
+                gain = TCS_GAIN_HIGH_GEAR
+            accel = min(accel, max(TCS_MIN_ACCEL, 1.0 - excess * gain))
+
+        # Wheel-slip cut: reduce throttle when rear wheels spin faster than expected
+        slip = self._wheel_slip_factor(state)
+        if slip > 0.0:
+            accel = min(accel, max(TCS_MIN_ACCEL, 1.0 - slip * TCS_SLIP_GAIN))
+
+        return accel
 
     # ------------------------------------------------------------------
     # Gear shifting
