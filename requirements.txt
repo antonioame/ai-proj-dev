@@ -1,0 +1,22 @@
+# Core ML — install PyTorch separately per platform:
+#   Apple Silicon (MPS): pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#   CUDA (Linux/Windows): pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+torch>=2.1.0
+torchvision>=0.16.0
+
+# Data handling
+numpy>=1.24.0
+pandas>=2.0.0
+
+# RL (Phase 3)
+gymnasium>=0.29.0
+stable-baselines3>=2.1.0
+
+# Testing
+pytest>=7.4.0
+pytest-mock>=3.11.0
+
+# Utilities
+tqdm>=4.66.0
+
+# Note: dataclasses is part of the Python 3.7+ stdlib — no install needed
