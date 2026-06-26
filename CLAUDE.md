@@ -121,6 +121,7 @@ docs/             Detailed documentation (see below)
   DEVELOPMENT_GUIDE.md      Setup, workflows, tuning, troubleshooting
   PHASE2_BEHAVIORAL_CLONING.md  Step-by-step BC implementation guide
   PHASE3_REINFORCEMENT_LEARNING.md  RL plan + code templates
+  LAPTIME_OPTIMIZATION_PLAN.md  Performance plan to minimise the Corkscrew lap time
 old_project_material/  Legacy reference code (do not import)
 ```
 
