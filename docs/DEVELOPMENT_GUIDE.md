@@ -1,0 +1,229 @@
+# Development Guide
+
+## Prerequisites
+
+| Tool | Version | Purpose |
+|------|---------|---------|
+| Python | ≥ 3.10 | Runtime |
+| PyTorch | ≥ 2.1 | Training and inference |
+| pytest | ≥ 7 | Unit tests |
+| TORCS 1.3.x + SCR patch | — | Simulation server (Windows) |
+
+---
+
+## Environment Setup
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+For Mac M2, PyTorch MPS is enabled automatically when available:
+```bash
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+```
+
+---
+
+## Running Tests
+
+All 37 tests use mocked UDP sockets — **no TORCS connection required**:
+
+```bash
+pytest tests/ -v
+# Expected: 37 passed
+```
+
+Individual test files:
+```bash
+pytest tests/test_sensors.py -v    # 35 sensor parsing tests
+pytest tests/test_client.py -v     # 15 client communication tests
+pytest tests/test_actions.py -v    # 22 action serialisation tests
+```
+
+---
+
+## Project Workflow (End-to-End)
+
+### 1. Start TORCS Server (Windows)
+
+```batch
+torcs.exe -r C:\path\to\torcs_env\race_config\corkscrew_solo.xml
+```
+
+TORCS enters headless mode and waits for a UDP client on port 3001. Confirm by checking no error dialog appears.
+
+### 2. Test Connection
+
+```bash
+export TORCS_HOST=192.168.1.100   # or localhost if same machine
+python scripts/run_agent.py --driver rule_based --laps 1
+```
+
+Expected output:
+```
+[Step 0050] lap=1 speed=45.3 km/h trackPos=0.01 gear=2
+[Step 0100] lap=1 speed=98.7 km/h trackPos=-0.03 gear=4
+...
+Lap completed in 234.567 s
+Results saved to results/rule_based_20260626_120000.json
+```
+
+### 3. Record Telemetry
+
+```bash
+python scripts/record_human.py --driver rule_based
+# Output: data/human_20260626_120000.csv
+```
+
+Repeat until you have ≥5 clean laps (no crashes, all laps complete).
+
+### 4. Train BC Model (Phase 2)
+
+```bash
+python -m training.behavioral_cloning.train \
+    --data "data/human_*.csv" \
+    --output models/bc_v1.pth \
+    --epochs 50
+```
+
+### 5. Run BC Driver
+
+```bash
+python scripts/run_agent.py --driver bc_model --laps 1
+```
+
+### 6. Evaluate & Compare
+
+```bash
+python scripts/evaluate.py --driver rule_based --laps 3
+python scripts/evaluate.py --driver bc_model --laps 3
+```
+
+Results land in `results/`. Compare `best_lap_s` and `off_track_pct`.
+
+---
+
+## Adding a New Driver
+
+1. Create a directory: `drivers/my_driver/`
+2. Add `__init__.py` (can be empty)
+3. Add `driver.py` with a class that extends `BaseDriver`:
+
+```python
+from drivers.base_driver import BaseDriver
+from torcs_env.sensors import SensorState
+from torcs_env.actions import Action
+
+class MyDriver(BaseDriver):
+    def step(self, state: SensorState) -> Action:
+        # your logic here
+        return Action(steer=0.0, accel=0.5, brake=0.0, gear=1)
+
+    def reset(self) -> None:
+        pass  # reset any internal state before a new episode
+```
+
+4. Register it in `scripts/run_agent.py` (and `evaluate.py`, `record_human.py` if needed):
+
+```python
+DRIVERS = {
+    "rule_based": RuleBasedDriver,
+    "bc_model": BCDriver,
+    "my_driver": MyDriver,      # add here
+}
+```
+
+---
+
+## Tuning the Rule-Based Driver
+
+All constants are module-level in `drivers/rule_based/driver.py`. You can override them at runtime without editing the file:
+
+```python
+from drivers.rule_based import driver as d
+d.STEER_ANGLE_GAIN = 2.5    # more responsive steering
+d.MAX_SPEED = 180.0          # lower top speed for safety
+drv = d.RuleBasedDriver()
+```
+
+Or edit the constants directly in the file for persistent changes.
+
+**Recommended starting tuning order:**
+1. `STEER_ANGLE_GAIN` / `STEER_TRACK_GAIN` — fix oscillation vs. understeer
+2. `BRAKE_DECEL_FACTOR` — fix over/under-braking before corners
+3. `MAX_SPEED` / `TARGET_PHYSICS_SCALE` — adjust lap pace
+4. `STEER_LOCK` — if car can't turn tight enough
+
+---
+
+## Common Failure Modes
+
+| Symptom | Likely Cause | Fix |
+|---------|-------------|-----|
+| `ConnectionError: Could not connect` | TORCS not running or wrong IP/port | Start TORCS, check `TORCS_HOST` and `TORCS_PORT` |
+| TORCS exits immediately | Wrong driver module name in XML | Edit `corkscrew_solo.xml` → `<attstr name="module" val="scr_server"/>` |
+| Car spins on startup | `STEER_ANGLE_GAIN` too high | Reduce to 1.5 |
+| Car brakes too late | `BRAKE_DECEL_FACTOR` too high | Reduce (try 200) |
+| Car brakes too early | `BRAKE_DECEL_FACTOR` too low | Increase (try 300) |
+| Car stuck in reverse loop | `STUCK_TIME_LIMIT` too short | Increase to 5.0 |
+| `TimeoutError` mid-race | Network packet loss | Check LAN stability; increase `timeout` in `TORCSClient` |
+| BC model produces NaN | Training divergence | Lower learning rate, check for NaN in CSVs |
+| MPS not used | PyTorch < 2.1 or macOS < 12.3 | Upgrade PyTorch; falls back to CPU automatically |
+
+---
+
+## Directory Conventions
+
+| Directory | Contents | Git-tracked |
+|-----------|----------|-------------|
+| `torcs_env/` | SCR protocol layer | Yes |
+| `drivers/` | Driver implementations | Yes |
+| `training/` | Datasets, models, trainers | Yes |
+| `scripts/` | CLI entry points | Yes |
+| `tests/` | Unit tests | Yes |
+| `data/` | Telemetry CSVs | **No** (.gitignore) |
+| `results/` | Evaluation JSONs | **No** (.gitignore) |
+| `models/` | Trained checkpoints (`.pth`) | **No** (create manually) |
+| `old_project_material/` | Legacy reference code | Yes (do not import) |
+
+The `models/` directory does not exist until the first training run creates it. `train.py` creates it automatically via `Path(output_path).parent.mkdir(parents=True, exist_ok=True)`.
+
+---
+
+## Writing Tests
+
+Tests live in `tests/` and use `pytest` with `unittest.mock` for UDP sockets. No TORCS server is required.
+
+Pattern for a new sensor test:
+```python
+def test_my_field():
+    raw = "(myField 42.0)(angle 0.0)(speedX 0.0) ..."
+    state = SensorState.from_string(raw)
+    assert state.my_field == pytest.approx(42.0)
+```
+
+Pattern for a client test:
+```python
+from unittest.mock import MagicMock, patch
+
+def test_my_client_behaviour():
+    with patch("socket.socket") as mock_socket_class:
+        mock_sock = MagicMock()
+        mock_socket_class.return_value = mock_sock
+        mock_sock.recvfrom.return_value = (b"***identified***", ("localhost", 3001))
+        client = TORCSClient()
+        client.connect()
+        # assert ...
+```
+
+---
+
+## Code Style
+
+- Python 3.10+ type hints everywhere
+- `@dataclass` for data-only classes
+- No inline comments unless the rationale is non-obvious
+- Constants in `UPPER_SNAKE_CASE` at module level
+- `clamp()` is always non-mutating (returns new object)
