@@ -1,0 +1,5060 @@
+{
+  "track_length_m": 3608.4,
+  "bucket_m": 5.0,
+  "buckets": [
+    {
+      "s": 2.5,
+      "speed_kmh": 48.44292,
+      "trackPos": 0.2218048526079523,
+      "curvature": 0.06375549310126966,
+      "is_corner": true
+    },
+    {
+      "s": 7.5,
+      "speed_kmh": 60.24498,
+      "trackPos": 0.20537214308414273,
+      "curvature": 0.06173118782424339,
+      "is_corner": true
+    },
+    {
+      "s": 12.5,
+      "speed_kmh": 69.75212,
+      "trackPos": 0.18286112117938083,
+      "curvature": 0.0590124519567669,
+      "is_corner": true
+    },
+    {
+      "s": 17.5,
+      "speed_kmh": 78.13746,
+      "trackPos": 0.16284735978482304,
+      "curvature": 0.055499022192914915,
+      "is_corner": true
+    },
+    {
+      "s": 22.5,
+      "speed_kmh": 84.95084,
+      "trackPos": 0.13097499696969697,
+      "curvature": 0.06772455092820809,
+      "is_corner": true
+    },
+    {
+      "s": 27.5,
+      "speed_kmh": 91.37292,
+      "trackPos": 0.10121531533704389,
+      "curvature": 0.07603857576705009,
+      "is_corner": true
+    },
+    {
+      "s": 32.5,
+      "speed_kmh": 97.1767,
+      "trackPos": 0.0769148843537415,
+      "curvature": 0.07064608263404161,
+      "is_corner": true
+    },
+    {
+      "s": 37.5,
+      "speed_kmh": 102.20444,
+      "trackPos": 0.05807473333333333,
+      "curvature": 0.0534356164721909,
+      "is_corner": true
+    },
+    {
+      "s": 42.5,
+      "speed_kmh": 107.0228,
+      "trackPos": 0.044322540136054425,
+      "curvature": 0.034611214763559606,
+      "is_corner": false
+    },
+    {
+      "s": 47.5,
+      "speed_kmh": 111.5154,
+      "trackPos": 0.03510379387755102,
+      "curvature": 0.018383740035224014,
+      "is_corner": false
+    },
+    {
+      "s": 52.5,
+      "speed_kmh": 115.81559999999999,
+      "trackPos": 0.030116735544217687,
+      "curvature": 0.0050612122867882674,
+      "is_corner": false
+    },
+    {
+      "s": 57.5,
+      "speed_kmh": 119.8884,
+      "trackPos": 0.027469622448979596,
+      "curvature": -0.005791404525801605,
+      "is_corner": false
+    },
+    {
+      "s": 62.5,
+      "speed_kmh": 123.3278,
+      "trackPos": 0.025519454081632652,
+      "curvature": -0.014112031718387956,
+      "is_corner": false
+    },
+    {
+      "s": 67.5,
+      "speed_kmh": 126.7148,
+      "trackPos": 0.023795076190476192,
+      "curvature": -0.017538812591024244,
+      "is_corner": false
+    },
+    {
+      "s": 72.5,
+      "speed_kmh": 129.95940000000002,
+      "trackPos": 0.022198003401360546,
+      "curvature": -0.017245352589942156,
+      "is_corner": false
+    },
+    {
+      "s": 77.5,
+      "speed_kmh": 133.003,
+      "trackPos": 0.020705134693877553,
+      "curvature": -0.016187676836818887,
+      "is_corner": false
+    },
+    {
+      "s": 82.5,
+      "speed_kmh": 135.8286,
+      "trackPos": 0.01932628857142857,
+      "curvature": -0.015033200074652912,
+      "is_corner": false
+    },
+    {
+      "s": 87.5,
+      "speed_kmh": 138.9416,
+      "trackPos": 0.01803979333333333,
+      "curvature": -0.013920788605205332,
+      "is_corner": false
+    },
+    {
+      "s": 92.5,
+      "speed_kmh": 142.0532,
+      "trackPos": 0.016825762857142858,
+      "curvature": -0.012876968659699842,
+      "is_corner": false
+    },
+    {
+      "s": 97.5,
+      "speed_kmh": 144.59179999999998,
+      "trackPos": 0.01567472,
+      "curvature": -0.011897359731432368,
+      "is_corner": false
+    },
+    {
+      "s": 102.5,
+      "speed_kmh": 145.76839999999999,
+      "trackPos": 0.014568924761904762,
+      "curvature": -0.010973277567763827,
+      "is_corner": false
+    },
+    {
+      "s": 107.5,
+      "speed_kmh": 145.57840000000002,
+      "trackPos": 0.013522042857142856,
+      "curvature": -0.010102828433339567,
+      "is_corner": false
+    },
+    {
+      "s": 112.5,
+      "speed_kmh": 144.1232,
+      "trackPos": 0.012528304217687075,
+      "curvature": -0.009283377321968992,
+      "is_corner": false
+    },
+    {
+      "s": 117.5,
+      "speed_kmh": 141.2458,
+      "trackPos": 0.011570409931972789,
+      "curvature": -0.008514913105015003,
+      "is_corner": false
+    },
+    {
+      "s": 122.5,
+      "speed_kmh": 137.5734,
+      "trackPos": 0.01066309112244898,
+      "curvature": -0.007798592860356404,
+      "is_corner": false
+    },
+    {
+      "s": 127.5,
+      "speed_kmh": 133.8716,
+      "trackPos": 0.00980163336734694,
+      "curvature": -0.007134766505291903,
+      "is_corner": false
+    },
+    {
+      "s": 132.5,
+      "speed_kmh": 129.9958,
+      "trackPos": 0.008990400918367348,
+      "curvature": -0.006421249826946613,
+      "is_corner": false
+    },
+    {
+      "s": 137.5,
+      "speed_kmh": 125.8232,
+      "trackPos": 0.008250289965986394,
+      "curvature": -0.004330364266151636,
+      "is_corner": false
+    },
+    {
+      "s": 142.5,
+      "speed_kmh": 121.602,
+      "trackPos": 0.007570316496598639,
+      "curvature": 0.01847468427658261,
+      "is_corner": false
+    },
+    {
+      "s": 147.5,
+      "speed_kmh": 117.2114,
+      "trackPos": 0.006953710552721088,
+      "curvature": 0.05422441727778323,
+      "is_corner": true
+    },
+    {
+      "s": 152.5,
+      "speed_kmh": 112.5212,
+      "trackPos": 0.006392915374149659,
+      "curvature": 0.09896189389199449,
+      "is_corner": true
+    },
+    {
+      "s": 157.5,
+      "speed_kmh": 107.65503999999999,
+      "trackPos": 0.0057768875170068025,
+      "curvature": 0.15858870985829743,
+      "is_corner": true
+    },
+    {
+      "s": 162.5,
+      "speed_kmh": 102.39487999999999,
+      "trackPos": 0.004415894503854875,
+      "curvature": 0.21913000545632424,
+      "is_corner": true
+    },
+    {
+      "s": 167.5,
+      "speed_kmh": 96.58204,
+      "trackPos": 0.0016317839658214798,
+      "curvature": 0.2755822952778128,
+      "is_corner": true
+    },
+    {
+      "s": 172.5,
+      "speed_kmh": 90.14852,
+      "trackPos": -0.0044212568133992994,
+      "curvature": 0.3354591652639926,
+      "is_corner": true
+    },
+    {
+      "s": 177.5,
+      "speed_kmh": 83.64416,
+      "trackPos": -0.015926010963059168,
+      "curvature": 0.3882550278075782,
+      "is_corner": true
+    },
+    {
+      "s": 182.5,
+      "speed_kmh": 77.86442000000001,
+      "trackPos": -0.0330684905293857,
+      "curvature": 0.429597193366619,
+      "is_corner": true
+    },
+    {
+      "s": 187.5,
+      "speed_kmh": 73.26086000000001,
+      "trackPos": -0.05550007535081427,
+      "curvature": 0.46192510693743205,
+      "is_corner": true
+    },
+    {
+      "s": 192.5,
+      "speed_kmh": 70.02316,
+      "trackPos": -0.08259521659623552,
+      "curvature": 0.4859863165047387,
+      "is_corner": true
+    },
+    {
+      "s": 197.5,
+      "speed_kmh": 68.42136,
+      "trackPos": -0.11346082802578374,
+      "curvature": 0.5042494009382885,
+      "is_corner": true
+    },
+    {
+      "s": 202.5,
+      "speed_kmh": 68.60074,
+      "trackPos": -0.1472893714024071,
+      "curvature": 0.5188832164218404,
+      "is_corner": true
+    },
+    {
+      "s": 207.5,
+      "speed_kmh": 70.69212,
+      "trackPos": -0.18097919348032918,
+      "curvature": 0.5114531221520309,
+      "is_corner": true
+    },
+    {
+      "s": 212.5,
+      "speed_kmh": 74.053,
+      "trackPos": -0.20918414586128156,
+      "curvature": 0.4899587854212281,
+      "is_corner": true
+    },
+    {
+      "s": 217.5,
+      "speed_kmh": 78.58133999999998,
+      "trackPos": -0.22975070425130426,
+      "curvature": 0.4585010582372879,
+      "is_corner": true
+    },
+    {
+      "s": 222.5,
+      "speed_kmh": 84.1335,
+      "trackPos": -0.24266829155289157,
+      "curvature": 0.41122692546980166,
+      "is_corner": true
+    },
+    {
+      "s": 227.5,
+      "speed_kmh": 90.10128,
+      "trackPos": -0.24852391792651798,
+      "curvature": 0.36219579950305436,
+      "is_corner": true
+    },
+    {
+      "s": 232.5,
+      "speed_kmh": 95.63319999999999,
+      "trackPos": -0.24766308001443008,
+      "curvature": 0.3164977142320878,
+      "is_corner": true
+    },
+    {
+      "s": 237.5,
+      "speed_kmh": 101.07563999999999,
+      "trackPos": -0.2402814257936508,
+      "curvature": 0.2666523855189891,
+      "is_corner": true
+    },
+    {
+      "s": 242.5,
+      "speed_kmh": 106.17144,
+      "trackPos": -0.22784396660997738,
+      "curvature": 0.22320157598269555,
+      "is_corner": true
+    },
+    {
+      "s": 247.5,
+      "speed_kmh": 110.96180000000001,
+      "trackPos": -0.21369498497732425,
+      "curvature": 0.19054731106688422,
+      "is_corner": true
+    },
+    {
+      "s": 252.5,
+      "speed_kmh": 115.4644,
+      "trackPos": -0.1998589214852608,
+      "curvature": 0.16632886477512596,
+      "is_corner": true
+    },
+    {
+      "s": 257.5,
+      "speed_kmh": 119.64439999999999,
+      "trackPos": -0.18676757908163263,
+      "curvature": 0.14982834783094653,
+      "is_corner": true
+    },
+    {
+      "s": 262.5,
+      "speed_kmh": 123.24520000000003,
+      "trackPos": -0.1744431913265306,
+      "curvature": 0.1385067922382795,
+      "is_corner": true
+    },
+    {
+      "s": 267.5,
+      "speed_kmh": 126.7442,
+      "trackPos": -0.1629070841836735,
+      "curvature": 0.12893335201596115,
+      "is_corner": true
+    },
+    {
+      "s": 272.5,
+      "speed_kmh": 130.1128,
+      "trackPos": -0.1521562040816327,
+      "curvature": 0.12020247042320051,
+      "is_corner": true
+    },
+    {
+      "s": 277.5,
+      "speed_kmh": 133.2982,
+      "trackPos": -0.14204644897959187,
+      "curvature": 0.11208391329402664,
+      "is_corner": true
+    },
+    {
+      "s": 282.5,
+      "speed_kmh": 136.3896,
+      "trackPos": -0.13255034013605443,
+      "curvature": 0.10449187697688236,
+      "is_corner": true
+    },
+    {
+      "s": 287.5,
+      "speed_kmh": 139.62279999999998,
+      "trackPos": -0.12366283775510205,
+      "curvature": 0.09751323008495859,
+      "is_corner": true
+    },
+    {
+      "s": 292.5,
+      "speed_kmh": 142.8692,
+      "trackPos": -0.11535541666666667,
+      "curvature": 0.09107874950474654,
+      "is_corner": true
+    },
+    {
+      "s": 297.5,
+      "speed_kmh": 146.0694,
+      "trackPos": -0.10759960680272108,
+      "curvature": 0.08506556223272142,
+      "is_corner": true
+    },
+    {
+      "s": 302.5,
+      "speed_kmh": 149.3052,
+      "trackPos": -0.10036706680272109,
+      "curvature": 0.07945441742034881,
+      "is_corner": true
+    },
+    {
+      "s": 307.5,
+      "speed_kmh": 151.4586,
+      "trackPos": -0.09368365523809526,
+      "curvature": 0.074234811787817,
+      "is_corner": true
+    },
+    {
+      "s": 312.5,
+      "speed_kmh": 152.2602,
+      "trackPos": -0.08751222666666666,
+      "curvature": 0.06940295966759016,
+      "is_corner": true
+    },
+    {
+      "s": 317.5,
+      "speed_kmh": 151.70680000000002,
+      "trackPos": -0.08172444775510203,
+      "curvature": 0.06488999809324417,
+      "is_corner": true
+    },
+    {
+      "s": 322.5,
+      "speed_kmh": 149.66639999999998,
+      "trackPos": -0.07633585727891155,
+      "curvature": 0.06069544328395842,
+      "is_corner": true
+    },
+    {
+      "s": 327.5,
+      "speed_kmh": 146.2578,
+      "trackPos": -0.07135888653061224,
+      "curvature": 0.05681477203717131,
+      "is_corner": true
+    },
+    {
+      "s": 332.5,
+      "speed_kmh": 142.35520000000002,
+      "trackPos": -0.06676164333333333,
+      "curvature": 0.05320274433432037,
+      "is_corner": true
+    },
+    {
+      "s": 337.5,
+      "speed_kmh": 138.3144,
+      "trackPos": -0.06246515884353742,
+      "curvature": 0.049846528372141694,
+      "is_corner": false
+    },
+    {
+      "s": 342.5,
+      "speed_kmh": 134.1186,
+      "trackPos": -0.05843269489795918,
+      "curvature": 0.04672347973921595,
+      "is_corner": false
+    },
+    {
+      "s": 347.5,
+      "speed_kmh": 129.89,
+      "trackPos": -0.054689125510204085,
+      "curvature": 0.04382902463243428,
+      "is_corner": false
+    },
+    {
+      "s": 352.5,
+      "speed_kmh": 125.5122,
+      "trackPos": -0.05123320561224489,
+      "curvature": 0.041084928358447646,
+      "is_corner": false
+    },
+    {
+      "s": 357.5,
+      "speed_kmh": 120.97939999999998,
+      "trackPos": -0.04799582862811791,
+      "curvature": 0.051143706999918506,
+      "is_corner": true
+    },
+    {
+      "s": 362.5,
+      "speed_kmh": 116.16220000000001,
+      "trackPos": -0.044960616638322,
+      "curvature": 0.06588775186709374,
+      "is_corner": true
+    },
+    {
+      "s": 367.5,
+      "speed_kmh": 111.19199999999998,
+      "trackPos": -0.042137870311791385,
+      "curvature": 0.09105915373291457,
+      "is_corner": true
+    },
+    {
+      "s": 372.5,
+      "speed_kmh": 105.80588,
+      "trackPos": -0.03952553623015873,
+      "curvature": 0.12408693363024123,
+      "is_corner": true
+    },
+    {
+      "s": 377.5,
+      "speed_kmh": 99.96356,
+      "trackPos": -0.037503953985260775,
+      "curvature": 0.16142101077668836,
+      "is_corner": true
+    },
+    {
+      "s": 382.5,
+      "speed_kmh": 93.75952,
+      "trackPos": -0.03636537575396826,
+      "curvature": 0.19998372746662121,
+      "is_corner": true
+    },
+    {
+      "s": 387.5,
+      "speed_kmh": 87.08618,
+      "trackPos": -0.03649727422335602,
+      "curvature": 0.24024731373382732,
+      "is_corner": true
+    },
+    {
+      "s": 392.5,
+      "speed_kmh": 79.53988,
+      "trackPos": -0.039225756445578235,
+      "curvature": 0.28225280485985804,
+      "is_corner": true
+    },
+    {
+      "s": 397.5,
+      "speed_kmh": 71.5565,
+      "trackPos": -0.04976880902494331,
+      "curvature": 0.3259065109974713,
+      "is_corner": true
+    },
+    {
+      "s": 402.5,
+      "speed_kmh": 64.25636,
+      "trackPos": -0.06969480569160999,
+      "curvature": 0.3711967238497937,
+      "is_corner": true
+    },
+    {
+      "s": 407.5,
+      "speed_kmh": 58.04467999999999,
+      "trackPos": -0.09842429031345871,
+      "curvature": 0.4183722479668633,
+      "is_corner": true
+    },
+    {
+      "s": 412.5,
+      "speed_kmh": 53.23524,
+      "trackPos": -0.13459645555155395,
+      "curvature": 0.4673925346259883,
+      "is_corner": true
+    },
+    {
+      "s": 417.5,
+      "speed_kmh": 50.12194,
+      "trackPos": -0.17725136256909782,
+      "curvature": 0.5182547770048611,
+      "is_corner": true
+    },
+    {
+      "s": 422.5,
+      "speed_kmh": 48.54414,
+      "trackPos": -0.22521274436286798,
+      "curvature": 0.5582470649990285,
+      "is_corner": true
+    },
+    {
+      "s": 427.5,
+      "speed_kmh": 47.43934,
+      "trackPos": -0.27633193498943437,
+      "curvature": 0.5950851602747647,
+      "is_corner": true
+    },
+    {
+      "s": 432.5,
+      "speed_kmh": 46.45528,
+      "trackPos": -0.3247666484814979,
+      "curvature": 0.622609430340765,
+      "is_corner": true
+    },
+    {
+      "s": 437.5,
+      "speed_kmh": 45.52562,
+      "trackPos": -0.3685023899780965,
+      "curvature": 0.6421663421549663,
+      "is_corner": true
+    },
+    {
+      "s": 442.5,
+      "speed_kmh": 44.644279999999995,
+      "trackPos": -0.40749709249910493,
+      "curvature": 0.6539243880811725,
+      "is_corner": true
+    },
+    {
+      "s": 447.5,
+      "speed_kmh": 43.833819999999996,
+      "trackPos": -0.4422647901181525,
+      "curvature": 0.6631380712985776,
+      "is_corner": true
+    },
+    {
+      "s": 452.5,
+      "speed_kmh": 43.26166,
+      "trackPos": -0.4737122912238579,
+      "curvature": 0.6719617275115565,
+      "is_corner": true
+    },
+    {
+      "s": 457.5,
+      "speed_kmh": 43.95992,
+      "trackPos": -0.5002329716749857,
+      "curvature": 0.6815254084749303,
+      "is_corner": true
+    },
+    {
+      "s": 462.5,
+      "speed_kmh": 45.36802,
+      "trackPos": -0.5182551746825046,
+      "curvature": 0.6917982929924853,
+      "is_corner": true
+    },
+    {
+      "s": 467.5,
+      "speed_kmh": 44.65671999999999,
+      "trackPos": -0.5329421732539331,
+      "curvature": 0.702385842116292,
+      "is_corner": true
+    },
+    {
+      "s": 472.5,
+      "speed_kmh": 43.16686,
+      "trackPos": -0.547770770381673,
+      "curvature": 0.7130609448624132,
+      "is_corner": true
+    },
+    {
+      "s": 477.5,
+      "speed_kmh": 41.575900000000004,
+      "trackPos": -0.5627524527992555,
+      "curvature": 0.7249982196192704,
+      "is_corner": true
+    },
+    {
+      "s": 482.5,
+      "speed_kmh": 38.9136,
+      "trackPos": -0.5773006427992555,
+      "curvature": 0.7394989032670528,
+      "is_corner": true
+    },
+    {
+      "s": 487.5,
+      "speed_kmh": 35.814980000000006,
+      "trackPos": -0.5903679708664826,
+      "curvature": 0.7525917235199711,
+      "is_corner": true
+    },
+    {
+      "s": 492.5,
+      "speed_kmh": 35.12138,
+      "trackPos": -0.6037271851521968,
+      "curvature": 0.7640451219344133,
+      "is_corner": true
+    },
+    {
+      "s": 497.5,
+      "speed_kmh": 35.48734,
+      "trackPos": -0.6213627480812585,
+      "curvature": 0.7742447877096332,
+      "is_corner": true
+    },
+    {
+      "s": 502.5,
+      "speed_kmh": 36.05968,
+      "trackPos": -0.6383641808762895,
+      "curvature": 0.7808884736225485,
+      "is_corner": true
+    },
+    {
+      "s": 507.5,
+      "speed_kmh": 36.759,
+      "trackPos": -0.6513437904921167,
+      "curvature": 0.7855505203165473,
+      "is_corner": true
+    },
+    {
+      "s": 512.5,
+      "speed_kmh": 37.553,
+      "trackPos": -0.6605477829044661,
+      "curvature": 0.782201011413335,
+      "is_corner": true
+    },
+    {
+      "s": 517.5,
+      "speed_kmh": 38.408480000000004,
+      "trackPos": -0.6667008214758947,
+      "curvature": 0.7723884618537351,
+      "is_corner": true
+    },
+    {
+      "s": 522.5,
+      "speed_kmh": 39.33167999999999,
+      "trackPos": -0.6707269114758948,
+      "curvature": 0.7566725155803921,
+      "is_corner": true
+    },
+    {
+      "s": 527.5,
+      "speed_kmh": 41.32454,
+      "trackPos": -0.6724868675198509,
+      "curvature": 0.7357823168680037,
+      "is_corner": true
+    },
+    {
+      "s": 532.5,
+      "speed_kmh": 46.0837,
+      "trackPos": -0.6682225998744526,
+      "curvature": 0.7102790808282552,
+      "is_corner": true
+    },
+    {
+      "s": 537.5,
+      "speed_kmh": 52.19831999999999,
+      "trackPos": -0.657536718507993,
+      "curvature": 0.6801836723228772,
+      "is_corner": true
+    },
+    {
+      "s": 542.5,
+      "speed_kmh": 59.87542,
+      "trackPos": -0.6408900718551289,
+      "curvature": 0.6442773731373568,
+      "is_corner": true
+    },
+    {
+      "s": 547.5,
+      "speed_kmh": 69.1563,
+      "trackPos": -0.6188977430569432,
+      "curvature": 0.6003358967400376,
+      "is_corner": true
+    },
+    {
+      "s": 552.5,
+      "speed_kmh": 77.99934,
+      "trackPos": -0.5921332037712289,
+      "curvature": 0.548848217493674,
+      "is_corner": true
+    },
+    {
+      "s": 557.5,
+      "speed_kmh": 85.047,
+      "trackPos": -0.560750810914086,
+      "curvature": 0.4578278750382587,
+      "is_corner": true
+    },
+    {
+      "s": 562.5,
+      "speed_kmh": 91.59954,
+      "trackPos": -0.5256579620129871,
+      "curvature": 0.3563932212513723,
+      "is_corner": true
+    },
+    {
+      "s": 567.5,
+      "speed_kmh": 96.1968,
+      "trackPos": -0.49145456428571427,
+      "curvature": 0.25540670826114653,
+      "is_corner": true
+    },
+    {
+      "s": 572.5,
+      "speed_kmh": 97.95581999999999,
+      "trackPos": -0.4587452103174604,
+      "curvature": 0.15628311511225546,
+      "is_corner": true
+    },
+    {
+      "s": 577.5,
+      "speed_kmh": 97.53183999999999,
+      "trackPos": -0.4250521150793651,
+      "curvature": 0.06462321473042909,
+      "is_corner": true
+    },
+    {
+      "s": 582.5,
+      "speed_kmh": 95.11594,
+      "trackPos": -0.3880885976190476,
+      "curvature": -0.022707084111524153,
+      "is_corner": false
+    },
+    {
+      "s": 587.5,
+      "speed_kmh": 91.65151999999999,
+      "trackPos": -0.3478983535714285,
+      "curvature": -0.09676092752567081,
+      "is_corner": true
+    },
+    {
+      "s": 592.5,
+      "speed_kmh": 88.54542000000001,
+      "trackPos": -0.3052244329365079,
+      "curvature": -0.15076019688208467,
+      "is_corner": true
+    },
+    {
+      "s": 597.5,
+      "speed_kmh": 86.6254,
+      "trackPos": -0.2602186357936508,
+      "curvature": -0.20004531631912922,
+      "is_corner": true
+    },
+    {
+      "s": 602.5,
+      "speed_kmh": 86.28114000000001,
+      "trackPos": -0.21314075603174604,
+      "curvature": -0.24591592746711394,
+      "is_corner": true
+    },
+    {
+      "s": 607.5,
+      "speed_kmh": 86.99069999999999,
+      "trackPos": -0.16536002269841268,
+      "curvature": -0.28866702528370713,
+      "is_corner": true
+    },
+    {
+      "s": 612.5,
+      "speed_kmh": 87.99686,
+      "trackPos": -0.12045059593253966,
+      "curvature": -0.3275308008837595,
+      "is_corner": true
+    },
+    {
+      "s": 617.5,
+      "speed_kmh": 89.37992,
+      "trackPos": -0.08104307085317461,
+      "curvature": -0.3590434401319623,
+      "is_corner": true
+    },
+    {
+      "s": 622.5,
+      "speed_kmh": 90.8924,
+      "trackPos": -0.0472164345436508,
+      "curvature": -0.3505839078442002,
+      "is_corner": true
+    },
+    {
+      "s": 627.5,
+      "speed_kmh": 92.44673999999999,
+      "trackPos": -0.018242509146825396,
+      "curvature": -0.3312666700165058,
+      "is_corner": true
+    },
+    {
+      "s": 632.5,
+      "speed_kmh": 94.01266,
+      "trackPos": 0.005919590138888888,
+      "curvature": -0.3084445409688763,
+      "is_corner": true
+    },
+    {
+      "s": 637.5,
+      "speed_kmh": 95.53034,
+      "trackPos": 0.025599312162698413,
+      "curvature": -0.2817292830747137,
+      "is_corner": true
+    },
+    {
+      "s": 642.5,
+      "speed_kmh": 96.72004000000001,
+      "trackPos": 0.04193751851190476,
+      "curvature": -0.25274226914102854,
+      "is_corner": true
+    },
+    {
+      "s": 647.5,
+      "speed_kmh": 97.83054,
+      "trackPos": 0.05595430583333333,
+      "curvature": -0.22238385304675165,
+      "is_corner": true
+    },
+    {
+      "s": 652.5,
+      "speed_kmh": 99.08138000000001,
+      "trackPos": 0.06811062837301586,
+      "curvature": -0.2010390844528012,
+      "is_corner": true
+    },
+    {
+      "s": 657.5,
+      "speed_kmh": 100.62888000000001,
+      "trackPos": 0.07875460515873016,
+      "curvature": -0.1955215414564677,
+      "is_corner": true
+    },
+    {
+      "s": 662.5,
+      "speed_kmh": 102.58346000000002,
+      "trackPos": 0.08811627698412701,
+      "curvature": -0.18998994439528769,
+      "is_corner": true
+    },
+    {
+      "s": 667.5,
+      "speed_kmh": 105.227,
+      "trackPos": 0.09635282698412698,
+      "curvature": -0.18255385586651024,
+      "is_corner": true
+    },
+    {
+      "s": 672.5,
+      "speed_kmh": 108.30799999999999,
+      "trackPos": 0.10356920223922902,
+      "curvature": -0.1741437897185361,
+      "is_corner": true
+    },
+    {
+      "s": 677.5,
+      "speed_kmh": 110.73979999999999,
+      "trackPos": 0.10967525858843538,
+      "curvature": -0.1653570788779396,
+      "is_corner": true
+    },
+    {
+      "s": 682.5,
+      "speed_kmh": 112.2356,
+      "trackPos": 0.11449039370748301,
+      "curvature": -0.162533921966079,
+      "is_corner": true
+    },
+    {
+      "s": 687.5,
+      "speed_kmh": 112.3658,
+      "trackPos": 0.1173952925170068,
+      "curvature": -0.17172161525419127,
+      "is_corner": true
+    },
+    {
+      "s": 692.5,
+      "speed_kmh": 110.69059999999999,
+      "trackPos": 0.11823940958049886,
+      "curvature": -0.18430628232631022,
+      "is_corner": true
+    },
+    {
+      "s": 697.5,
+      "speed_kmh": 107.2219,
+      "trackPos": 0.11708977743764173,
+      "curvature": -0.2056513926938053,
+      "is_corner": true
+    },
+    {
+      "s": 702.5,
+      "speed_kmh": 102.75183999999999,
+      "trackPos": 0.11441098386621316,
+      "curvature": -0.23478971691429312,
+      "is_corner": true
+    },
+    {
+      "s": 707.5,
+      "speed_kmh": 97.31476,
+      "trackPos": 0.11097606364357866,
+      "curvature": -0.2663315138151399,
+      "is_corner": true
+    },
+    {
+      "s": 712.5,
+      "speed_kmh": 91.1214,
+      "trackPos": 0.10729677792929293,
+      "curvature": -0.29916915152581797,
+      "is_corner": true
+    },
+    {
+      "s": 717.5,
+      "speed_kmh": 84.21306,
+      "trackPos": 0.10445588078643578,
+      "curvature": -0.3336968399285253,
+      "is_corner": true
+    },
+    {
+      "s": 722.5,
+      "speed_kmh": 76.5324,
+      "trackPos": 0.10727177364357865,
+      "curvature": -0.3704686317028816,
+      "is_corner": true
+    },
+    {
+      "s": 727.5,
+      "speed_kmh": 69.34718000000001,
+      "trackPos": 0.11780534408008658,
+      "curvature": -0.4101032379549266,
+      "is_corner": true
+    },
+    {
+      "s": 732.5,
+      "speed_kmh": 63.280199999999994,
+      "trackPos": 0.13607068852453102,
+      "curvature": -0.4532909392997491,
+      "is_corner": true
+    },
+    {
+      "s": 737.5,
+      "speed_kmh": 58.44216,
+      "trackPos": 0.16121157138167388,
+      "curvature": -0.49900184929703656,
+      "is_corner": true
+    },
+    {
+      "s": 742.5,
+      "speed_kmh": 55.04758,
+      "trackPos": 0.19216537452589807,
+      "curvature": -0.5472173001155931,
+      "is_corner": true
+    },
+    {
+      "s": 747.5,
+      "speed_kmh": 53.36866,
+      "trackPos": 0.2281255610338346,
+      "curvature": -0.5933671494810946,
+      "is_corner": true
+    },
+    {
+      "s": 752.5,
+      "speed_kmh": 52.30894000000001,
+      "trackPos": 0.26781019251253135,
+      "curvature": -0.6344885950521941,
+      "is_corner": true
+    },
+    {
+      "s": 757.5,
+      "speed_kmh": 51.365840000000006,
+      "trackPos": 0.30683178931704264,
+      "curvature": -0.6717711433641296,
+      "is_corner": true
+    },
+    {
+      "s": 762.5,
+      "speed_kmh": 50.48076,
+      "trackPos": 0.34303902681704257,
+      "curvature": -0.7016897266632547,
+      "is_corner": true
+    },
+    {
+      "s": 767.5,
+      "speed_kmh": 49.60414000000001,
+      "trackPos": 0.376259925229741,
+      "curvature": -0.7235985208953012,
+      "is_corner": true
+    },
+    {
+      "s": 772.5,
+      "speed_kmh": 48.71992,
+      "trackPos": 0.4068315918964077,
+      "curvature": -0.7341249856858121,
+      "is_corner": true
+    },
+    {
+      "s": 777.5,
+      "speed_kmh": 47.84686000000001,
+      "trackPos": 0.43498211033536227,
+      "curvature": -0.7326286029082714,
+      "is_corner": true
+    },
+    {
+      "s": 782.5,
+      "speed_kmh": 46.994600000000005,
+      "trackPos": 0.4609262180451128,
+      "curvature": -0.7217667569010342,
+      "is_corner": true
+    },
+    {
+      "s": 787.5,
+      "speed_kmh": 46.302800000000005,
+      "trackPos": 0.485266761487051,
+      "curvature": -0.7059256069419301,
+      "is_corner": true
+    },
+    {
+      "s": 792.5,
+      "speed_kmh": 46.43674,
+      "trackPos": 0.5078002682539683,
+      "curvature": -0.6865556715792752,
+      "is_corner": true
+    },
+    {
+      "s": 797.5,
+      "speed_kmh": 48.58592,
+      "trackPos": 0.5243739902319903,
+      "curvature": -0.6639174573283229,
+      "is_corner": true
+    },
+    {
+      "s": 802.5,
+      "speed_kmh": 52.631400000000006,
+      "trackPos": 0.5329958746475747,
+      "curvature": -0.6379382746018438,
+      "is_corner": true
+    },
+    {
+      "s": 807.5,
+      "speed_kmh": 58.5946,
+      "trackPos": 0.5336275508380509,
+      "curvature": -0.6080914941690186,
+      "is_corner": true
+    },
+    {
+      "s": 812.5,
+      "speed_kmh": 66.27518,
+      "trackPos": 0.5266229045795475,
+      "curvature": -0.5725954453639919,
+      "is_corner": true
+    },
+    {
+      "s": 817.5,
+      "speed_kmh": 74.44189999999999,
+      "trackPos": 0.5124775349650349,
+      "curvature": -0.528575412797776,
+      "is_corner": true
+    },
+    {
+      "s": 822.5,
+      "speed_kmh": 81.89641999999999,
+      "trackPos": 0.491406034965035,
+      "curvature": -0.48357195815520815,
+      "is_corner": true
+    },
+    {
+      "s": 827.5,
+      "speed_kmh": 88.6668,
+      "trackPos": 0.46401917147297145,
+      "curvature": -0.4357300309170687,
+      "is_corner": true
+    },
+    {
+      "s": 832.5,
+      "speed_kmh": 94.78381999999999,
+      "trackPos": 0.435260802556174,
+      "curvature": -0.3868352382917047,
+      "is_corner": true
+    },
+    {
+      "s": 837.5,
+      "speed_kmh": 100.36551999999999,
+      "trackPos": 0.4075915038548753,
+      "curvature": -0.3459228482274322,
+      "is_corner": true
+    },
+    {
+      "s": 842.5,
+      "speed_kmh": 105.6632,
+      "trackPos": 0.3811417324263039,
+      "curvature": -0.3149664117208842,
+      "is_corner": true
+    },
+    {
+      "s": 847.5,
+      "speed_kmh": 110.45,
+      "trackPos": 0.35616491609977324,
+      "curvature": -0.2913451272629064,
+      "is_corner": true
+    },
+    {
+      "s": 852.5,
+      "speed_kmh": 115.0634,
+      "trackPos": 0.33272898639455784,
+      "curvature": -0.27075403758046057,
+      "is_corner": true
+    },
+    {
+      "s": 857.5,
+      "speed_kmh": 119.3606,
+      "trackPos": 0.3107120793650794,
+      "curvature": -0.25183438364502375,
+      "is_corner": true
+    },
+    {
+      "s": 862.5,
+      "speed_kmh": 123.0692,
+      "trackPos": 0.29036778571428573,
+      "curvature": -0.23430603700934075,
+      "is_corner": true
+    },
+    {
+      "s": 867.5,
+      "speed_kmh": 126.44380000000001,
+      "trackPos": 0.2713032755102041,
+      "curvature": -0.21802029570765585,
+      "is_corner": true
+    },
+    {
+      "s": 872.5,
+      "speed_kmh": 129.79919999999998,
+      "trackPos": 0.25332670408163266,
+      "curvature": -0.20290457684681631,
+      "is_corner": true
+    },
+    {
+      "s": 877.5,
+      "speed_kmh": 132.9614,
+      "trackPos": 0.23660523469387756,
+      "curvature": -0.18894091140186697,
+      "is_corner": true
+    },
+    {
+      "s": 882.5,
+      "speed_kmh": 135.92620000000002,
+      "trackPos": 0.22093155102040812,
+      "curvature": -0.1758909651954699,
+      "is_corner": true
+    },
+    {
+      "s": 887.5,
+      "speed_kmh": 139.01620000000003,
+      "trackPos": 0.2062471156462585,
+      "curvature": -0.1637226191308366,
+      "is_corner": true
+    },
+    {
+      "s": 892.5,
+      "speed_kmh": 142.21200000000002,
+      "trackPos": 0.19251457823129248,
+      "curvature": -0.15248032315685675,
+      "is_corner": true
+    },
+    {
+      "s": 897.5,
+      "speed_kmh": 145.4634,
+      "trackPos": 0.17953124489795916,
+      "curvature": -0.1420209764912745,
+      "is_corner": true
+    },
+    {
+      "s": 902.5,
+      "speed_kmh": 148.06040000000002,
+      "trackPos": 0.1674329306122449,
+      "curvature": -0.13229349431042434,
+      "is_corner": true
+    },
+    {
+      "s": 907.5,
+      "speed_kmh": 149.4838,
+      "trackPos": 0.1561299918367347,
+      "curvature": -0.12324518375279145,
+      "is_corner": true
+    },
+    {
+      "s": 912.5,
+      "speed_kmh": 149.37039999999996,
+      "trackPos": 0.14554774693877554,
+      "curvature": -0.11476658570148925,
+      "is_corner": true
+    },
+    {
+      "s": 917.5,
+      "speed_kmh": 147.923,
+      "trackPos": 0.1358067469387755,
+      "curvature": -0.10685232906324794,
+      "is_corner": true
+    },
+    {
+      "s": 922.5,
+      "speed_kmh": 145.13299999999998,
+      "trackPos": 0.12669707823129253,
+      "curvature": -0.09949457616739209,
+      "is_corner": true
+    },
+    {
+      "s": 927.5,
+      "speed_kmh": 141.4764,
+      "trackPos": 0.11816999931972791,
+      "curvature": -0.09266235425013926,
+      "is_corner": true
+    },
+    {
+      "s": 932.5,
+      "speed_kmh": 137.5552,
+      "trackPos": 0.11024419795918365,
+      "curvature": -0.08633114108627901,
+      "is_corner": true
+    },
+    {
+      "s": 937.5,
+      "speed_kmh": 133.615,
+      "trackPos": 0.10278432448979591,
+      "curvature": -0.0804366621605111,
+      "is_corner": true
+    },
+    {
+      "s": 942.5,
+      "speed_kmh": 129.5392,
+      "trackPos": 0.09582329005102042,
+      "curvature": -0.0750672659655446,
+      "is_corner": true
+    },
+    {
+      "s": 947.5,
+      "speed_kmh": 125.20520000000002,
+      "trackPos": 0.0893803650510204,
+      "curvature": -0.07192605589415225,
+      "is_corner": true
+    },
+    {
+      "s": 952.5,
+      "speed_kmh": 120.7302,
+      "trackPos": 0.08333022576530612,
+      "curvature": -0.09000521755005107,
+      "is_corner": true
+    },
+    {
+      "s": 957.5,
+      "speed_kmh": 116.1134,
+      "trackPos": 0.07769463732993198,
+      "curvature": -0.11110810612658004,
+      "is_corner": true
+    },
+    {
+      "s": 962.5,
+      "speed_kmh": 111.23060000000001,
+      "trackPos": 0.07249501147959184,
+      "curvature": -0.14261746164165906,
+      "is_corner": true
+    },
+    {
+      "s": 967.5,
+      "speed_kmh": 106.06859999999999,
+      "trackPos": 0.06784307903061225,
+      "curvature": -0.17932309843067346,
+      "is_corner": true
+    },
+    {
+      "s": 972.5,
+      "speed_kmh": 100.49598,
+      "trackPos": 0.06427891678571429,
+      "curvature": -0.21732602633948195,
+      "is_corner": true
+    },
+    {
+      "s": 977.5,
+      "speed_kmh": 94.55032,
+      "trackPos": 0.062128818571428567,
+      "curvature": -0.2565127375235131,
+      "is_corner": true
+    },
+    {
+      "s": 982.5,
+      "speed_kmh": 88.02296000000001,
+      "trackPos": 0.06295398313186813,
+      "curvature": -0.2967846541937294,
+      "is_corner": true
+    },
+    {
+      "s": 987.5,
+      "speed_kmh": 81.36716,
+      "trackPos": 0.06921663364207221,
+      "curvature": -0.33810446706370995,
+      "is_corner": true
+    },
+    {
+      "s": 992.5,
+      "speed_kmh": 75.42112,
+      "trackPos": 0.08116127513867086,
+      "curvature": -0.38050672624883836,
+      "is_corner": true
+    },
+    {
+      "s": 997.5,
+      "speed_kmh": 70.61126,
+      "trackPos": 0.09838409894819468,
+      "curvature": -0.42653673118513274,
+      "is_corner": true
+    },
+    {
+      "s": 1002.5,
+      "speed_kmh": 66.9371,
+      "trackPos": 0.12043662799581371,
+      "curvature": -0.4787684591025202,
+      "is_corner": true
+    },
+    {
+      "s": 1007.5,
+      "speed_kmh": 64.60846,
+      "trackPos": 0.1464533684720042,
+      "curvature": -0.5333532796466584,
+      "is_corner": true
+    },
+    {
+      "s": 1012.5,
+      "speed_kmh": 63.306639999999994,
+      "trackPos": 0.17572837323390897,
+      "curvature": -0.5905018537198088,
+      "is_corner": true
+    },
+    {
+      "s": 1017.5,
+      "speed_kmh": 62.209860000000006,
+      "trackPos": 0.2064875527210884,
+      "curvature": -0.6290159802639308,
+      "is_corner": true
+    },
+    {
+      "s": 1022.5,
+      "speed_kmh": 61.107780000000005,
+      "trackPos": 0.23617469328231294,
+      "curvature": -0.6624912734201511,
+      "is_corner": true
+    },
+    {
+      "s": 1027.5,
+      "speed_kmh": 59.988519999999994,
+      "trackPos": 0.26452334814425776,
+      "curvature": -0.6892342957431268,
+      "is_corner": true
+    },
+    {
+      "s": 1032.5,
+      "speed_kmh": 58.83574,
+      "trackPos": 0.29172585707282916,
+      "curvature": -0.7106488037771634,
+      "is_corner": true
+    },
+    {
+      "s": 1037.5,
+      "speed_kmh": 57.64489999999999,
+      "trackPos": 0.3177739824696545,
+      "curvature": -0.7277957207090657,
+      "is_corner": true
+    },
+    {
+      "s": 1042.5,
+      "speed_kmh": 56.389359999999996,
+      "trackPos": 0.3426752138422036,
+      "curvature": -0.7332319157090356,
+      "is_corner": true
+    },
+    {
+      "s": 1047.5,
+      "speed_kmh": 55.04861999999999,
+      "trackPos": 0.36672361885473487,
+      "curvature": -0.7255868405602286,
+      "is_corner": true
+    },
+    {
+      "s": 1052.5,
+      "speed_kmh": 53.73729999999999,
+      "trackPos": 0.39018283005921667,
+      "curvature": -0.7107641742439793,
+      "is_corner": true
+    },
+    {
+      "s": 1057.5,
+      "speed_kmh": 52.75764,
+      "trackPos": 0.4135197139877881,
+      "curvature": -0.6921869393561634,
+      "is_corner": true
+    },
+    {
+      "s": 1062.5,
+      "speed_kmh": 53.132799999999996,
+      "trackPos": 0.4354305685449957,
+      "curvature": -0.6682421050979366,
+      "is_corner": true
+    },
+    {
+      "s": 1067.5,
+      "speed_kmh": 55.603719999999996,
+      "trackPos": 0.4513843518242164,
+      "curvature": -0.6365275982363608,
+      "is_corner": true
+    },
+    {
+      "s": 1072.5,
+      "speed_kmh": 60.16774,
+      "trackPos": 0.46000712166548624,
+      "curvature": -0.6009170003078568,
+      "is_corner": true
+    },
+    {
+      "s": 1077.5,
+      "speed_kmh": 66.63424,
+      "trackPos": 0.4614995156897626,
+      "curvature": -0.559623256952462,
+      "is_corner": true
+    },
+    {
+      "s": 1082.5,
+      "speed_kmh": 74.24294,
+      "trackPos": 0.4560879059153265,
+      "curvature": -0.5147855215450884,
+      "is_corner": true
+    },
+    {
+      "s": 1087.5,
+      "speed_kmh": 81.72908,
+      "trackPos": 0.4439064363775114,
+      "curvature": -0.4712003624527199,
+      "is_corner": true
+    },
+    {
+      "s": 1092.5,
+      "speed_kmh": 88.55431999999999,
+      "trackPos": 0.4247372895521146,
+      "curvature": -0.4232228996881456,
+      "is_corner": true
+    },
+    {
+      "s": 1097.5,
+      "speed_kmh": 94.6036,
+      "trackPos": 0.39990980054112557,
+      "curvature": -0.37462296255709765,
+      "is_corner": true
+    },
+    {
+      "s": 1102.5,
+      "speed_kmh": 100.11449999999999,
+      "trackPos": 0.3745826205782313,
+      "curvature": -0.32835588582682274,
+      "is_corner": true
+    },
+    {
+      "s": 1107.5,
+      "speed_kmh": 105.37964,
+      "trackPos": 0.35048265629251707,
+      "curvature": -0.29201642454310084,
+      "is_corner": true
+    },
+    {
+      "s": 1112.5,
+      "speed_kmh": 110.14160000000001,
+      "trackPos": 0.32772070164399103,
+      "curvature": -0.26708009920724424,
+      "is_corner": true
+    },
+    {
+      "s": 1117.5,
+      "speed_kmh": 114.61280000000002,
+      "trackPos": 0.30638170776643997,
+      "curvature": -0.24775280886450363,
+      "is_corner": true
+    },
+    {
+      "s": 1122.5,
+      "speed_kmh": 118.89079999999998,
+      "trackPos": 0.2863400368480726,
+      "curvature": -0.2305967259209104,
+      "is_corner": true
+    },
+    {
+      "s": 1127.5,
+      "speed_kmh": 122.70160000000001,
+      "trackPos": 0.2674747397959184,
+      "curvature": -0.2146878511114262,
+      "is_corner": true
+    },
+    {
+      "s": 1132.5,
+      "speed_kmh": 125.95360000000001,
+      "trackPos": 0.2499862159863946,
+      "curvature": -0.19990358476458298,
+      "is_corner": true
+    },
+    {
+      "s": 1137.5,
+      "speed_kmh": 129.38799999999998,
+      "trackPos": 0.23350725680272108,
+      "curvature": -0.1861688040965667,
+      "is_corner": true
+    },
+    {
+      "s": 1142.5,
+      "speed_kmh": 131.916,
+      "trackPos": 0.21794618027210885,
+      "curvature": -0.17341651617937143,
+      "is_corner": true
+    },
+    {
+      "s": 1147.5,
+      "speed_kmh": 132.8996,
+      "trackPos": 0.20339613945578236,
+      "curvature": -0.1617800380624455,
+      "is_corner": true
+    },
+    {
+      "s": 1152.5,
+      "speed_kmh": 132.424,
+      "trackPos": 0.18976081292517008,
+      "curvature": -0.15162500386561234,
+      "is_corner": true
+    },
+    {
+      "s": 1157.5,
+      "speed_kmh": 130.766,
+      "trackPos": 0.17709134353741499,
+      "curvature": -0.14387126883242313,
+      "is_corner": true
+    },
+    {
+      "s": 1162.5,
+      "speed_kmh": 127.68059999999998,
+      "trackPos": 0.16531668027210883,
+      "curvature": -0.13999687764831614,
+      "is_corner": true
+    },
+    {
+      "s": 1167.5,
+      "speed_kmh": 123.75880000000002,
+      "trackPos": 0.1542549362244898,
+      "curvature": -0.14157471497228397,
+      "is_corner": true
+    },
+    {
+      "s": 1172.5,
+      "speed_kmh": 119.7098,
+      "trackPos": 0.1439675331632653,
+      "curvature": -0.1472976094917416,
+      "is_corner": true
+    },
+    {
+      "s": 1177.5,
+      "speed_kmh": 115.5234,
+      "trackPos": 0.134567304138322,
+      "curvature": -0.1551277433778479,
+      "is_corner": true
+    },
+    {
+      "s": 1182.5,
+      "speed_kmh": 111.0542,
+      "trackPos": 0.12616361706349208,
+      "curvature": -0.1644972225376496,
+      "is_corner": true
+    },
+    {
+      "s": 1187.5,
+      "speed_kmh": 106.3057,
+      "trackPos": 0.11968844699546484,
+      "curvature": -0.17520014368916964,
+      "is_corner": true
+    },
+    {
+      "s": 1192.5,
+      "speed_kmh": 101.92056,
+      "trackPos": 0.11568609801587301,
+      "curvature": -0.18713096068576937,
+      "is_corner": true
+    },
+    {
+      "s": 1197.5,
+      "speed_kmh": 98.32054,
+      "trackPos": 0.114270498015873,
+      "curvature": -0.2001776070891757,
+      "is_corner": true
+    },
+    {
+      "s": 1202.5,
+      "speed_kmh": 95.56363999999999,
+      "trackPos": 0.11533226587301589,
+      "curvature": -0.2142541933504155,
+      "is_corner": true
+    },
+    {
+      "s": 1207.5,
+      "speed_kmh": 93.81309999999999,
+      "trackPos": 0.11858515873015874,
+      "curvature": -0.22926362183530966,
+      "is_corner": true
+    },
+    {
+      "s": 1212.5,
+      "speed_kmh": 93.07484,
+      "trackPos": 0.12382102857142856,
+      "curvature": -0.2449936753408336,
+      "is_corner": true
+    },
+    {
+      "s": 1217.5,
+      "speed_kmh": 92.81787999999999,
+      "trackPos": 0.13073889523809523,
+      "curvature": -0.26083657127531545,
+      "is_corner": true
+    },
+    {
+      "s": 1222.5,
+      "speed_kmh": 92.63337999999999,
+      "trackPos": 0.1381690714285714,
+      "curvature": -0.275791827476214,
+      "is_corner": true
+    },
+    {
+      "s": 1227.5,
+      "speed_kmh": 92.48179999999999,
+      "trackPos": 0.1453166222222222,
+      "curvature": -0.2880877688176555,
+      "is_corner": true
+    },
+    {
+      "s": 1232.5,
+      "speed_kmh": 92.3475,
+      "trackPos": 0.15197329365079362,
+      "curvature": -0.2957873486505053,
+      "is_corner": true
+    },
+    {
+      "s": 1237.5,
+      "speed_kmh": 92.2235,
+      "trackPos": 0.15816996507936507,
+      "curvature": -0.29994083009804196,
+      "is_corner": true
+    },
+    {
+      "s": 1242.5,
+      "speed_kmh": 92.10759999999999,
+      "trackPos": 0.16398300793650794,
+      "curvature": -0.3023541642691036,
+      "is_corner": true
+    },
+    {
+      "s": 1247.5,
+      "speed_kmh": 92.04342,
+      "trackPos": 0.1694317888888889,
+      "curvature": -0.30319591878872887,
+      "is_corner": true
+    },
+    {
+      "s": 1252.5,
+      "speed_kmh": 92.14484,
+      "trackPos": 0.1745288031746032,
+      "curvature": -0.3018356043896522,
+      "is_corner": true
+    },
+    {
+      "s": 1257.5,
+      "speed_kmh": 92.57514,
+      "trackPos": 0.17938915079365078,
+      "curvature": -0.2972171033487153,
+      "is_corner": true
+    },
+    {
+      "s": 1262.5,
+      "speed_kmh": 93.82884,
+      "trackPos": 0.18410858928571425,
+      "curvature": -0.28877564767473446,
+      "is_corner": true
+    },
+    {
+      "s": 1267.5,
+      "speed_kmh": 96.03484,
+      "trackPos": 0.18877631944444445,
+      "curvature": -0.2779649843601637,
+      "is_corner": true
+    },
+    {
+      "s": 1272.5,
+      "speed_kmh": 99.22614,
+      "trackPos": 0.19336177046485262,
+      "curvature": -0.26577613907641473,
+      "is_corner": true
+    },
+    {
+      "s": 1277.5,
+      "speed_kmh": 103.471,
+      "trackPos": 0.197377191893424,
+      "curvature": -0.25247847083282104,
+      "is_corner": true
+    },
+    {
+      "s": 1282.5,
+      "speed_kmh": 107.87074,
+      "trackPos": 0.19963754563492064,
+      "curvature": -0.23822033901371142,
+      "is_corner": true
+    },
+    {
+      "s": 1287.5,
+      "speed_kmh": 112.3374,
+      "trackPos": 0.1995408849206349,
+      "curvature": -0.22300321779294055,
+      "is_corner": true
+    },
+    {
+      "s": 1292.5,
+      "speed_kmh": 116.646,
+      "trackPos": 0.19706640873015874,
+      "curvature": -0.207150220038558,
+      "is_corner": true
+    },
+    {
+      "s": 1297.5,
+      "speed_kmh": 120.8798,
+      "trackPos": 0.19237811536281182,
+      "curvature": -0.1909310109187097,
+      "is_corner": true
+    },
+    {
+      "s": 1302.5,
+      "speed_kmh": 124.18140000000001,
+      "trackPos": 0.18537244642857145,
+      "curvature": -0.1745792701437049,
+      "is_corner": true
+    },
+    {
+      "s": 1307.5,
+      "speed_kmh": 127.68819999999998,
+      "trackPos": 0.17627210969387755,
+      "curvature": -0.15834092788559226,
+      "is_corner": true
+    },
+    {
+      "s": 1312.5,
+      "speed_kmh": 131.0164,
+      "trackPos": 0.1656764005102041,
+      "curvature": -0.14252831937921615,
+      "is_corner": true
+    },
+    {
+      "s": 1317.5,
+      "speed_kmh": 134.1692,
+      "trackPos": 0.15489138010204082,
+      "curvature": -0.12796677132649809,
+      "is_corner": true
+    },
+    {
+      "s": 1322.5,
+      "speed_kmh": 137.09859999999998,
+      "trackPos": 0.14467335034013604,
+      "curvature": -0.11581604467040701,
+      "is_corner": true
+    },
+    {
+      "s": 1327.5,
+      "speed_kmh": 140.3928,
+      "trackPos": 0.13505492176870748,
+      "curvature": -0.1067195424046839,
+      "is_corner": true
+    },
+    {
+      "s": 1332.5,
+      "speed_kmh": 143.65479999999997,
+      "trackPos": 0.12593351156462587,
+      "curvature": -0.09926025582143394,
+      "is_corner": true
+    },
+    {
+      "s": 1337.5,
+      "speed_kmh": 146.86040000000003,
+      "trackPos": 0.1174217193877551,
+      "curvature": -0.09245924284440334,
+      "is_corner": true
+    },
+    {
+      "s": 1342.5,
+      "speed_kmh": 150.0944,
+      "trackPos": 0.10946917081632652,
+      "curvature": -0.08611177822266428,
+      "is_corner": true
+    },
+    {
+      "s": 1347.5,
+      "speed_kmh": 153.23600000000002,
+      "trackPos": 0.1020630823809524,
+      "curvature": -0.08013566861576962,
+      "is_corner": true
+    },
+    {
+      "s": 1352.5,
+      "speed_kmh": 156.2578,
+      "trackPos": 0.09518111095238095,
+      "curvature": -0.07458220496993964,
+      "is_corner": true
+    },
+    {
+      "s": 1357.5,
+      "speed_kmh": 158.89659999999998,
+      "trackPos": 0.08872277523809524,
+      "curvature": -0.06937330478143622,
+      "is_corner": true
+    },
+    {
+      "s": 1362.5,
+      "speed_kmh": 160.53400000000002,
+      "trackPos": 0.08268506666666667,
+      "curvature": -0.06450265259548363,
+      "is_corner": true
+    },
+    {
+      "s": 1367.5,
+      "speed_kmh": 161.1854,
+      "trackPos": 0.07706180952380952,
+      "curvature": -0.05996548514548285,
+      "is_corner": true
+    },
+    {
+      "s": 1372.5,
+      "speed_kmh": 160.71060000000003,
+      "trackPos": 0.07180040238095238,
+      "curvature": -0.05571825668908421,
+      "is_corner": true
+    },
+    {
+      "s": 1377.5,
+      "speed_kmh": 159.1708,
+      "trackPos": 0.06683453904761905,
+      "curvature": -0.05175706748326829,
+      "is_corner": true
+    },
+    {
+      "s": 1382.5,
+      "speed_kmh": 156.78500000000003,
+      "trackPos": 0.06216816047619048,
+      "curvature": -0.048060040820919414,
+      "is_corner": false
+    },
+    {
+      "s": 1387.5,
+      "speed_kmh": 154.14479999999998,
+      "trackPos": 0.05780633904761905,
+      "curvature": -0.04462394595313608,
+      "is_corner": false
+    },
+    {
+      "s": 1392.5,
+      "speed_kmh": 151.22419999999997,
+      "trackPos": 0.05374196761904761,
+      "curvature": -0.04141738312619138,
+      "is_corner": false
+    },
+    {
+      "s": 1397.5,
+      "speed_kmh": 148.1522,
+      "trackPos": 0.04993071292517006,
+      "curvature": -0.03841840854377615,
+      "is_corner": false
+    },
+    {
+      "s": 1402.5,
+      "speed_kmh": 144.85479999999998,
+      "trackPos": 0.04636719863945578,
+      "curvature": -0.03565811207489931,
+      "is_corner": false
+    },
+    {
+      "s": 1407.5,
+      "speed_kmh": 141.46999999999997,
+      "trackPos": 0.04309833877551021,
+      "curvature": -0.033118170686192716,
+      "is_corner": false
+    },
+    {
+      "s": 1412.5,
+      "speed_kmh": 137.89759999999998,
+      "trackPos": 0.040069626190476194,
+      "curvature": -0.030765612569697866,
+      "is_corner": false
+    },
+    {
+      "s": 1417.5,
+      "speed_kmh": 134.1458,
+      "trackPos": 0.03726670136054422,
+      "curvature": -0.028584772328738954,
+      "is_corner": false
+    },
+    {
+      "s": 1422.5,
+      "speed_kmh": 130.2236,
+      "trackPos": 0.034655556717687074,
+      "curvature": -0.026581395190558722,
+      "is_corner": false
+    },
+    {
+      "s": 1427.5,
+      "speed_kmh": 126.12740000000001,
+      "trackPos": 0.03220669719387755,
+      "curvature": -0.023943315869067665,
+      "is_corner": false
+    },
+    {
+      "s": 1432.5,
+      "speed_kmh": 121.747,
+      "trackPos": 0.02994642117346939,
+      "curvature": -0.0067750677255184934,
+      "is_corner": false
+    },
+    {
+      "s": 1437.5,
+      "speed_kmh": 117.20160000000001,
+      "trackPos": 0.027865390816326534,
+      "curvature": 0.019955540545231153,
+      "is_corner": false
+    },
+    {
+      "s": 1442.5,
+      "speed_kmh": 112.4934,
+      "trackPos": 0.025921071632653062,
+      "curvature": 0.05525039847957965,
+      "is_corner": true
+    },
+    {
+      "s": 1447.5,
+      "speed_kmh": 107.3723,
+      "trackPos": 0.024069873900226756,
+      "curvature": 0.09692804933452424,
+      "is_corner": true
+    },
+    {
+      "s": 1452.5,
+      "speed_kmh": 102.04012,
+      "trackPos": 0.021787842972582978,
+      "curvature": 0.13961502503493267,
+      "is_corner": true
+    },
+    {
+      "s": 1457.5,
+      "speed_kmh": 96.13154,
+      "trackPos": 0.018592407719336217,
+      "curvature": 0.1839166384377481,
+      "is_corner": true
+    },
+    {
+      "s": 1462.5,
+      "speed_kmh": 89.75996,
+      "trackPos": 0.013723310111002886,
+      "curvature": 0.23520515939680817,
+      "is_corner": true
+    },
+    {
+      "s": 1467.5,
+      "speed_kmh": 82.90306000000001,
+      "trackPos": 0.00409006148462926,
+      "curvature": 0.28676215472010824,
+      "is_corner": true
+    },
+    {
+      "s": 1472.5,
+      "speed_kmh": 76.622,
+      "trackPos": -0.011352297169216893,
+      "curvature": 0.3386770130243009,
+      "is_corner": true
+    },
+    {
+      "s": 1477.5,
+      "speed_kmh": 71.15608,
+      "trackPos": -0.03231003497141469,
+      "curvature": 0.3910554807322789,
+      "is_corner": true
+    },
+    {
+      "s": 1482.5,
+      "speed_kmh": 66.89146000000001,
+      "trackPos": -0.058632324994090435,
+      "curvature": 0.44407527871758745,
+      "is_corner": true
+    },
+    {
+      "s": 1487.5,
+      "speed_kmh": 63.73338,
+      "trackPos": -0.08955307569909969,
+      "curvature": 0.49800541679292964,
+      "is_corner": true
+    },
+    {
+      "s": 1492.5,
+      "speed_kmh": 61.731100000000005,
+      "trackPos": -0.12413207029279173,
+      "curvature": 0.5523426663170053,
+      "is_corner": true
+    },
+    {
+      "s": 1497.5,
+      "speed_kmh": 60.08972,
+      "trackPos": -0.16136969173207746,
+      "curvature": 0.5934181550451512,
+      "is_corner": true
+    },
+    {
+      "s": 1502.5,
+      "speed_kmh": 58.47926,
+      "trackPos": -0.19812565917713237,
+      "curvature": 0.6263121427107714,
+      "is_corner": true
+    },
+    {
+      "s": 1507.5,
+      "speed_kmh": 56.89219999999999,
+      "trackPos": -0.2331946790947148,
+      "curvature": 0.6519189756184368,
+      "is_corner": true
+    },
+    {
+      "s": 1512.5,
+      "speed_kmh": 55.394099999999995,
+      "trackPos": -0.26668999022108847,
+      "curvature": 0.6723011301485886,
+      "is_corner": true
+    },
+    {
+      "s": 1517.5,
+      "speed_kmh": 54.1127,
+      "trackPos": -0.2986815586484594,
+      "curvature": 0.6918863966081995,
+      "is_corner": true
+    },
+    {
+      "s": 1522.5,
+      "speed_kmh": 53.14034,
+      "trackPos": -0.3289841402811125,
+      "curvature": 0.7058035446033344,
+      "is_corner": true
+    },
+    {
+      "s": 1527.5,
+      "speed_kmh": 52.55592,
+      "trackPos": -0.3574176657913165,
+      "curvature": 0.7134393784632252,
+      "is_corner": true
+    },
+    {
+      "s": 1532.5,
+      "speed_kmh": 52.38581999999999,
+      "trackPos": -0.38375026995798317,
+      "curvature": 0.7221669517285564,
+      "is_corner": true
+    },
+    {
+      "s": 1537.5,
+      "speed_kmh": 52.59051999999999,
+      "trackPos": -0.4074951860294118,
+      "curvature": 0.7329718638048071,
+      "is_corner": true
+    },
+    {
+      "s": 1542.5,
+      "speed_kmh": 53.020920000000004,
+      "trackPos": -0.42834973067226895,
+      "curvature": 0.7472382553997784,
+      "is_corner": true
+    },
+    {
+      "s": 1547.5,
+      "speed_kmh": 53.6275,
+      "trackPos": -0.44618249793417375,
+      "curvature": 0.7614128547271583,
+      "is_corner": true
+    },
+    {
+      "s": 1552.5,
+      "speed_kmh": 54.33072,
+      "trackPos": -0.4607880363095238,
+      "curvature": 0.772420038288447,
+      "is_corner": true
+    },
+    {
+      "s": 1557.5,
+      "speed_kmh": 55.05344,
+      "trackPos": -0.4724953730442177,
+      "curvature": 0.7838483957181972,
+      "is_corner": true
+    },
+    {
+      "s": 1562.5,
+      "speed_kmh": 55.783820000000006,
+      "trackPos": -0.4818986992346939,
+      "curvature": 0.7896388895345269,
+      "is_corner": true
+    },
+    {
+      "s": 1567.5,
+      "speed_kmh": 56.49829999999999,
+      "trackPos": -0.48930171071428574,
+      "curvature": 0.7866806328032012,
+      "is_corner": true
+    },
+    {
+      "s": 1572.5,
+      "speed_kmh": 57.13486,
+      "trackPos": -0.49506617602040814,
+      "curvature": 0.7774273310714546,
+      "is_corner": true
+    },
+    {
+      "s": 1577.5,
+      "speed_kmh": 57.796479999999995,
+      "trackPos": -0.49956721428571427,
+      "curvature": 0.7622718335564981,
+      "is_corner": true
+    },
+    {
+      "s": 1582.5,
+      "speed_kmh": 58.458780000000004,
+      "trackPos": -0.5028186217687074,
+      "curvature": 0.7398758470219415,
+      "is_corner": true
+    },
+    {
+      "s": 1587.5,
+      "speed_kmh": 59.19,
+      "trackPos": -0.5048337717687075,
+      "curvature": 0.7150296114677764,
+      "is_corner": true
+    },
+    {
+      "s": 1592.5,
+      "speed_kmh": 60.52421999999999,
+      "trackPos": -0.5057456168521954,
+      "curvature": 0.686395015196869,
+      "is_corner": true
+    },
+    {
+      "s": 1597.5,
+      "speed_kmh": 63.256359999999994,
+      "trackPos": -0.5055534692331477,
+      "curvature": 0.6540208186829685,
+      "is_corner": true
+    },
+    {
+      "s": 1602.5,
+      "speed_kmh": 67.53516,
+      "trackPos": -0.5025476154916513,
+      "curvature": 0.617127955330527,
+      "is_corner": true
+    },
+    {
+      "s": 1607.5,
+      "speed_kmh": 73.20376,
+      "trackPos": -0.49501117558235413,
+      "curvature": 0.5744719999803076,
+      "is_corner": true
+    },
+    {
+      "s": 1612.5,
+      "speed_kmh": 79.53838,
+      "trackPos": -0.4829668158884766,
+      "curvature": 0.5296181629760837,
+      "is_corner": true
+    },
+    {
+      "s": 1617.5,
+      "speed_kmh": 86.23155999999999,
+      "trackPos": -0.46694852507215007,
+      "curvature": 0.48546676659515203,
+      "is_corner": true
+    },
+    {
+      "s": 1622.5,
+      "speed_kmh": 92.44418,
+      "trackPos": -0.44749307439187797,
+      "curvature": 0.43817009112380084,
+      "is_corner": true
+    },
+    {
+      "s": 1627.5,
+      "speed_kmh": 97.98971999999999,
+      "trackPos": -0.4249267497165533,
+      "curvature": 0.39365770655820315,
+      "is_corner": true
+    },
+    {
+      "s": 1632.5,
+      "speed_kmh": 103.01546,
+      "trackPos": -0.39944927012471654,
+      "curvature": 0.3551001385860222,
+      "is_corner": true
+    },
+    {
+      "s": 1637.5,
+      "speed_kmh": 107.66770000000001,
+      "trackPos": -0.37308664427437643,
+      "curvature": 0.32033956140976627,
+      "is_corner": true
+    },
+    {
+      "s": 1642.5,
+      "speed_kmh": 112.0356,
+      "trackPos": -0.34786339030612246,
+      "curvature": 0.289129050331437,
+      "is_corner": true
+    },
+    {
+      "s": 1647.5,
+      "speed_kmh": 116.1964,
+      "trackPos": -0.3241984200680272,
+      "curvature": 0.2638238003856109,
+      "is_corner": true
+    },
+    {
+      "s": 1652.5,
+      "speed_kmh": 120.1308,
+      "trackPos": -0.3021845034013606,
+      "curvature": 0.2439780119395564,
+      "is_corner": true
+    },
+    {
+      "s": 1657.5,
+      "speed_kmh": 123.554,
+      "trackPos": -0.2816474659863946,
+      "curvature": 0.22622160069285055,
+      "is_corner": true
+    },
+    {
+      "s": 1662.5,
+      "speed_kmh": 126.91900000000001,
+      "trackPos": -0.26235903741496597,
+      "curvature": 0.20997980333774052,
+      "is_corner": true
+    },
+    {
+      "s": 1667.5,
+      "speed_kmh": 130.08980000000003,
+      "trackPos": -0.24427539795918365,
+      "curvature": 0.19500456842299643,
+      "is_corner": true
+    },
+    {
+      "s": 1672.5,
+      "speed_kmh": 133.06,
+      "trackPos": -0.22736561904761904,
+      "curvature": 0.18109595923108507,
+      "is_corner": true
+    },
+    {
+      "s": 1677.5,
+      "speed_kmh": 135.814,
+      "trackPos": -0.21178361904761903,
+      "curvature": 0.16811592678600723,
+      "is_corner": true
+    },
+    {
+      "s": 1682.5,
+      "speed_kmh": 138.73020000000002,
+      "trackPos": -0.1972959761904762,
+      "curvature": 0.15601727302772678,
+      "is_corner": true
+    },
+    {
+      "s": 1687.5,
+      "speed_kmh": 141.74259999999998,
+      "trackPos": -0.18365918571428572,
+      "curvature": 0.14486051787682888,
+      "is_corner": true
+    },
+    {
+      "s": 1692.5,
+      "speed_kmh": 144.8164,
+      "trackPos": -0.1708329,
+      "curvature": 0.13461598096545557,
+      "is_corner": true
+    },
+    {
+      "s": 1697.5,
+      "speed_kmh": 147.8228,
+      "trackPos": -0.1588016142857143,
+      "curvature": 0.12519203641305496,
+      "is_corner": true
+    },
+    {
+      "s": 1702.5,
+      "speed_kmh": 150.85160000000002,
+      "trackPos": -0.14767014761904762,
+      "curvature": 0.11641989415008064,
+      "is_corner": true
+    },
+    {
+      "s": 1707.5,
+      "speed_kmh": 153.7756,
+      "trackPos": -0.13740545714285715,
+      "curvature": 0.1082865986390737,
+      "is_corner": true
+    },
+    {
+      "s": 1712.5,
+      "speed_kmh": 156.68540000000002,
+      "trackPos": -0.12783123142857142,
+      "curvature": 0.10076828564120932,
+      "is_corner": true
+    },
+    {
+      "s": 1717.5,
+      "speed_kmh": 159.0518,
+      "trackPos": -0.11894546380952382,
+      "curvature": 0.0938298970572626,
+      "is_corner": true
+    },
+    {
+      "s": 1722.5,
+      "speed_kmh": 160.9112,
+      "trackPos": -0.11073679523809524,
+      "curvature": 0.08744163935277521,
+      "is_corner": true
+    },
+    {
+      "s": 1727.5,
+      "speed_kmh": 162.2054,
+      "trackPos": -0.10317922,
+      "curvature": 0.0815090724894621,
+      "is_corner": true
+    },
+    {
+      "s": 1732.5,
+      "speed_kmh": 163.0118,
+      "trackPos": -0.09625156857142858,
+      "curvature": 0.07600910754329795,
+      "is_corner": true
+    },
+    {
+      "s": 1737.5,
+      "speed_kmh": 163.33280000000002,
+      "trackPos": -0.08980265428571428,
+      "curvature": 0.07092308691493185,
+      "is_corner": true
+    },
+    {
+      "s": 1742.5,
+      "speed_kmh": 163.608,
+      "trackPos": -0.08381198857142856,
+      "curvature": 0.06622672636716717,
+      "is_corner": true
+    },
+    {
+      "s": 1747.5,
+      "speed_kmh": 163.88,
+      "trackPos": -0.07824246,
+      "curvature": 0.061900900777589286,
+      "is_corner": true
+    },
+    {
+      "s": 1752.5,
+      "speed_kmh": 164.1018,
+      "trackPos": -0.07305144285714286,
+      "curvature": 0.05787289229709409,
+      "is_corner": true
+    },
+    {
+      "s": 1757.5,
+      "speed_kmh": 164.30900000000003,
+      "trackPos": -0.06820759142857143,
+      "curvature": 0.054130093168759864,
+      "is_corner": true
+    },
+    {
+      "s": 1762.5,
+      "speed_kmh": 164.5312,
+      "trackPos": -0.06369052,
+      "curvature": 0.050626793760171616,
+      "is_corner": true
+    },
+    {
+      "s": 1767.5,
+      "speed_kmh": 164.7102,
+      "trackPos": -0.05947561428571429,
+      "curvature": 0.047351038264039205,
+      "is_corner": false
+    },
+    {
+      "s": 1772.5,
+      "speed_kmh": 164.8786,
+      "trackPos": -0.055585360714285714,
+      "curvature": 0.04429822777767936,
+      "is_corner": false
+    },
+    {
+      "s": 1777.5,
+      "speed_kmh": 165.0392,
+      "trackPos": -0.05200050071428571,
+      "curvature": 0.04144213048213284,
+      "is_corner": false
+    },
+    {
+      "s": 1782.5,
+      "speed_kmh": 165.1928,
+      "trackPos": -0.04866043785714286,
+      "curvature": 0.03880900331576243,
+      "is_corner": false
+    },
+    {
+      "s": 1787.5,
+      "speed_kmh": 165.3364,
+      "trackPos": -0.04554365785714286,
+      "curvature": 0.03638113242689224,
+      "is_corner": false
+    },
+    {
+      "s": 1792.5,
+      "speed_kmh": 165.44459999999998,
+      "trackPos": -0.042637826428571425,
+      "curvature": 0.03412315818650814,
+      "is_corner": false
+    },
+    {
+      "s": 1797.5,
+      "speed_kmh": 165.615,
+      "trackPos": -0.039923263571428565,
+      "curvature": 0.03202085218718303,
+      "is_corner": false
+    },
+    {
+      "s": 1802.5,
+      "speed_kmh": 165.2146,
+      "trackPos": -0.037403626428571424,
+      "curvature": 0.030057909182423573,
+      "is_corner": false
+    },
+    {
+      "s": 1807.5,
+      "speed_kmh": 164.2116,
+      "trackPos": -0.03502942,
+      "curvature": 0.028219862657659377,
+      "is_corner": false
+    },
+    {
+      "s": 1812.5,
+      "speed_kmh": 162.56619999999998,
+      "trackPos": -0.032771038571428567,
+      "curvature": 0.026495019004146563,
+      "is_corner": false
+    },
+    {
+      "s": 1817.5,
+      "speed_kmh": 160.18900000000002,
+      "trackPos": -0.030663741428571426,
+      "curvature": 0.02487491234752442,
+      "is_corner": false
+    },
+    {
+      "s": 1822.5,
+      "speed_kmh": 157.091,
+      "trackPos": -0.028699479999999996,
+      "curvature": 0.023323151119095775,
+      "is_corner": false
+    },
+    {
+      "s": 1827.5,
+      "speed_kmh": 153.76680000000002,
+      "trackPos": -0.026860311428571426,
+      "curvature": 0.021829065180394895,
+      "is_corner": false
+    },
+    {
+      "s": 1832.5,
+      "speed_kmh": 150.36939999999998,
+      "trackPos": -0.02513343761904762,
+      "curvature": 0.020395960790615515,
+      "is_corner": false
+    },
+    {
+      "s": 1837.5,
+      "speed_kmh": 146.77339999999998,
+      "trackPos": -0.02347028904761905,
+      "curvature": 0.019016248437407065,
+      "is_corner": false
+    },
+    {
+      "s": 1842.5,
+      "speed_kmh": 143.1136,
+      "trackPos": -0.021854160952380956,
+      "curvature": 0.017691945869126275,
+      "is_corner": false
+    },
+    {
+      "s": 1847.5,
+      "speed_kmh": 139.277,
+      "trackPos": -0.020274498707482998,
+      "curvature": 0.01637014756448562,
+      "is_corner": false
+    },
+    {
+      "s": 1852.5,
+      "speed_kmh": 135.2588,
+      "trackPos": -0.018718798707482994,
+      "curvature": 0.015045061777718919,
+      "is_corner": false
+    },
+    {
+      "s": 1857.5,
+      "speed_kmh": 131.0684,
+      "trackPos": -0.017180250748299323,
+      "curvature": 0.01373664381217955,
+      "is_corner": false
+    },
+    {
+      "s": 1862.5,
+      "speed_kmh": 126.70459999999999,
+      "trackPos": -0.015641268707482992,
+      "curvature": 0.012440341418582992,
+      "is_corner": false
+    },
+    {
+      "s": 1867.5,
+      "speed_kmh": 122.1702,
+      "trackPos": -0.014085340552721091,
+      "curvature": 0.017806840235734082,
+      "is_corner": false
+    },
+    {
+      "s": 1872.5,
+      "speed_kmh": 117.32539999999999,
+      "trackPos": -0.012531170960884352,
+      "curvature": 0.034440394941522685,
+      "is_corner": false
+    },
+    {
+      "s": 1877.5,
+      "speed_kmh": 112.44920000000002,
+      "trackPos": -0.010966423500566893,
+      "curvature": 0.0582036331214963,
+      "is_corner": true
+    },
+    {
+      "s": 1882.5,
+      "speed_kmh": 107.12086,
+      "trackPos": -0.00939269876133787,
+      "curvature": 0.09078389200366349,
+      "is_corner": true
+    },
+    {
+      "s": 1887.5,
+      "speed_kmh": 101.46978,
+      "trackPos": -0.008078667808956917,
+      "curvature": 0.1308035860738016,
+      "is_corner": true
+    },
+    {
+      "s": 1892.5,
+      "speed_kmh": 95.41212,
+      "trackPos": -0.007448205638270461,
+      "curvature": 0.17221209104826776,
+      "is_corner": true
+    },
+    {
+      "s": 1897.5,
+      "speed_kmh": 88.84948,
+      "trackPos": -0.007847366120645228,
+      "curvature": 0.2185368703004299,
+      "is_corner": true
+    },
+    {
+      "s": 1902.5,
+      "speed_kmh": 81.62602000000001,
+      "trackPos": -0.01006342318697176,
+      "curvature": 0.27453173874901626,
+      "is_corner": true
+    },
+    {
+      "s": 1907.5,
+      "speed_kmh": 73.69564,
+      "trackPos": -0.018921592778808498,
+      "curvature": 0.3348383826960818,
+      "is_corner": true
+    },
+    {
+      "s": 1912.5,
+      "speed_kmh": 66.21522,
+      "trackPos": -0.03709083589738926,
+      "curvature": 0.39603114204081735,
+      "is_corner": true
+    },
+    {
+      "s": 1917.5,
+      "speed_kmh": 59.72594,
+      "trackPos": -0.06456765103277674,
+      "curvature": 0.4476489278393953,
+      "is_corner": true
+    },
+    {
+      "s": 1922.5,
+      "speed_kmh": 54.54218000000001,
+      "trackPos": -0.10051553595341166,
+      "curvature": 0.4804086190692282,
+      "is_corner": true
+    },
+    {
+      "s": 1927.5,
+      "speed_kmh": 50.792860000000005,
+      "trackPos": -0.14416971354359928,
+      "curvature": 0.5057301560779599,
+      "is_corner": true
+    },
+    {
+      "s": 1932.5,
+      "speed_kmh": 49.08738,
+      "trackPos": -0.19515645510204083,
+      "curvature": 0.521397544719364,
+      "is_corner": true
+    },
+    {
+      "s": 1937.5,
+      "speed_kmh": 49.32238,
+      "trackPos": -0.24900170439560437,
+      "curvature": 0.5239982201864022,
+      "is_corner": true
+    },
+    {
+      "s": 1942.5,
+      "speed_kmh": 51.41004,
+      "trackPos": -0.29471569660339664,
+      "curvature": 0.5178990115296883,
+      "is_corner": true
+    },
+    {
+      "s": 1947.5,
+      "speed_kmh": 55.52994000000001,
+      "trackPos": -0.3279531747546571,
+      "curvature": 0.5015424241531957,
+      "is_corner": true
+    },
+    {
+      "s": 1952.5,
+      "speed_kmh": 61.548260000000006,
+      "trackPos": -0.34850517755577753,
+      "curvature": 0.4765139720940978,
+      "is_corner": true
+    },
+    {
+      "s": 1957.5,
+      "speed_kmh": 69.25056000000001,
+      "trackPos": -0.35711986803196805,
+      "curvature": 0.4489105511619606,
+      "is_corner": true
+    },
+    {
+      "s": 1962.5,
+      "speed_kmh": 76.74442,
+      "trackPos": -0.3543434791430791,
+      "curvature": 0.4155442832560462,
+      "is_corner": true
+    },
+    {
+      "s": 1967.5,
+      "speed_kmh": 83.85182,
+      "trackPos": -0.3404380184287934,
+      "curvature": 0.3721644427497222,
+      "is_corner": true
+    },
+    {
+      "s": 1972.5,
+      "speed_kmh": 90.25832,
+      "trackPos": -0.3191632354617604,
+      "curvature": 0.32531161094315586,
+      "is_corner": true
+    },
+    {
+      "s": 1977.5,
+      "speed_kmh": 96.03858,
+      "trackPos": -0.2969844432539682,
+      "curvature": 0.29767836111052953,
+      "is_corner": true
+    },
+    {
+      "s": 1982.5,
+      "speed_kmh": 100.32028,
+      "trackPos": -0.27592802182539683,
+      "curvature": 0.2955016772669016,
+      "is_corner": true
+    },
+    {
+      "s": 1987.5,
+      "speed_kmh": 102.59912,
+      "trackPos": -0.256431123015873,
+      "curvature": 0.31331843290290706,
+      "is_corner": true
+    },
+    {
+      "s": 1992.5,
+      "speed_kmh": 102.71878000000001,
+      "trackPos": -0.23857282142857145,
+      "curvature": 0.3410496230661533,
+      "is_corner": true
+    },
+    {
+      "s": 1997.5,
+      "speed_kmh": 100.53404,
+      "trackPos": -0.22299733571428573,
+      "curvature": 0.3752737845608013,
+      "is_corner": true
+    },
+    {
+      "s": 2002.5,
+      "speed_kmh": 95.60578000000001,
+      "trackPos": -0.21035925357142857,
+      "curvature": 0.4081963235363518,
+      "is_corner": true
+    },
+    {
+      "s": 2007.5,
+      "speed_kmh": 89.05762,
+      "trackPos": -0.20197175357142857,
+      "curvature": 0.4258799967509192,
+      "is_corner": true
+    },
+    {
+      "s": 2012.5,
+      "speed_kmh": 82.58148000000001,
+      "trackPos": -0.19948350357142858,
+      "curvature": 0.43690746563037053,
+      "is_corner": true
+    },
+    {
+      "s": 2017.5,
+      "speed_kmh": 77.13929999999999,
+      "trackPos": -0.20285060422077922,
+      "curvature": 0.4422320321086787,
+      "is_corner": true
+    },
+    {
+      "s": 2022.5,
+      "speed_kmh": 73.3203,
+      "trackPos": -0.21179373246753247,
+      "curvature": 0.4454126861431835,
+      "is_corner": true
+    },
+    {
+      "s": 2027.5,
+      "speed_kmh": 72.0504,
+      "trackPos": -0.22559298643578643,
+      "curvature": 0.4482034644169813,
+      "is_corner": true
+    },
+    {
+      "s": 2032.5,
+      "speed_kmh": 73.90038000000001,
+      "trackPos": -0.24152432135642135,
+      "curvature": 0.45111438447801144,
+      "is_corner": true
+    },
+    {
+      "s": 2037.5,
+      "speed_kmh": 77.56658,
+      "trackPos": -0.25590408008658005,
+      "curvature": 0.4538731301237817,
+      "is_corner": true
+    },
+    {
+      "s": 2042.5,
+      "speed_kmh": 82.26418,
+      "trackPos": -0.26653386580086574,
+      "curvature": 0.4383401283479962,
+      "is_corner": true
+    },
+    {
+      "s": 2047.5,
+      "speed_kmh": 87.6832,
+      "trackPos": -0.2714319908008658,
+      "curvature": 0.4086905735320723,
+      "is_corner": true
+    },
+    {
+      "s": 2052.5,
+      "speed_kmh": 93.21996,
+      "trackPos": -0.27048110953927024,
+      "curvature": 0.3782464054930064,
+      "is_corner": true
+    },
+    {
+      "s": 2057.5,
+      "speed_kmh": 98.06074,
+      "trackPos": -0.26395723129251697,
+      "curvature": 0.34535134989879285,
+      "is_corner": true
+    },
+    {
+      "s": 2062.5,
+      "speed_kmh": 101.32308,
+      "trackPos": -0.2529948701814059,
+      "curvature": 0.30893601722865677,
+      "is_corner": true
+    },
+    {
+      "s": 2067.5,
+      "speed_kmh": 103.00548,
+      "trackPos": -0.24024848526077097,
+      "curvature": 0.2756107922151495,
+      "is_corner": true
+    },
+    {
+      "s": 2072.5,
+      "speed_kmh": 103.549,
+      "trackPos": -0.22872571938775507,
+      "curvature": 0.25907855462548046,
+      "is_corner": true
+    },
+    {
+      "s": 2077.5,
+      "speed_kmh": 103.095,
+      "trackPos": -0.2192851678004535,
+      "curvature": 0.25064671531071725,
+      "is_corner": true
+    },
+    {
+      "s": 2082.5,
+      "speed_kmh": 101.60780000000001,
+      "trackPos": -0.21197743565759636,
+      "curvature": 0.24917059338114747,
+      "is_corner": true
+    },
+    {
+      "s": 2087.5,
+      "speed_kmh": 100.9166,
+      "trackPos": -0.20664976984126984,
+      "curvature": 0.25103284699118805,
+      "is_corner": true
+    },
+    {
+      "s": 2092.5,
+      "speed_kmh": 100.8366,
+      "trackPos": -0.2031109126984127,
+      "curvature": 0.2540679300957549,
+      "is_corner": true
+    },
+    {
+      "s": 2097.5,
+      "speed_kmh": 100.89779999999999,
+      "trackPos": -0.20070621626984125,
+      "curvature": 0.25703436574421745,
+      "is_corner": true
+    },
+    {
+      "s": 2102.5,
+      "speed_kmh": 101.0598,
+      "trackPos": -0.19868571626984127,
+      "curvature": 0.2587778818754777,
+      "is_corner": true
+    },
+    {
+      "s": 2107.5,
+      "speed_kmh": 101.5158,
+      "trackPos": -0.1968920376984127,
+      "curvature": 0.25786333157016467,
+      "is_corner": true
+    },
+    {
+      "s": 2112.5,
+      "speed_kmh": 102.4306,
+      "trackPos": -0.195322375,
+      "curvature": 0.2535490067763614,
+      "is_corner": true
+    },
+    {
+      "s": 2117.5,
+      "speed_kmh": 104.0702,
+      "trackPos": -0.1939938035714286,
+      "curvature": 0.24639999305312546,
+      "is_corner": true
+    },
+    {
+      "s": 2122.5,
+      "speed_kmh": 106.5574,
+      "trackPos": -0.19285593877551022,
+      "curvature": 0.23729762908036162,
+      "is_corner": true
+    },
+    {
+      "s": 2127.5,
+      "speed_kmh": 109.4272,
+      "trackPos": -0.1918836556122449,
+      "curvature": 0.2272207357727907,
+      "is_corner": true
+    },
+    {
+      "s": 2132.5,
+      "speed_kmh": 112.725,
+      "trackPos": -0.1910155544217687,
+      "curvature": 0.21654851960051402,
+      "is_corner": true
+    },
+    {
+      "s": 2137.5,
+      "speed_kmh": 116.31580000000001,
+      "trackPos": -0.18943413095238096,
+      "curvature": 0.20534641361763584,
+      "is_corner": true
+    },
+    {
+      "s": 2142.5,
+      "speed_kmh": 119.84660000000001,
+      "trackPos": -0.18651084523809525,
+      "curvature": 0.19366842104862989,
+      "is_corner": true
+    },
+    {
+      "s": 2147.5,
+      "speed_kmh": 123.09920000000002,
+      "trackPos": -0.18220038095238095,
+      "curvature": 0.1812789629222988,
+      "is_corner": true
+    },
+    {
+      "s": 2152.5,
+      "speed_kmh": 126.1896,
+      "trackPos": -0.17647878571428574,
+      "curvature": 0.16782216077414644,
+      "is_corner": true
+    },
+    {
+      "s": 2157.5,
+      "speed_kmh": 129.0772,
+      "trackPos": -0.1694476326530612,
+      "curvature": 0.15291078253069762,
+      "is_corner": true
+    },
+    {
+      "s": 2162.5,
+      "speed_kmh": 130.96800000000002,
+      "trackPos": -0.1611238775510204,
+      "curvature": 0.13586770506597035,
+      "is_corner": true
+    },
+    {
+      "s": 2167.5,
+      "speed_kmh": 131.8578,
+      "trackPos": -0.15164611564625852,
+      "curvature": 0.11666375988914646,
+      "is_corner": true
+    },
+    {
+      "s": 2172.5,
+      "speed_kmh": 131.88439999999997,
+      "trackPos": -0.14196255102040814,
+      "curvature": 0.09689272069242924,
+      "is_corner": true
+    },
+    {
+      "s": 2177.5,
+      "speed_kmh": 131.3722,
+      "trackPos": -0.13259740816326532,
+      "curvature": 0.07787612510985772,
+      "is_corner": true
+    },
+    {
+      "s": 2182.5,
+      "speed_kmh": 130.175,
+      "trackPos": -0.12322543673469386,
+      "curvature": 0.06119106808529085,
+      "is_corner": true
+    },
+    {
+      "s": 2187.5,
+      "speed_kmh": 129.2634,
+      "trackPos": -0.11333037482993198,
+      "curvature": 0.04710475849766944,
+      "is_corner": false
+    },
+    {
+      "s": 2192.5,
+      "speed_kmh": 129.17860000000002,
+      "trackPos": -0.10262221768707483,
+      "curvature": 0.035435051091451564,
+      "is_corner": false
+    },
+    {
+      "s": 2197.5,
+      "speed_kmh": 129.8526,
+      "trackPos": -0.09104796666666667,
+      "curvature": 0.027055799957503145,
+      "is_corner": false
+    },
+    {
+      "s": 2202.5,
+      "speed_kmh": 131.2886,
+      "trackPos": -0.07854152619047618,
+      "curvature": 0.02251869220585943,
+      "is_corner": false
+    },
+    {
+      "s": 2207.5,
+      "speed_kmh": 132.79059999999998,
+      "trackPos": -0.06495507857142857,
+      "curvature": 0.020362227035640886,
+      "is_corner": false
+    },
+    {
+      "s": 2212.5,
+      "speed_kmh": 132.549,
+      "trackPos": -0.05013942492244898,
+      "curvature": 0.01998731088021041,
+      "is_corner": false
+    },
+    {
+      "s": 2217.5,
+      "speed_kmh": 130.2212,
+      "trackPos": -0.03554684145306123,
+      "curvature": 0.021107615988551043,
+      "is_corner": false
+    },
+    {
+      "s": 2222.5,
+      "speed_kmh": 126.035,
+      "trackPos": -0.02351158469795919,
+      "curvature": 0.02452953612621965,
+      "is_corner": false
+    },
+    {
+      "s": 2227.5,
+      "speed_kmh": 120.85920000000002,
+      "trackPos": -0.014963271305102043,
+      "curvature": 0.03100913797399339,
+      "is_corner": false
+    },
+    {
+      "s": 2232.5,
+      "speed_kmh": 115.8312,
+      "trackPos": -0.010112771305102044,
+      "curvature": 0.040380614211108314,
+      "is_corner": false
+    },
+    {
+      "s": 2237.5,
+      "speed_kmh": 112.8208,
+      "trackPos": -0.008758268243877551,
+      "curvature": 0.05106542191317891,
+      "is_corner": true
+    },
+    {
+      "s": 2242.5,
+      "speed_kmh": 111.74000000000001,
+      "trackPos": -0.010840225386734693,
+      "curvature": 0.06174715584152645,
+      "is_corner": true
+    },
+    {
+      "s": 2247.5,
+      "speed_kmh": 112.7272,
+      "trackPos": -0.01655251577040816,
+      "curvature": 0.07101063060117013,
+      "is_corner": true
+    },
+    {
+      "s": 2252.5,
+      "speed_kmh": 114.806,
+      "trackPos": -0.024655989715986395,
+      "curvature": 0.07818567887022614,
+      "is_corner": true
+    },
+    {
+      "s": 2257.5,
+      "speed_kmh": 117.63900000000001,
+      "trackPos": -0.03326890361394557,
+      "curvature": 0.08348836633430029,
+      "is_corner": true
+    },
+    {
+      "s": 2262.5,
+      "speed_kmh": 120.8816,
+      "trackPos": -0.04155603843537414,
+      "curvature": 0.08591775652931709,
+      "is_corner": true
+    },
+    {
+      "s": 2267.5,
+      "speed_kmh": 124.36100000000002,
+      "trackPos": -0.04869907653061224,
+      "curvature": 0.08493059998276274,
+      "is_corner": true
+    },
+    {
+      "s": 2272.5,
+      "speed_kmh": 127.5568,
+      "trackPos": -0.054254227210884354,
+      "curvature": 0.08190570546184407,
+      "is_corner": true
+    },
+    {
+      "s": 2277.5,
+      "speed_kmh": 130.7086,
+      "trackPos": -0.05806229863945578,
+      "curvature": 0.07768209350778085,
+      "is_corner": true
+    },
+    {
+      "s": 2282.5,
+      "speed_kmh": 132.5188,
+      "trackPos": -0.06012014761904762,
+      "curvature": 0.07293319952530083,
+      "is_corner": true
+    },
+    {
+      "s": 2287.5,
+      "speed_kmh": 132.86939999999998,
+      "trackPos": -0.06054686734693877,
+      "curvature": 0.06732297898422669,
+      "is_corner": true
+    },
+    {
+      "s": 2292.5,
+      "speed_kmh": 131.75979999999998,
+      "trackPos": -0.0594311768707483,
+      "curvature": 0.06100080347895891,
+      "is_corner": true
+    },
+    {
+      "s": 2297.5,
+      "speed_kmh": 129.4478,
+      "trackPos": -0.056933514625850334,
+      "curvature": 0.05437129625468984,
+      "is_corner": true
+    },
+    {
+      "s": 2302.5,
+      "speed_kmh": 125.65540000000001,
+      "trackPos": -0.05371558673469388,
+      "curvature": 0.04626389216816041,
+      "is_corner": false
+    },
+    {
+      "s": 2307.5,
+      "speed_kmh": 121.4856,
+      "trackPos": -0.050399456972789115,
+      "curvature": 0.01488488214579074,
+      "is_corner": false
+    },
+    {
+      "s": 2312.5,
+      "speed_kmh": 117.02059999999999,
+      "trackPos": -0.047218697789115645,
+      "curvature": -0.029493830015648224,
+      "is_corner": false
+    },
+    {
+      "s": 2317.5,
+      "speed_kmh": 112.5172,
+      "trackPos": -0.044210012074829934,
+      "curvature": -0.0765372276187943,
+      "is_corner": true
+    },
+    {
+      "s": 2322.5,
+      "speed_kmh": 107.57888,
+      "trackPos": -0.041289696513605444,
+      "curvature": -0.1273915629156308,
+      "is_corner": true
+    },
+    {
+      "s": 2327.5,
+      "speed_kmh": 102.38298,
+      "trackPos": -0.03764307984693877,
+      "curvature": -0.1756745724689233,
+      "is_corner": true
+    },
+    {
+      "s": 2332.5,
+      "speed_kmh": 96.43843999999999,
+      "trackPos": -0.03249018209183673,
+      "curvature": -0.21777179024291726,
+      "is_corner": true
+    },
+    {
+      "s": 2337.5,
+      "speed_kmh": 90.13424,
+      "trackPos": -0.0245154964851577,
+      "curvature": -0.2507693702885715,
+      "is_corner": true
+    },
+    {
+      "s": 2342.5,
+      "speed_kmh": 83.72856,
+      "trackPos": -0.010768000056586272,
+      "curvature": -0.2780189669882073,
+      "is_corner": true
+    },
+    {
+      "s": 2347.5,
+      "speed_kmh": 78.57104,
+      "trackPos": 0.008507740759740262,
+      "curvature": -0.29916696545577076,
+      "is_corner": true
+    },
+    {
+      "s": 2352.5,
+      "speed_kmh": 75.12494000000001,
+      "trackPos": 0.03244271218831169,
+      "curvature": -0.31389609101955634,
+      "is_corner": true
+    },
+    {
+      "s": 2357.5,
+      "speed_kmh": 74.65936,
+      "trackPos": 0.060054849688311686,
+      "curvature": -0.32723556650116864,
+      "is_corner": true
+    },
+    {
+      "s": 2362.5,
+      "speed_kmh": 76.71996,
+      "trackPos": 0.0896555961168831,
+      "curvature": -0.33968535239436204,
+      "is_corner": true
+    },
+    {
+      "s": 2367.5,
+      "speed_kmh": 80.91463999999999,
+      "trackPos": 0.11864641468831169,
+      "curvature": -0.3497391711620864,
+      "is_corner": true
+    },
+    {
+      "s": 2372.5,
+      "speed_kmh": 86.01784,
+      "trackPos": 0.14319926428571428,
+      "curvature": -0.33490691119526156,
+      "is_corner": true
+    },
+    {
+      "s": 2377.5,
+      "speed_kmh": 91.63304,
+      "trackPos": 0.15980742857142857,
+      "curvature": -0.3047157900883048,
+      "is_corner": true
+    },
+    {
+      "s": 2382.5,
+      "speed_kmh": 97.00976,
+      "trackPos": 0.16888676122448978,
+      "curvature": -0.2647986981688304,
+      "is_corner": true
+    },
+    {
+      "s": 2387.5,
+      "speed_kmh": 100.99116,
+      "trackPos": 0.17148408979591837,
+      "curvature": -0.20681421628876442,
+      "is_corner": true
+    },
+    {
+      "s": 2392.5,
+      "speed_kmh": 102.72896,
+      "trackPos": 0.16849049773242633,
+      "curvature": -0.1426519823439871,
+      "is_corner": true
+    },
+    {
+      "s": 2397.5,
+      "speed_kmh": 102.22054,
+      "trackPos": 0.1609329838435374,
+      "curvature": -0.074716622544652,
+      "is_corner": true
+    },
+    {
+      "s": 2402.5,
+      "speed_kmh": 99.3522,
+      "trackPos": 0.1506557219387755,
+      "curvature": -0.010993254268984641,
+      "is_corner": false
+    },
+    {
+      "s": 2407.5,
+      "speed_kmh": 94.01989999999999,
+      "trackPos": 0.13978316187384046,
+      "curvature": 0.047357307797577144,
+      "is_corner": false
+    },
+    {
+      "s": 2412.5,
+      "speed_kmh": 87.30586000000001,
+      "trackPos": 0.12850418449288806,
+      "curvature": 0.10007493270960317,
+      "is_corner": true
+    },
+    {
+      "s": 2417.5,
+      "speed_kmh": 79.91284,
+      "trackPos": 0.11536286510513295,
+      "curvature": 0.14678837443547138,
+      "is_corner": true
+    },
+    {
+      "s": 2422.5,
+      "speed_kmh": 71.9253,
+      "trackPos": 0.09445073907834724,
+      "curvature": 0.19262891109065225,
+      "is_corner": true
+    },
+    {
+      "s": 2427.5,
+      "speed_kmh": 64.31508,
+      "trackPos": 0.06356827637993454,
+      "curvature": 0.24036692421559652,
+      "is_corner": true
+    },
+    {
+      "s": 2432.5,
+      "speed_kmh": 57.39734000000001,
+      "trackPos": 0.02268464647183095,
+      "curvature": 0.29985918469422385,
+      "is_corner": true
+    },
+    {
+      "s": 2437.5,
+      "speed_kmh": 51.494820000000004,
+      "trackPos": -0.027839285500958166,
+      "curvature": 0.3642793875548349,
+      "is_corner": true
+    },
+    {
+      "s": 2442.5,
+      "speed_kmh": 46.73602,
+      "trackPos": -0.08731834422484298,
+      "curvature": 0.4120862614283434,
+      "is_corner": true
+    },
+    {
+      "s": 2447.5,
+      "speed_kmh": 42.98692,
+      "trackPos": -0.1559716454153192,
+      "curvature": 0.40878073274115034,
+      "is_corner": true
+    },
+    {
+      "s": 2452.5,
+      "speed_kmh": 38.7361,
+      "trackPos": -0.2346952270788937,
+      "curvature": 0.37313829928489395,
+      "is_corner": true
+    },
+    {
+      "s": 2457.5,
+      "speed_kmh": 34.98182,
+      "trackPos": -0.31591049220857054,
+      "curvature": 0.3265749843985675,
+      "is_corner": true
+    },
+    {
+      "s": 2462.5,
+      "speed_kmh": 33.10856,
+      "trackPos": -0.38460597554190384,
+      "curvature": 0.26556225467938366,
+      "is_corner": true
+    },
+    {
+      "s": 2467.5,
+      "speed_kmh": 34.37586,
+      "trackPos": -0.4348956302142991,
+      "curvature": 0.19279555505376017,
+      "is_corner": true
+    },
+    {
+      "s": 2472.5,
+      "speed_kmh": 37.80534,
+      "trackPos": -0.4573477832755236,
+      "curvature": 0.10828103944979173,
+      "is_corner": true
+    },
+    {
+      "s": 2477.5,
+      "speed_kmh": 41.952180000000006,
+      "trackPos": -0.4484749894867037,
+      "curvature": 0.015719907822640638,
+      "is_corner": false
+    },
+    {
+      "s": 2482.5,
+      "speed_kmh": 46.256840000000004,
+      "trackPos": -0.4090973516715777,
+      "curvature": -0.0777147811405998,
+      "is_corner": true
+    },
+    {
+      "s": 2487.5,
+      "speed_kmh": 49.38844,
+      "trackPos": -0.3400856301483093,
+      "curvature": -0.16482879398737513,
+      "is_corner": true
+    },
+    {
+      "s": 2492.5,
+      "speed_kmh": 50.25558,
+      "trackPos": -0.2466111505989896,
+      "curvature": -0.22937761631239026,
+      "is_corner": true
+    },
+    {
+      "s": 2497.5,
+      "speed_kmh": 49.987919999999995,
+      "trackPos": -0.14353800774184675,
+      "curvature": -0.29726630055377556,
+      "is_corner": true
+    },
+    {
+      "s": 2502.5,
+      "speed_kmh": 50.738659999999996,
+      "trackPos": -0.037504735371360065,
+      "curvature": -0.3687393265398767,
+      "is_corner": true
+    },
+    {
+      "s": 2507.5,
+      "speed_kmh": 53.09298,
+      "trackPos": 0.058397695982999855,
+      "curvature": -0.42338185578627097,
+      "is_corner": true
+    },
+    {
+      "s": 2512.5,
+      "speed_kmh": 57.107899999999994,
+      "trackPos": 0.13403425312585698,
+      "curvature": -0.43265115401463816,
+      "is_corner": true
+    },
+    {
+      "s": 2517.5,
+      "speed_kmh": 62.76026,
+      "trackPos": 0.18809516769168333,
+      "curvature": -0.43111807046016515,
+      "is_corner": true
+    },
+    {
+      "s": 2522.5,
+      "speed_kmh": 69.51198000000001,
+      "trackPos": 0.22334601615398492,
+      "curvature": -0.4394898240404884,
+      "is_corner": true
+    },
+    {
+      "s": 2527.5,
+      "speed_kmh": 77.09546,
+      "trackPos": 0.24328874918969917,
+      "curvature": -0.4468346481041113,
+      "is_corner": true
+    },
+    {
+      "s": 2532.5,
+      "speed_kmh": 84.33314000000001,
+      "trackPos": 0.2502174412531913,
+      "curvature": -0.44990794865511297,
+      "is_corner": true
+    },
+    {
+      "s": 2537.5,
+      "speed_kmh": 88.92551999999999,
+      "trackPos": 0.2453692312409812,
+      "curvature": -0.4407002450452481,
+      "is_corner": true
+    },
+    {
+      "s": 2542.5,
+      "speed_kmh": 90.26942,
+      "trackPos": 0.23277790396825399,
+      "curvature": -0.4213348862031119,
+      "is_corner": true
+    },
+    {
+      "s": 2547.5,
+      "speed_kmh": 88.94628,
+      "trackPos": 0.22033291046176046,
+      "curvature": -0.3985650587350873,
+      "is_corner": true
+    },
+    {
+      "s": 2552.5,
+      "speed_kmh": 85.56288,
+      "trackPos": 0.21235929574314572,
+      "curvature": -0.37898448651973704,
+      "is_corner": true
+    },
+    {
+      "s": 2557.5,
+      "speed_kmh": 80.73982000000001,
+      "trackPos": 0.20933677987012986,
+      "curvature": -0.38107355860476283,
+      "is_corner": true
+    },
+    {
+      "s": 2562.5,
+      "speed_kmh": 76.77664,
+      "trackPos": 0.21096136753246755,
+      "curvature": -0.38594988488619547,
+      "is_corner": true
+    },
+    {
+      "s": 2567.5,
+      "speed_kmh": 74.28748,
+      "trackPos": 0.21711835642135643,
+      "curvature": -0.35835685467773365,
+      "is_corner": true
+    },
+    {
+      "s": 2572.5,
+      "speed_kmh": 74.31446000000001,
+      "trackPos": 0.22707889610389614,
+      "curvature": -0.3166714406484528,
+      "is_corner": true
+    },
+    {
+      "s": 2577.5,
+      "speed_kmh": 76.80196000000001,
+      "trackPos": 0.239865638961039,
+      "curvature": -0.2602134375622621,
+      "is_corner": true
+    },
+    {
+      "s": 2582.5,
+      "speed_kmh": 80.62778,
+      "trackPos": 0.25366835468975474,
+      "curvature": -0.19157839476114566,
+      "is_corner": true
+    },
+    {
+      "s": 2587.5,
+      "speed_kmh": 83.55557999999999,
+      "trackPos": 0.2619892598845599,
+      "curvature": -0.11249794212188576,
+      "is_corner": true
+    },
+    {
+      "s": 2592.5,
+      "speed_kmh": 84.80608000000001,
+      "trackPos": 0.26133140274170275,
+      "curvature": -0.03341957177334741,
+      "is_corner": false
+    },
+    {
+      "s": 2597.5,
+      "speed_kmh": 84.18226000000001,
+      "trackPos": 0.2512977663780664,
+      "curvature": 0.04848811535798255,
+      "is_corner": false
+    },
+    {
+      "s": 2602.5,
+      "speed_kmh": 81.36884,
+      "trackPos": 0.2317058962481963,
+      "curvature": 0.1184763319354078,
+      "is_corner": true
+    },
+    {
+      "s": 2607.5,
+      "speed_kmh": 77.13022,
+      "trackPos": 0.2025938414862915,
+      "curvature": 0.16748257831751653,
+      "is_corner": true
+    },
+    {
+      "s": 2612.5,
+      "speed_kmh": 73.90412,
+      "trackPos": 0.16386625020057718,
+      "curvature": 0.2246950504986417,
+      "is_corner": true
+    },
+    {
+      "s": 2617.5,
+      "speed_kmh": 72.83915999999999,
+      "trackPos": 0.11442750940692643,
+      "curvature": 0.28698102658277896,
+      "is_corner": true
+    },
+    {
+      "s": 2622.5,
+      "speed_kmh": 73.93091999999999,
+      "trackPos": 0.06305463321645022,
+      "curvature": 0.3494540160204526,
+      "is_corner": true
+    },
+    {
+      "s": 2627.5,
+      "speed_kmh": 76.98098,
+      "trackPos": 0.017957658613275602,
+      "curvature": 0.41614795257986525,
+      "is_corner": true
+    },
+    {
+      "s": 2632.5,
+      "speed_kmh": 81.07934,
+      "trackPos": -0.01975226966955268,
+      "curvature": 0.44947386069870415,
+      "is_corner": true
+    },
+    {
+      "s": 2637.5,
+      "speed_kmh": 83.79836,
+      "trackPos": -0.050200129539682545,
+      "curvature": 0.4687881486477202,
+      "is_corner": true
+    },
+    {
+      "s": 2642.5,
+      "speed_kmh": 84.57266000000001,
+      "trackPos": -0.07363567834920635,
+      "curvature": 0.4744153208609637,
+      "is_corner": true
+    },
+    {
+      "s": 2647.5,
+      "speed_kmh": 82.23994,
+      "trackPos": -0.09231171801587301,
+      "curvature": 0.47650525392826804,
+      "is_corner": true
+    },
+    {
+      "s": 2652.5,
+      "speed_kmh": 77.8558,
+      "trackPos": -0.1064070455982906,
+      "curvature": 0.4812567619721675,
+      "is_corner": true
+    },
+    {
+      "s": 2657.5,
+      "speed_kmh": 72.48404000000001,
+      "trackPos": -0.11978186281440782,
+      "curvature": 0.4903658671513212,
+      "is_corner": true
+    },
+    {
+      "s": 2662.5,
+      "speed_kmh": 68.28790000000001,
+      "trackPos": -0.1368912893101343,
+      "curvature": 0.5000987814034039,
+      "is_corner": true
+    },
+    {
+      "s": 2667.5,
+      "speed_kmh": 65.35928,
+      "trackPos": -0.1578888974908425,
+      "curvature": 0.5216264830184764,
+      "is_corner": true
+    },
+    {
+      "s": 2672.5,
+      "speed_kmh": 64.0427,
+      "trackPos": -0.18221013562271063,
+      "curvature": 0.5622649743297635,
+      "is_corner": true
+    },
+    {
+      "s": 2677.5,
+      "speed_kmh": 63.356700000000004,
+      "trackPos": -0.20924609327577182,
+      "curvature": 0.5924226170717646,
+      "is_corner": true
+    },
+    {
+      "s": 2682.5,
+      "speed_kmh": 62.808620000000005,
+      "trackPos": -0.23605892386185243,
+      "curvature": 0.614483182222399,
+      "is_corner": true
+    },
+    {
+      "s": 2687.5,
+      "speed_kmh": 62.31814000000001,
+      "trackPos": -0.2607896287284145,
+      "curvature": 0.6332926226564143,
+      "is_corner": true
+    },
+    {
+      "s": 2692.5,
+      "speed_kmh": 61.86355999999999,
+      "trackPos": -0.28327345368916795,
+      "curvature": 0.6419201587143952,
+      "is_corner": true
+    },
+    {
+      "s": 2697.5,
+      "speed_kmh": 61.43964,
+      "trackPos": -0.30368010361067505,
+      "curvature": 0.6499336336075713,
+      "is_corner": true
+    },
+    {
+      "s": 2702.5,
+      "speed_kmh": 61.043420000000005,
+      "trackPos": -0.32220474803767657,
+      "curvature": 0.6576084110532434,
+      "is_corner": true
+    },
+    {
+      "s": 2707.5,
+      "speed_kmh": 60.67866,
+      "trackPos": -0.3390413390894819,
+      "curvature": 0.6653943943470885,
+      "is_corner": true
+    },
+    {
+      "s": 2712.5,
+      "speed_kmh": 60.33836,
+      "trackPos": -0.3542645533751962,
+      "curvature": 0.6740866283937288,
+      "is_corner": true
+    },
+    {
+      "s": 2717.5,
+      "speed_kmh": 60.0279,
+      "trackPos": -0.36805676530612247,
+      "curvature": 0.6852498127652863,
+      "is_corner": true
+    },
+    {
+      "s": 2722.5,
+      "speed_kmh": 59.74378,
+      "trackPos": -0.38063996666666666,
+      "curvature": 0.7006355587731614,
+      "is_corner": true
+    },
+    {
+      "s": 2727.5,
+      "speed_kmh": 59.4779,
+      "trackPos": -0.39209630340136054,
+      "curvature": 0.7152566967932384,
+      "is_corner": true
+    },
+    {
+      "s": 2732.5,
+      "speed_kmh": 59.2248,
+      "trackPos": -0.40262014285714287,
+      "curvature": 0.7290840768465491,
+      "is_corner": true
+    },
+    {
+      "s": 2737.5,
+      "speed_kmh": 58.962239999999994,
+      "trackPos": -0.41244874489795924,
+      "curvature": 0.7419225819960212,
+      "is_corner": true
+    },
+    {
+      "s": 2742.5,
+      "speed_kmh": 58.6639,
+      "trackPos": -0.4218079333333334,
+      "curvature": 0.746450510028865,
+      "is_corner": true
+    },
+    {
+      "s": 2747.5,
+      "speed_kmh": 58.349199999999996,
+      "trackPos": -0.4307246986394558,
+      "curvature": 0.7441032588114715,
+      "is_corner": true
+    },
+    {
+      "s": 2752.5,
+      "speed_kmh": 58.057759999999995,
+      "trackPos": -0.4392362156462585,
+      "curvature": 0.7340583682311943,
+      "is_corner": true
+    },
+    {
+      "s": 2757.5,
+      "speed_kmh": 57.78664,
+      "trackPos": -0.4473101163265306,
+      "curvature": 0.7136156815004688,
+      "is_corner": true
+    },
+    {
+      "s": 2762.5,
+      "speed_kmh": 57.6553,
+      "trackPos": -0.4549650755102041,
+      "curvature": 0.6887762931110205,
+      "is_corner": true
+    },
+    {
+      "s": 2767.5,
+      "speed_kmh": 58.491240000000005,
+      "trackPos": -0.4624587759431045,
+      "curvature": 0.6609456044379518,
+      "is_corner": true
+    },
+    {
+      "s": 2772.5,
+      "speed_kmh": 61.199059999999996,
+      "trackPos": -0.46841120859616575,
+      "curvature": 0.6299476967943092,
+      "is_corner": true
+    },
+    {
+      "s": 2777.5,
+      "speed_kmh": 65.81035999999999,
+      "trackPos": -0.46925614827870543,
+      "curvature": 0.5952902940517133,
+      "is_corner": true
+    },
+    {
+      "s": 2782.5,
+      "speed_kmh": 71.72972,
+      "trackPos": -0.464363607462379,
+      "curvature": 0.5556889111762049,
+      "is_corner": true
+    },
+    {
+      "s": 2787.5,
+      "speed_kmh": 78.73094,
+      "trackPos": -0.4540375598433313,
+      "curvature": 0.5098027804863217,
+      "is_corner": true
+    },
+    {
+      "s": 2792.5,
+      "speed_kmh": 86.0815,
+      "trackPos": -0.43867079963924965,
+      "curvature": 0.4626544566156543,
+      "is_corner": true
+    },
+    {
+      "s": 2797.5,
+      "speed_kmh": 92.77610000000001,
+      "trackPos": -0.41865635065965773,
+      "curvature": 0.4145043140753948,
+      "is_corner": true
+    },
+    {
+      "s": 2802.5,
+      "speed_kmh": 98.80986,
+      "trackPos": -0.39416625975056696,
+      "curvature": 0.36569888597180716,
+      "is_corner": true
+    },
+    {
+      "s": 2807.5,
+      "speed_kmh": 104.57968000000001,
+      "trackPos": -0.3667790924036281,
+      "curvature": 0.32366668755411127,
+      "is_corner": true
+    },
+    {
+      "s": 2812.5,
+      "speed_kmh": 109.77646,
+      "trackPos": -0.340362981292517,
+      "curvature": 0.28705720748704205,
+      "is_corner": true
+    },
+    {
+      "s": 2817.5,
+      "speed_kmh": 114.651,
+      "trackPos": -0.3158015323129252,
+      "curvature": 0.2567808772415018,
+      "is_corner": true
+    },
+    {
+      "s": 2822.5,
+      "speed_kmh": 119.1804,
+      "trackPos": -0.2930540323129252,
+      "curvature": 0.23561561360889283,
+      "is_corner": true
+    },
+    {
+      "s": 2827.5,
+      "speed_kmh": 123.0738,
+      "trackPos": -0.27217030612244897,
+      "curvature": 0.2176130551955927,
+      "is_corner": true
+    },
+    {
+      "s": 2832.5,
+      "speed_kmh": 126.58279999999999,
+      "trackPos": -0.2529258741496599,
+      "curvature": 0.20125174211677319,
+      "is_corner": true
+    },
+    {
+      "s": 2837.5,
+      "speed_kmh": 130.20239999999998,
+      "trackPos": -0.23503511224489795,
+      "curvature": 0.18653192739167354,
+      "is_corner": true
+    },
+    {
+      "s": 2842.5,
+      "speed_kmh": 133.61999999999998,
+      "trackPos": -0.2185377367346939,
+      "curvature": 0.17324769100713217,
+      "is_corner": true
+    },
+    {
+      "s": 2847.5,
+      "speed_kmh": 136.9542,
+      "trackPos": -0.2031814510204082,
+      "curvature": 0.16112129711976142,
+      "is_corner": true
+    },
+    {
+      "s": 2852.5,
+      "speed_kmh": 140.3216,
+      "trackPos": -0.18896818571428575,
+      "curvature": 0.14986712584022158,
+      "is_corner": true
+    },
+    {
+      "s": 2857.5,
+      "speed_kmh": 142.692,
+      "trackPos": -0.17593620952380953,
+      "curvature": 0.13953461272240392,
+      "is_corner": true
+    },
+    {
+      "s": 2862.5,
+      "speed_kmh": 143.68159999999997,
+      "trackPos": -0.16379332857142856,
+      "curvature": 0.12999917075356945,
+      "is_corner": true
+    },
+    {
+      "s": 2867.5,
+      "speed_kmh": 143.23039999999997,
+      "trackPos": -0.1525842095238095,
+      "curvature": 0.12117350270773268,
+      "is_corner": true
+    },
+    {
+      "s": 2872.5,
+      "speed_kmh": 141.3068,
+      "trackPos": -0.14233204285714288,
+      "curvature": 0.11299680882446049,
+      "is_corner": true
+    },
+    {
+      "s": 2877.5,
+      "speed_kmh": 138.0044,
+      "trackPos": -0.13288480952380954,
+      "curvature": 0.10547026223105643,
+      "is_corner": true
+    },
+    {
+      "s": 2882.5,
+      "speed_kmh": 134.2964,
+      "trackPos": -0.12417799251700681,
+      "curvature": 0.09858238385981594,
+      "is_corner": true
+    },
+    {
+      "s": 2887.5,
+      "speed_kmh": 130.3596,
+      "trackPos": -0.11612314761904763,
+      "curvature": 0.09227883112564977,
+      "is_corner": true
+    },
+    {
+      "s": 2892.5,
+      "speed_kmh": 126.22840000000001,
+      "trackPos": -0.10863297482993198,
+      "curvature": 0.08597391200441985,
+      "is_corner": true
+    },
+    {
+      "s": 2897.5,
+      "speed_kmh": 121.9086,
+      "trackPos": -0.10176078299319727,
+      "curvature": 0.06669047655990282,
+      "is_corner": true
+    },
+    {
+      "s": 2902.5,
+      "speed_kmh": 117.40740000000001,
+      "trackPos": -0.09541380085034014,
+      "curvature": 0.03653466761094627,
+      "is_corner": false
+    },
+    {
+      "s": 2907.5,
+      "speed_kmh": 112.5832,
+      "trackPos": -0.0894802929138322,
+      "curvature": -0.0028429847078734025,
+      "is_corner": false
+    },
+    {
+      "s": 2912.5,
+      "speed_kmh": 107.43646000000001,
+      "trackPos": -0.08390862981859411,
+      "curvature": -0.04815955729967115,
+      "is_corner": false
+    },
+    {
+      "s": 2917.5,
+      "speed_kmh": 102.07898,
+      "trackPos": -0.07825074777777778,
+      "curvature": -0.10032197807782818,
+      "is_corner": true
+    },
+    {
+      "s": 2922.5,
+      "speed_kmh": 96.10713999999999,
+      "trackPos": -0.07199410696145125,
+      "curvature": -0.15536528617758247,
+      "is_corner": true
+    },
+    {
+      "s": 2927.5,
+      "speed_kmh": 89.62796,
+      "trackPos": -0.06445289403628118,
+      "curvature": -0.210797642424189,
+      "is_corner": true
+    },
+    {
+      "s": 2932.5,
+      "speed_kmh": 82.52434000000001,
+      "trackPos": -0.05252982170634922,
+      "curvature": -0.2665937919169111,
+      "is_corner": true
+    },
+    {
+      "s": 2937.5,
+      "speed_kmh": 75.90756,
+      "trackPos": -0.03419019874716554,
+      "curvature": -0.3228361832622486,
+      "is_corner": true
+    },
+    {
+      "s": 2942.5,
+      "speed_kmh": 70.07414,
+      "trackPos": -0.009518849540816329,
+      "curvature": -0.3797453494898829,
+      "is_corner": true
+    },
+    {
+      "s": 2947.5,
+      "speed_kmh": 65.57154,
+      "trackPos": 0.020863164234693875,
+      "curvature": -0.43767941312120234,
+      "is_corner": true
+    },
+    {
+      "s": 2952.5,
+      "speed_kmh": 62.315039999999996,
+      "trackPos": 0.05609354341836733,
+      "curvature": -0.49740830072774905,
+      "is_corner": true
+    },
+    {
+      "s": 2957.5,
+      "speed_kmh": 60.58669999999999,
+      "trackPos": 0.09525942913265305,
+      "curvature": -0.560178811102326,
+      "is_corner": true
+    },
+    {
+      "s": 2962.5,
+      "speed_kmh": 59.41994,
+      "trackPos": 0.1372751743707483,
+      "curvature": -0.6149444117449976,
+      "is_corner": true
+    },
+    {
+      "s": 2967.5,
+      "speed_kmh": 58.43386,
+      "trackPos": 0.17876314549819927,
+      "curvature": -0.6560971696387947,
+      "is_corner": true
+    },
+    {
+      "s": 2972.5,
+      "speed_kmh": 57.488440000000004,
+      "trackPos": 0.21744857400960385,
+      "curvature": -0.6902884033028038,
+      "is_corner": true
+    },
+    {
+      "s": 2977.5,
+      "speed_kmh": 56.559960000000004,
+      "trackPos": 0.25313988073229293,
+      "curvature": -0.7176309254315506,
+      "is_corner": true
+    },
+    {
+      "s": 2982.5,
+      "speed_kmh": 55.61298000000001,
+      "trackPos": 0.28637716417900494,
+      "curvature": -0.7333886656647606,
+      "is_corner": true
+    },
+    {
+      "s": 2987.5,
+      "speed_kmh": 54.68528,
+      "trackPos": 0.3173189827731092,
+      "curvature": -0.7353710213882737,
+      "is_corner": true
+    },
+    {
+      "s": 2992.5,
+      "speed_kmh": 53.749080000000006,
+      "trackPos": 0.34611361134453783,
+      "curvature": -0.7245874194665541,
+      "is_corner": true
+    },
+    {
+      "s": 2997.5,
+      "speed_kmh": 52.905499999999996,
+      "trackPos": 0.3730896260504202,
+      "curvature": -0.7056855052331871,
+      "is_corner": true
+    },
+    {
+      "s": 3002.5,
+      "speed_kmh": 52.37542,
+      "trackPos": 0.3987376574229692,
+      "curvature": -0.6828050569019456,
+      "is_corner": true
+    },
+    {
+      "s": 3007.5,
+      "speed_kmh": 53.2359,
+      "trackPos": 0.42248593150183156,
+      "curvature": -0.6568421807158947,
+      "is_corner": true
+    },
+    {
+      "s": 3012.5,
+      "speed_kmh": 56.05501999999999,
+      "trackPos": 0.4401577351687528,
+      "curvature": -0.6277565074881275,
+      "is_corner": true
+    },
+    {
+      "s": 3017.5,
+      "speed_kmh": 60.87728,
+      "trackPos": 0.4498476817776994,
+      "curvature": -0.5948278749343496,
+      "is_corner": true
+    },
+    {
+      "s": 3022.5,
+      "speed_kmh": 67.5741,
+      "trackPos": 0.4517781659046835,
+      "curvature": -0.5564960036622442,
+      "is_corner": true
+    },
+    {
+      "s": 3027.5,
+      "speed_kmh": 75.29942,
+      "trackPos": 0.44662041987293755,
+      "curvature": -0.5110191194930587,
+      "is_corner": true
+    },
+    {
+      "s": 3032.5,
+      "speed_kmh": 82.86761999999999,
+      "trackPos": 0.4345651789765789,
+      "curvature": -0.4663750988747496,
+      "is_corner": true
+    },
+    {
+      "s": 3037.5,
+      "speed_kmh": 89.73267999999999,
+      "trackPos": 0.415744198024198,
+      "curvature": -0.41768681935838003,
+      "is_corner": true
+    },
+    {
+      "s": 3042.5,
+      "speed_kmh": 95.92179999999999,
+      "trackPos": 0.3912635331890331,
+      "curvature": -0.3682045099475117,
+      "is_corner": true
+    },
+    {
+      "s": 3047.5,
+      "speed_kmh": 101.39862000000001,
+      "trackPos": 0.3656919406565656,
+      "curvature": -0.32186838116844224,
+      "is_corner": true
+    },
+    {
+      "s": 3052.5,
+      "speed_kmh": 106.37274,
+      "trackPos": 0.341370016723356,
+      "curvature": -0.28495915137838546,
+      "is_corner": true
+    },
+    {
+      "s": 3057.5,
+      "speed_kmh": 111.1962,
+      "trackPos": 0.3186216833900226,
+      "curvature": -0.25902601382898477,
+      "is_corner": true
+    },
+    {
+      "s": 3062.5,
+      "speed_kmh": 115.72620000000002,
+      "trackPos": 0.29714787840136053,
+      "curvature": -0.23958416215827397,
+      "is_corner": true
+    },
+    {
+      "s": 3067.5,
+      "speed_kmh": 119.923,
+      "trackPos": 0.27705429336734694,
+      "curvature": -0.22247152009245408,
+      "is_corner": true
+    },
+    {
+      "s": 3072.5,
+      "speed_kmh": 123.53,
+      "trackPos": 0.25821464030612246,
+      "curvature": -0.2066550436463433,
+      "is_corner": true
+    },
+    {
+      "s": 3077.5,
+      "speed_kmh": 127.11479999999999,
+      "trackPos": 0.2406228069727891,
+      "curvature": -0.19195232922053967,
+      "is_corner": true
+    },
+    {
+      "s": 3082.5,
+      "speed_kmh": 130.51260000000002,
+      "trackPos": 0.22425613605442177,
+      "curvature": -0.17834885641759343,
+      "is_corner": true
+    },
+    {
+      "s": 3087.5,
+      "speed_kmh": 133.72099999999998,
+      "trackPos": 0.20890062925170066,
+      "curvature": -0.16573028424940123,
+      "is_corner": true
+    },
+    {
+      "s": 3092.5,
+      "speed_kmh": 136.8338,
+      "trackPos": 0.19451189115646259,
+      "curvature": -0.15400449371505198,
+      "is_corner": true
+    },
+    {
+      "s": 3097.5,
+      "speed_kmh": 140.0864,
+      "trackPos": 0.18108258503401362,
+      "curvature": -0.1431706424527049,
+      "is_corner": true
+    },
+    {
+      "s": 3102.5,
+      "speed_kmh": 143.34980000000002,
+      "trackPos": 0.16856995578231296,
+      "curvature": -0.1331364854382113,
+      "is_corner": true
+    },
+    {
+      "s": 3107.5,
+      "speed_kmh": 146.5656,
+      "trackPos": 0.15692791836734693,
+      "curvature": -0.12377191898092511,
+      "is_corner": true
+    },
+    {
+      "s": 3112.5,
+      "speed_kmh": 149.8094,
+      "trackPos": 0.14608770884353744,
+      "curvature": -0.1150580799355124,
+      "is_corner": true
+    },
+    {
+      "s": 3117.5,
+      "speed_kmh": 152.96020000000001,
+      "trackPos": 0.13602226666666667,
+      "curvature": -0.10694162094483277,
+      "is_corner": true
+    },
+    {
+      "s": 3122.5,
+      "speed_kmh": 155.9998,
+      "trackPos": 0.12671414857142857,
+      "curvature": -0.09945329792821742,
+      "is_corner": true
+    },
+    {
+      "s": 3127.5,
+      "speed_kmh": 158.5138,
+      "trackPos": 0.11801491761904763,
+      "curvature": -0.09246690350403461,
+      "is_corner": true
+    },
+    {
+      "s": 3132.5,
+      "speed_kmh": 160.20279999999997,
+      "trackPos": 0.10991661761904763,
+      "curvature": -0.08597114853021035,
+      "is_corner": true
+    },
+    {
+      "s": 3137.5,
+      "speed_kmh": 160.8622,
+      "trackPos": 0.10241614857142857,
+      "curvature": -0.07995552236406617,
+      "is_corner": true
+    },
+    {
+      "s": 3142.5,
+      "speed_kmh": 160.308,
+      "trackPos": 0.09543797238095239,
+      "curvature": -0.07434955732031048,
+      "is_corner": true
+    },
+    {
+      "s": 3147.5,
+      "speed_kmh": 158.589,
+      "trackPos": 0.08887935333333331,
+      "curvature": -0.06912522331443074,
+      "is_corner": true
+    },
+    {
+      "s": 3152.5,
+      "speed_kmh": 156.07580000000002,
+      "trackPos": 0.08274921761904763,
+      "curvature": -0.06427381696325837,
+      "is_corner": true
+    },
+    {
+      "s": 3157.5,
+      "speed_kmh": 153.04579999999999,
+      "trackPos": 0.07704110952380952,
+      "curvature": -0.059785524690533325,
+      "is_corner": true
+    },
+    {
+      "s": 3162.5,
+      "speed_kmh": 149.6952,
+      "trackPos": 0.0716944418367347,
+      "curvature": -0.055591339467057695,
+      "is_corner": true
+    },
+    {
+      "s": 3167.5,
+      "speed_kmh": 146.0802,
+      "trackPos": 0.06670161326530613,
+      "curvature": -0.05169178695943821,
+      "is_corner": true
+    },
+    {
+      "s": 3172.5,
+      "speed_kmh": 142.372,
+      "trackPos": 0.06204725034013606,
+      "curvature": -0.0480772083375527,
+      "is_corner": false
+    },
+    {
+      "s": 3177.5,
+      "speed_kmh": 138.46880000000002,
+      "trackPos": 0.057746231292517006,
+      "curvature": -0.04472596752074896,
+      "is_corner": false
+    },
+    {
+      "s": 3182.5,
+      "speed_kmh": 134.3824,
+      "trackPos": 0.0537741156462585,
+      "curvature": -0.041633209854250945,
+      "is_corner": false
+    },
+    {
+      "s": 3187.5,
+      "speed_kmh": 130.12079999999997,
+      "trackPos": 0.05007695195578231,
+      "curvature": -0.03875958010317222,
+      "is_corner": false
+    },
+    {
+      "s": 3192.5,
+      "speed_kmh": 125.68400000000001,
+      "trackPos": 0.046614584693877546,
+      "curvature": -0.03612178177118193,
+      "is_corner": false
+    },
+    {
+      "s": 3197.5,
+      "speed_kmh": 120.95219999999999,
+      "trackPos": 0.04342204107142857,
+      "curvature": -0.029221212789010985,
+      "is_corner": false
+    },
+    {
+      "s": 3202.5,
+      "speed_kmh": 116.05199999999999,
+      "trackPos": 0.04046240932539682,
+      "curvature": -0.013106236894793871,
+      "is_corner": false
+    },
+    {
+      "s": 3207.5,
+      "speed_kmh": 110.85511999999999,
+      "trackPos": 0.037704450821995465,
+      "curvature": 0.009596253686464681,
+      "is_corner": false
+    },
+    {
+      "s": 3212.5,
+      "speed_kmh": 105.3577,
+      "trackPos": 0.035159940821995465,
+      "curvature": 0.04107718497683645,
+      "is_corner": false
+    },
+    {
+      "s": 3217.5,
+      "speed_kmh": 99.55915999999999,
+      "trackPos": 0.03258696512626263,
+      "curvature": 0.07519147654536644,
+      "is_corner": true
+    },
+    {
+      "s": 3222.5,
+      "speed_kmh": 93.26628000000001,
+      "trackPos": 0.029634574054834058,
+      "curvature": 0.10953820012097416,
+      "is_corner": true
+    },
+    {
+      "s": 3227.5,
+      "speed_kmh": 86.37098,
+      "trackPos": 0.025967686554834054,
+      "curvature": 0.14512969587851443,
+      "is_corner": true
+    },
+    {
+      "s": 3232.5,
+      "speed_kmh": 78.72446000000001,
+      "trackPos": 0.02113710001135191,
+      "curvature": 0.18263538857395611,
+      "is_corner": true
+    },
+    {
+      "s": 3237.5,
+      "speed_kmh": 70.07458,
+      "trackPos": 0.009498566757383657,
+      "curvature": 0.22245230575808966,
+      "is_corner": true
+    },
+    {
+      "s": 3242.5,
+      "speed_kmh": 61.306,
+      "trackPos": -0.015172298874086316,
+      "curvature": 0.26606798751110206,
+      "is_corner": true
+    },
+    {
+      "s": 3247.5,
+      "speed_kmh": 53.363879999999995,
+      "trackPos": -0.0533993831598006,
+      "curvature": 0.32446387673513655,
+      "is_corner": true
+    },
+    {
+      "s": 3252.5,
+      "speed_kmh": 46.50618,
+      "trackPos": -0.10421040032121062,
+      "curvature": 0.39495480703658686,
+      "is_corner": true
+    },
+    {
+      "s": 3257.5,
+      "speed_kmh": 41.080040000000004,
+      "trackPos": -0.16620534732581893,
+      "curvature": 0.45779807879708645,
+      "is_corner": true
+    },
+    {
+      "s": 3262.5,
+      "speed_kmh": 37.35508,
+      "trackPos": -0.2380045677339822,
+      "curvature": 0.501535089999916,
+      "is_corner": true
+    },
+    {
+      "s": 3267.5,
+      "speed_kmh": 34.4939,
+      "trackPos": -0.318290574642881,
+      "curvature": 0.5288794966146942,
+      "is_corner": true
+    },
+    {
+      "s": 3272.5,
+      "speed_kmh": 32.124,
+      "trackPos": -0.4003983439285953,
+      "curvature": 0.5463108386125559,
+      "is_corner": true
+    },
+    {
+      "s": 3277.5,
+      "speed_kmh": 31.336180000000002,
+      "trackPos": -0.4705800309581898,
+      "curvature": 0.5520431975908372,
+      "is_corner": true
+    },
+    {
+      "s": 3282.5,
+      "speed_kmh": 33.5522,
+      "trackPos": -0.5230364489173734,
+      "curvature": 0.5525147442007002,
+      "is_corner": true
+    },
+    {
+      "s": 3287.5,
+      "speed_kmh": 39.02666,
+      "trackPos": -0.5570626400476717,
+      "curvature": 0.5502472822828216,
+      "is_corner": true
+    },
+    {
+      "s": 3292.5,
+      "speed_kmh": 46.78282,
+      "trackPos": -0.5738818423937128,
+      "curvature": 0.5444306424741521,
+      "is_corner": true
+    },
+    {
+      "s": 3297.5,
+      "speed_kmh": 56.60745999999999,
+      "trackPos": -0.5749953219855495,
+      "curvature": 0.5345860328821574,
+      "is_corner": true
+    },
+    {
+      "s": 3302.5,
+      "speed_kmh": 67.21826,
+      "trackPos": -0.5615448767474543,
+      "curvature": 0.5204844474066241,
+      "is_corner": true
+    },
+    {
+      "s": 3307.5,
+      "speed_kmh": 76.24647999999999,
+      "trackPos": -0.5348023059538035,
+      "curvature": 0.5007932834868997,
+      "is_corner": true
+    },
+    {
+      "s": 3312.5,
+      "speed_kmh": 83.66510000000001,
+      "trackPos": -0.5025593358324216,
+      "curvature": 0.4647168597792329,
+      "is_corner": true
+    },
+    {
+      "s": 3317.5,
+      "speed_kmh": 90.49163999999999,
+      "trackPos": -0.4703787593018093,
+      "curvature": 0.41500067744315944,
+      "is_corner": true
+    },
+    {
+      "s": 3322.5,
+      "speed_kmh": 96.6285,
+      "trackPos": -0.4400217977633477,
+      "curvature": 0.371473040710818,
+      "is_corner": true
+    },
+    {
+      "s": 3327.5,
+      "speed_kmh": 102.05311999999999,
+      "trackPos": -0.41166227086167806,
+      "curvature": 0.34127544258588477,
+      "is_corner": true
+    },
+    {
+      "s": 3332.5,
+      "speed_kmh": 107.18681999999998,
+      "trackPos": -0.3849671137188209,
+      "curvature": 0.31683614262075427,
+      "is_corner": true
+    },
+    {
+      "s": 3337.5,
+      "speed_kmh": 111.9482,
+      "trackPos": -0.35979874433106573,
+      "curvature": 0.2944451358693958,
+      "is_corner": true
+    },
+    {
+      "s": 3342.5,
+      "speed_kmh": 116.5242,
+      "trackPos": -0.3362257012471655,
+      "curvature": 0.27377093488831183,
+      "is_corner": true
+    },
+    {
+      "s": 3347.5,
+      "speed_kmh": 120.75319999999999,
+      "trackPos": -0.31413492346938776,
+      "curvature": 0.2545764727030564,
+      "is_corner": true
+    },
+    {
+      "s": 3352.5,
+      "speed_kmh": 124.28339999999999,
+      "trackPos": -0.2935539829931973,
+      "curvature": 0.2368795022882673,
+      "is_corner": true
+    },
+    {
+      "s": 3357.5,
+      "speed_kmh": 127.87339999999999,
+      "trackPos": -0.2743012176870748,
+      "curvature": 0.2205218531762876,
+      "is_corner": true
+    },
+    {
+      "s": 3362.5,
+      "speed_kmh": 131.26420000000002,
+      "trackPos": -0.25613947619047617,
+      "curvature": 0.20536620533191283,
+      "is_corner": true
+    },
+    {
+      "s": 3367.5,
+      "speed_kmh": 134.4364,
+      "trackPos": -0.23921502380952386,
+      "curvature": 0.191294405557714,
+      "is_corner": true
+    },
+    {
+      "s": 3372.5,
+      "speed_kmh": 137.4094,
+      "trackPos": -0.22351613605442178,
+      "curvature": 0.178196001464619,
+      "is_corner": true
+    },
+    {
+      "s": 3377.5,
+      "speed_kmh": 140.598,
+      "trackPos": -0.20882468707482996,
+      "curvature": 0.1659844091430487,
+      "is_corner": true
+    },
+    {
+      "s": 3382.5,
+      "speed_kmh": 143.733,
+      "trackPos": -0.19508971088435373,
+      "curvature": 0.154665167824018,
+      "is_corner": true
+    },
+    {
+      "s": 3387.5,
+      "speed_kmh": 146.91819999999998,
+      "trackPos": -0.18210316326530612,
+      "curvature": 0.14421556273426017,
+      "is_corner": true
+    },
+    {
+      "s": 3392.5,
+      "speed_kmh": 150.02159999999998,
+      "trackPos": -0.16997145714285716,
+      "curvature": 0.13449656515033215,
+      "is_corner": true
+    },
+    {
+      "s": 3397.5,
+      "speed_kmh": 153.1228,
+      "trackPos": -0.15867452857142858,
+      "curvature": 0.12547812094199823,
+      "is_corner": true
+    },
+    {
+      "s": 3402.5,
+      "speed_kmh": 156.07780000000002,
+      "trackPos": -0.14804866666666666,
+      "curvature": 0.11707237906391375,
+      "is_corner": true
+    },
+    {
+      "s": 3407.5,
+      "speed_kmh": 158.48899999999998,
+      "trackPos": -0.13810385714285714,
+      "curvature": 0.10923367123042962,
+      "is_corner": true
+    },
+    {
+      "s": 3412.5,
+      "speed_kmh": 160.3816,
+      "trackPos": -0.1288342857142857,
+      "curvature": 0.10196460279185139,
+      "is_corner": true
+    },
+    {
+      "s": 3417.5,
+      "speed_kmh": 161.715,
+      "trackPos": -0.12023373809523809,
+      "curvature": 0.0951639422566917,
+      "is_corner": true
+    },
+    {
+      "s": 3422.5,
+      "speed_kmh": 162.469,
+      "trackPos": -0.11228358476190474,
+      "curvature": 0.08882321777829061,
+      "is_corner": true
+    },
+    {
+      "s": 3427.5,
+      "speed_kmh": 162.826,
+      "trackPos": -0.10484809190476188,
+      "curvature": 0.08292514677122803,
+      "is_corner": true
+    },
+    {
+      "s": 3432.5,
+      "speed_kmh": 163.1282,
+      "trackPos": -0.09790941380952381,
+      "curvature": 0.0774532659191368,
+      "is_corner": true
+    },
+    {
+      "s": 3437.5,
+      "speed_kmh": 163.3786,
+      "trackPos": -0.0914385780952381,
+      "curvature": 0.07238556512997331,
+      "is_corner": true
+    },
+    {
+      "s": 3442.5,
+      "speed_kmh": 163.607,
+      "trackPos": -0.0853949104761905,
+      "curvature": 0.06766464656268525,
+      "is_corner": true
+    },
+    {
+      "s": 3447.5,
+      "speed_kmh": 163.84539999999998,
+      "trackPos": -0.07975420333333334,
+      "curvature": 0.06324782388391476,
+      "is_corner": true
+    },
+    {
+      "s": 3452.5,
+      "speed_kmh": 164.0528,
+      "trackPos": -0.07448409285714286,
+      "curvature": 0.05910463517004369,
+      "is_corner": true
+    },
+    {
+      "s": 3457.5,
+      "speed_kmh": 164.26579999999998,
+      "trackPos": -0.06956529619047618,
+      "curvature": 0.05523897028295928,
+      "is_corner": true
+    },
+    {
+      "s": 3462.5,
+      "speed_kmh": 164.452,
+      "trackPos": -0.06497148619047619,
+      "curvature": 0.051629389913639634,
+      "is_corner": true
+    },
+    {
+      "s": 3467.5,
+      "speed_kmh": 164.60840000000002,
+      "trackPos": -0.06068534761904761,
+      "curvature": 0.048261320130383714,
+      "is_corner": false
+    },
+    {
+      "s": 3472.5,
+      "speed_kmh": 164.7586,
+      "trackPos": -0.056684420476190475,
+      "curvature": 0.045125800389730644,
+      "is_corner": false
+    },
+    {
+      "s": 3477.5,
+      "speed_kmh": 164.9124,
+      "trackPos": -0.052953526190476184,
+      "curvature": 0.042237350670080324,
+      "is_corner": false
+    },
+    {
+      "s": 3482.5,
+      "speed_kmh": 165.06,
+      "trackPos": -0.04947220761904763,
+      "curvature": 0.0395732950105893,
+      "is_corner": false
+    },
+    {
+      "s": 3487.5,
+      "speed_kmh": 165.2084,
+      "trackPos": -0.04625823047619048,
+      "curvature": 0.037096565207963776,
+      "is_corner": false
+    },
+    {
+      "s": 3492.5,
+      "speed_kmh": 165.45059999999998,
+      "trackPos": -0.04326165428571428,
+      "curvature": 0.03479272501309349,
+      "is_corner": false
+    },
+    {
+      "s": 3497.5,
+      "speed_kmh": 165.15540000000001,
+      "trackPos": -0.040482,
+      "curvature": 0.03264837292828143,
+      "is_corner": false
+    },
+    {
+      "s": 3502.5,
+      "speed_kmh": 164.4066,
+      "trackPos": -0.03791396904761905,
+      "curvature": 0.030666112197685537,
+      "is_corner": false
+    },
+    {
+      "s": 3507.5,
+      "speed_kmh": 163.1106,
+      "trackPos": -0.03552540333333333,
+      "curvature": 0.028824071890906317,
+      "is_corner": false
+    },
+    {
+      "s": 3512.5,
+      "speed_kmh": 161.24,
+      "trackPos": -0.03330827238095239,
+      "curvature": 0.02710902388405144,
+      "is_corner": false
+    },
+    {
+      "s": 3517.5,
+      "speed_kmh": 158.7056,
+      "trackPos": -0.03127463523809524,
+      "curvature": 0.025517398473869028,
+      "is_corner": false
+    },
+    {
+      "s": 3522.5,
+      "speed_kmh": 156.1864,
+      "trackPos": -0.029365958911564627,
+      "curvature": 0.024039416138416907,
+      "is_corner": false
+    },
+    {
+      "s": 3527.5,
+      "speed_kmh": 153.3888,
+      "trackPos": -0.027591461292517012,
+      "curvature": 0.022668373369410747,
+      "is_corner": false
+    },
+    {
+      "s": 3532.5,
+      "speed_kmh": 150.4958,
+      "trackPos": -0.02594793034013606,
+      "curvature": 0.021388837704674445,
+      "is_corner": false
+    },
+    {
+      "s": 3537.5,
+      "speed_kmh": 147.5258,
+      "trackPos": -0.024417656530612248,
+      "curvature": 0.02019010873915381,
+      "is_corner": false
+    },
+    {
+      "s": 3542.5,
+      "speed_kmh": 144.49259999999998,
+      "trackPos": -0.023000574897959185,
+      "curvature": 0.019032384058379384,
+      "is_corner": false
+    },
+    {
+      "s": 3547.5,
+      "speed_kmh": 141.1988,
+      "trackPos": -0.021675540544217692,
+      "curvature": 0.017922634194988272,
+      "is_corner": false
+    },
+    {
+      "s": 3552.5,
+      "speed_kmh": 137.8458,
+      "trackPos": -0.020415991156462587,
+      "curvature": 0.016876674569018976,
+      "is_corner": false
+    },
+    {
+      "s": 3557.5,
+      "speed_kmh": 134.34,
+      "trackPos": -0.019234154421768707,
+      "curvature": 0.015964524680640666,
+      "is_corner": false
+    },
+    {
+      "s": 3562.5,
+      "speed_kmh": 130.6828,
+      "trackPos": -0.01813097525510204,
+      "curvature": 0.01595882756265054,
+      "is_corner": false
+    },
+    {
+      "s": 3567.5,
+      "speed_kmh": 126.76480000000001,
+      "trackPos": -0.017084332738095235,
+      "curvature": 0.0004143100407312442,
+      "is_corner": false
+    },
+    {
+      "s": 3572.5,
+      "speed_kmh": 122.8048,
+      "trackPos": -0.016091223214285716,
+      "curvature": -0.01101143283884551,
+      "is_corner": false
+    },
+    {
+      "s": 3577.5,
+      "speed_kmh": 118.6944,
+      "trackPos": -0.015152304846938774,
+      "curvature": -0.008530046582728216,
+      "is_corner": false
+    },
+    {
+      "s": 3582.5,
+      "speed_kmh": 114.31400000000001,
+      "trackPos": 0.02147246318027211,
+      "curvature": 0.00594697268241051,
+      "is_corner": false
+    },
+    {
+      "s": 3587.5,
+      "speed_kmh": 90.026236,
+      "trackPos": 0.059220282363945595,
+      "curvature": 0.022202305529046323,
+      "is_corner": false
+    },
+    {
+      "s": 3592.5,
+      "speed_kmh": 70.21759599999999,
+      "trackPos": 0.0898591585544218,
+      "curvature": 0.03601826164600829,
+      "is_corner": false
+    },
+    {
+      "s": 3597.5,
+      "speed_kmh": 55.269715999999995,
+      "trackPos": 0.1296674124409764,
+      "curvature": 0.04708339030438924,
+      "is_corner": false
+    },
+    {
+      "s": 3602.5,
+      "speed_kmh": 43.169416,
+      "trackPos": 0.16633859611444576,
+      "curvature": 0.055827088424027047,
+      "is_corner": true
+    },
+    {
+      "s": 3607.5,
+      "speed_kmh": 34.758835999999995,
+      "trackPos": 0.19701560975080942,
+      "curvature": 0.062174608195120204,
+      "is_corner": true
+    }
+  ]
+}
