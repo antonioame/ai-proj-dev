@@ -40,8 +40,11 @@ def load_driver(name: str) -> BaseDriver:
     elif name == "bc_model":
         from drivers.bc.driver import BCDriver
         return BCDriver()
+    elif name == "optimal":
+        from drivers.optimal.driver import OptimalLineDriver
+        return OptimalLineDriver()
     raise ValueError(
-        f"Unknown driver '{name}'. Available: rule_based, bc_model"
+        f"Unknown driver '{name}'. Available: rule_based, bc_model, optimal"
     )
 
 
@@ -98,12 +101,17 @@ def run(
             if save_telemetry:
                 rows.append({
                     "timestamp": time.time(),
+                    "distFromStart": state.distFromStart,
+                    "distRaced": state.distRaced,
+                    "curLapTime": state.curLapTime,
                     "angle": state.angle,
                     "speed": state.speed,
                     "trackPos": state.trackPos,
                     **{f"track_{i}": state.track[i] for i in range(len(state.track))},
                     "rpm": state.rpm,
                     "gear": state.gear,
+                    "damage": state.damage,
+                    **{f"wheel_{i}": state.wheelSpinVel[i] for i in range(len(state.wheelSpinVel))},
                     "steer": action.steer,
                     "accel": action.accel,
                     "brake": action.brake,

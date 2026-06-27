@@ -28,7 +28,7 @@ STEER_LOCK: float = 0.785398  # 45° in radians
 #   physics_safe(d) = sqrt(max(0, (d - BRAKE_MARGIN) * BRAKE_DECEL_FACTOR))
 #
 # BRAKE_DECEL_FACTOR calibrated for this simulator: gives ~1 g deceleration.
-BRAKE_DECEL_FACTOR: float = 255.0   # ~1.0 g deceleration; brakes 7-15 m later than 232
+BRAKE_DECEL_FACTOR: float = 270.0   # ~1.05 g; reflects higher brake pressure with ABS (was 255)
 BRAKE_MARGIN: float = 5.0           # metres of safety headroom in stopping formula
 TARGET_PHYSICS_SCALE: float = 1.20  # target = physics_safe × this → physics binds
 MAX_SPEED: float = 200.0            # absolute cap (km/h)
@@ -40,15 +40,21 @@ EDGE_SPEED_HARD: tuple[float, float] = (0.88, 100.0)
 # ---------------------------------------------------------------------------
 # Braking model
 # ---------------------------------------------------------------------------
-# Maximum brake pressure by speed regime
-BRAKE_MAX_HIGH: float = 0.65   # > 140 km/h — partial; preserve steering authority
-BRAKE_MAX_MED:  float = 0.78   # 90–140 km/h
-BRAKE_MAX_LOW:  float = 0.90   # < 90 km/h
+# Maximum brake pressure by speed regime (ABS allows higher values safely)
+BRAKE_MAX_HIGH: float = 0.82   # > 140 km/h   (was 0.65 — ABS prevents lockup)
+BRAKE_MAX_MED:  float = 0.88   # 90–140 km/h  (was 0.78)
+BRAKE_MAX_LOW:  float = 0.93   # < 90 km/h    (was 0.90)
 
 # Electronic Brake-force Distribution: back off while cornering
 EBD_STEER_THRESH: float = 0.08
 EBD_GAIN: float = 0.75
 EBD_FLOOR: float = 0.40
+
+# ---------------------------------------------------------------------------
+# Anti-lock Braking System (ABS)
+# ---------------------------------------------------------------------------
+ABS_SLIP_THRESHOLD: float = 0.80   # front wheel < 80% of ground speed = lockup
+# Reduction: brake × (1 − lockup / threshold); prevents lockup, allows higher BRAKE_MAX
 
 # ---------------------------------------------------------------------------
 # Full-throttle override
@@ -269,6 +275,7 @@ class RuleBasedDriver(BaseDriver):
             if steer_abs > EBD_STEER_THRESH:
                 max_brake = max(EBD_FLOOR, max_brake - (steer_abs - EBD_STEER_THRESH) * EBD_GAIN)
             brake = min(max_brake, diff / 10.0)
+            brake = self._apply_abs(brake, state)
             self._speed_integral = 0.0
             return 0.0, brake
 
@@ -297,6 +304,25 @@ class RuleBasedDriver(BaseDriver):
         )
         control = THROTTLE_KP * error + THROTTLE_KI * self._speed_integral
         return min(control, 1.0), 0.0
+
+    # ------------------------------------------------------------------
+    # Anti-lock Braking System
+    # ------------------------------------------------------------------
+
+    def _apply_abs(self, brake: float, state: SensorState) -> float:
+        """Reduce brake pressure if front wheels are locking up."""
+        if brake < 0.05 or state.speed < 10.0 or len(state.wheelSpinVel) < 2:
+            return brake
+        speed_ms = state.speed * (1000.0 / 3600.0)
+        expected = speed_ms / WHEEL_RADIUS
+        if expected < 1.0:
+            return brake
+        front = (state.wheelSpinVel[0] + state.wheelSpinVel[1]) / 2.0
+        ratio = front / expected  # 1.0 = rolling, <threshold = locking
+        if ratio < ABS_SLIP_THRESHOLD:
+            lockup = ABS_SLIP_THRESHOLD - ratio
+            brake = max(0.0, brake * (1.0 - lockup / ABS_SLIP_THRESHOLD))
+        return brake
 
     # ------------------------------------------------------------------
     # Traction control
