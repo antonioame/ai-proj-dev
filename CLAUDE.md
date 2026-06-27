@@ -44,19 +44,20 @@ TORCS_PORT   (default: 3001)
 ### Phase 2 — TODO
 **Behavioral Cloning from recorded laps.**
 - Prerequisites: ≥5 clean laps saved in `data/` (run `scripts/record_human.py`)
-- Files already stubbed: `training/behavioral_cloning/`
-  - `dataset.py` — PyTorch Dataset from CSV
-  - `model.py`   — MLP policy (sensors → steer/accel/brake/gear)
-  - `train.py`   — training loop (MPS-aware, saves `.pth` checkpoint)
-- Next step: implement a `BCDriver` in `drivers/bc/driver.py` that loads
-  the saved `.pth` and calls `model.predict()` at each step.
-- Use `scripts/evaluate.py --driver bc_model` to benchmark.
+- Infrastructure **fully implemented** — dataset, model, train script, and `BCDriver` are all ready
+  - `training/behavioral_cloning/dataset.py` — PyTorch Dataset from CSV
+  - `training/behavioral_cloning/model.py`   — MLP policy (sensors → steer/accel/brake/gear)
+  - `training/behavioral_cloning/train.py`   — training loop (MPS-aware, saves `.pth` checkpoint)
+  - `drivers/bc/driver.py` — BCDriver with lazy checkpoint loading
+- **Only missing:** ≥5 recorded laps + trained `models/bc_v1.pth`
+- See `docs/PHASE2_BEHAVIORAL_CLONING.md` for the complete step-by-step guide.
 
 ### Phase 3 — TODO
 **Reinforcement Learning fine-tuning (DDPG or PPO).**
-- Wrap `TORCSClient` as a `gymnasium.Env` (see `training/rl/README.md`)
+- Wrap `TORCSClient` as a `gymnasium.Env` (`training/rl/gym_env.py` — not yet created)
 - Use BC checkpoint to warm-start the policy
 - Reward: forward progress minus track-deviation minus damage
+- See `docs/PHASE3_REINFORCEMENT_LEARNING.md` for implementation plan + code templates.
 
 ---
 
@@ -104,15 +105,24 @@ TORCS_HOST=<windows-ip> python scripts/record_human.py --driver rule_based
 ```
 torcs_env/        SCR protocol (sensors, actions, UDP client, race XML)
 drivers/          Driving agents
-  rule_based/     Phase 1 baseline
-  bc/             (Phase 2, to create)
+  rule_based/     Phase 1 baseline (complete)
+  bc/             Phase 2 — BCDriver ready, needs trained .pth
 training/
-  behavioral_cloning/   Dataset + MLP model + train script
-  rl/                   Placeholder for Phase 3
-scripts/          CLI entry points (run, record, evaluate)
+  behavioral_cloning/   Dataset + MLP model + train script (all ready)
+  rl/                   Placeholder for Phase 3 (README only)
+scripts/          CLI entry points (run, record, evaluate, launch_race)
 data/             Telemetry CSVs (git-ignored)
 results/          Evaluation JSON files (git-ignored)
+models/           Trained checkpoints (git-ignored, created by train.py)
 tests/            37 unit tests
+docs/             Detailed documentation (see below)
+  ARCHITECTURE.md           System design, data flow, SCR protocol
+  API_REFERENCE.md          All public classes and functions
+  DEVELOPMENT_GUIDE.md      Setup, workflows, tuning, troubleshooting
+  PHASE2_BEHAVIORAL_CLONING.md  Step-by-step BC implementation guide
+  PHASE3_REINFORCEMENT_LEARNING.md  RL plan + code templates
+  LAPTIME_OPTIMIZATION_PLAN.md  Performance plan to minimise the Corkscrew lap time
+old_project_material/  Legacy reference code (do not import)
 ```
 
 ---
