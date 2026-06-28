@@ -27,17 +27,17 @@ _DEFAULT_MAP_PATH = (
 )
 
 # --------------- Steering ---------------
-STEER_ANGLE_GAIN:   float = 2.0
+STEER_ANGLE_GAIN:   float = 1.5     # Reduced from 2.0 for smoother response
 STEER_LINE_GAIN:    float = 0.20    # trackPos error → steer correction
 STEER_LOCK:         float = 0.785398
-STEER_SMOOTH_SPEED: float = 40.0
+STEER_SMOOTH_SPEED: float = 60.0    # Increased from 40.0 for more smoothing
 STEER_SMOOTH_ALPHA: float = 0.35
 
 # --------------- Speed control ---------------
 BRAKE_MAX:        float = 0.90
-SCAN_AHEAD_M:     float = 250.0     # look this far ahead for speed minima
-BRAKE_MARGIN_M:   float = 12.0     # start braking this many metres before the mathematical onset
-THROTTLE_BASE:    float = 0.70     # minimum throttle when below target speed
+SCAN_AHEAD_M:     float = 180.0     # Reduced from 250.0 for shorter look-ahead
+BRAKE_MARGIN_M:   float = 25.0      # Increased from 12.0 to brake earlier
+THROTTLE_BASE:    float = 0.70      # minimum throttle when below target speed
 
 # ABS
 WHEEL_RADIUS:        float = 0.33
@@ -50,8 +50,8 @@ RPM_DOWNSHIFT_DEFAULT: float = 3000.0
 GEAR_SPEED_CAPS: list[tuple[float, int]] = [(15.0, 1), (45.0, 2), (75.0, 3)]
 
 # --------------- Safety / startup ---------------
-STARTUP_STEPS:     int   = 80
-FALLBACK_TRACKPOS: float = 1.2     # abs(trackPos) > this → recovery
+STARTUP_STEPS:     int   = 150      # Increased from 80 for conservative startup
+FALLBACK_TRACKPOS: float = 1.2      # abs(trackPos) > this → recovery
 
 
 class OptimalLineDriver(BaseDriver):
