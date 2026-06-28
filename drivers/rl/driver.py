@@ -16,7 +16,14 @@ import numpy as np
 from drivers.base_driver import BaseDriver
 from torcs_env.actions import Action
 from torcs_env.sensors import SensorState
-from training.rl.gym_env import _TRACK_IDX, _GEAR_UP_RPM, _GEAR_DOWN_RPM, _GEAR_COOLDOWN
+from training.rl.gym_env import (
+    _TRACK_IDX,
+    _GEAR_UP_RPM,
+    _GEAR_DOWN_RPM,
+    _GEAR_COOLDOWN,
+    _OBS_MEAN,
+    _OBS_STD,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -76,20 +83,20 @@ class RLDriver(BaseDriver):
     # ------------------------------------------------------------------
 
     def _make_obs(self, state: SensorState) -> np.ndarray:
-        return np.array(
+        raw = np.array(
             [
-                state.speed / 300.0,
+                state.speed,
                 state.trackPos,
-                state.angle / np.pi,
-                state.rpm / 10_000.0,
-                float(self._gear) / 6.0,
-                state.damage / 10_000.0,
-                state.track[_TRACK_IDX[0]] / 200.0,
-                state.track[_TRACK_IDX[1]] / 200.0,
-                state.track[_TRACK_IDX[2]] / 200.0,
+                state.angle,
+                state.rpm,
+                float(self._gear),
+                state.track[_TRACK_IDX[0]],
+                state.track[_TRACK_IDX[1]],
+                state.track[_TRACK_IDX[2]],
             ],
             dtype=np.float32,
         )
+        return (raw - _OBS_MEAN) / _OBS_STD
 
     # ------------------------------------------------------------------
     # Gear management (mirrors gym_env logic)

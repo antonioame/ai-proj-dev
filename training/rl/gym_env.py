@@ -1,15 +1,18 @@
 """Gymnasium environment wrapping TORCSClient for RL training (Phase 3).
 
-Observation space (9 features):
-  [0] speed       — forward speed, normalised by 300 km/h
+Observation space (8 features — matches BC v2 training exactly):
+  [0] speed       — forward speed (km/h), z-score normalised
   [1] trackPos    — lateral position on track (−1=left edge, +1=right edge)
-  [2] angle       — car orientation vs track axis, normalised by π
-  [3] rpm         — engine RPM, normalised by 10 000
-  [4] gear        — current gear (1–6), normalised by 6
-  [5] damage      — cumulative damage, normalised by 10 000
-  [6] track[7]    — range-finder at −6°, normalised by 200 m
-  [7] track[9]    — range-finder at   0° (dead ahead), normalised by 200 m
-  [8] track[11]   — range-finder at  +6°, normalised by 200 m
+  [2] angle       — car orientation vs track axis (radians)
+  [3] rpm         — engine RPM
+  [4] gear        — current gear (1–6)
+  [5] track[6]    — range-finder at ≈−9°
+  [6] track[12]   — range-finder at ≈  0° (dead ahead)
+  [7] track[18]   — range-finder at ≈+81°
+
+All features are z-score normalised using stats from bc_v2.pth so that
+the input distribution matches the one BC was trained on. This is critical
+for BC warm-start: mismatched normalization causes zero-steering.
 
 Action space (3 continuous):
   [0] steer  ∈ [−1, 1]   (−1 = full right, +1 = full left)
@@ -32,9 +35,21 @@ from training.rl.reward import compute_reward
 
 logger = logging.getLogger(__name__)
 
-# Indices into the 19-element track sensor array that we include in obs
-_TRACK_IDX = (7, 9, 11)   # ≈ −6°, 0°, +6°
-OBS_DIM = 9
+# Track sensor indices — must match BC v2 training (dataset.py: track_6, track_12, track_18)
+_TRACK_IDX = (6, 12, 18)
+OBS_DIM = 8  # [speed, trackPos, angle, rpm, gear, track[6], track[12], track[18]]
+
+# Z-score normalisation stats from bc_v2.pth (empirical, 35 k samples).
+# Single source of truth: imported by drivers/rl/driver.py to guarantee
+# training/inference symmetry.
+_OBS_MEAN = np.array(
+    [88.3322, -0.07083, 0.007979, 6952.43, 3.9712, 48.499, 43.285, 8.3500],
+    dtype=np.float32,
+)
+_OBS_STD = np.array(
+    [38.331, 0.29979, 0.049692, 1590.22, 1.4519, 36.969, 31.052, 5.2554],
+    dtype=np.float32,
+)
 
 _GEAR_UP_RPM = 9000
 _GEAR_DOWN_RPM = 3500
@@ -90,20 +105,20 @@ class TORCSGymEnv(gym.Env):
     # ------------------------------------------------------------------
 
     def _make_obs(self, state: SensorState) -> np.ndarray:
-        return np.array(
+        raw = np.array(
             [
-                state.speed / 300.0,
+                state.speed,
                 state.trackPos,
-                state.angle / np.pi,
-                state.rpm / 10_000.0,
-                float(self._gear) / 6.0,
-                state.damage / 10_000.0,
-                state.track[_TRACK_IDX[0]] / 200.0,
-                state.track[_TRACK_IDX[1]] / 200.0,
-                state.track[_TRACK_IDX[2]] / 200.0,
+                state.angle,
+                state.rpm,
+                float(self._gear),
+                state.track[_TRACK_IDX[0]],
+                state.track[_TRACK_IDX[1]],
+                state.track[_TRACK_IDX[2]],
             ],
             dtype=np.float32,
         )
+        return (raw - _OBS_MEAN) / _OBS_STD
 
     def _update_gear(self, state: SensorState) -> None:
         if (self._steps - self._last_gear_step) < _GEAR_COOLDOWN:

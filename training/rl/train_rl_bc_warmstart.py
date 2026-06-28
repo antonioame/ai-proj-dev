@@ -1,7 +1,12 @@
 """RL fine-tuning with BC checkpoint as warm-start.
 
-Start from BC v2 (8-feature model trained on 35k samples), then fine-tune with RL
-to optimize for lap time while staying on track.
+Start from BC v2 (8-feature model, z-score normalised), then fine-tune with PPO.
+
+Key fixes vs previous version:
+  1. Model is built BEFORE TORCS starts — eliminates pre-connection timeout.
+  2. BC backbone weights are properly mapped to PPO policy_net layers.
+  3. Real step count tracked via SB3 callback (no more fake elapsed-time estimates).
+  4. Per-session step limit avoids over-running a single TORCS session.
 """
 
 from __future__ import annotations
@@ -18,14 +23,30 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import torch
 import numpy as np
 from stable_baselines3 import PPO
+from stable_baselines3.common.callbacks import BaseCallback
 from training.rl.gym_env import TORCSGymEnv
-from training.behavioral_cloning.model import MLPPolicy as BCMLPPolicy
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 TORCS_EXE = Path(r"U:\AI-Partition\torcs\torcs\wtorcs.exe")
 RACE_XML = Path(r"U:\AI-Partition\progetto_v2\ai_private_proj\torcs_env\race_config\corkscrew_solo.xml")
+
+# Steps to collect per TORCS session before saving a checkpoint.
+# Keep below ~1 500 to avoid hitting the per-session TORCS timeout.
+STEPS_PER_SESSION = 1000
+
+
+class StepCounter(BaseCallback):
+    """Callback that counts real environment steps."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.real_steps: int = 0
+
+    def _on_step(self) -> bool:
+        self.real_steps += 1
+        return True  # continue training
 
 
 def start_torcs() -> subprocess.Popen:
@@ -45,174 +66,196 @@ def stop_torcs(proc: subprocess.Popen) -> None:
         proc.terminate()
         try:
             proc.wait(timeout=3)
-        except:
+        except Exception:
             proc.kill()
 
 
 def load_bc_checkpoint(bc_path: Path) -> dict:
-    """Load BC checkpoint and extract policy weights."""
-    logger.info(f"Loading BC checkpoint from {bc_path}")
-    ckpt = torch.load(bc_path, map_location="cpu", weights_only=False)
-    return ckpt
+    logger.info("Loading BC checkpoint from %s", bc_path)
+    return torch.load(str(bc_path), map_location="cpu", weights_only=False)
 
 
-def create_bc_initialized_ppo(
-    env,
-    bc_checkpoint: dict,
-    policy_lr: float = 1e-4,
-) -> PPO:
-    """Create PPO model initialized from BC weights."""
-    logger.info("Creating PPO model initialized from BC checkpoint")
+def _init_ppo_from_bc(model: PPO, bc_state: dict) -> int:
+    """Copy BC backbone weights into PPO's policy_net.
 
-    # Create PPO with same policy architecture as BC
+    BC backbone layout (indices into nn.Sequential):
+        0 Linear(8→256)   ← copy → PPO policy_net[0] Linear(8→256)
+        1 LayerNorm(256)
+        2 ReLU
+        3 Linear(256→256) ← copy → PPO policy_net[2] Linear(256→256)
+        4 LayerNorm(256)
+        5 ReLU
+        6 Linear(256→128) (no matching layer in PPO — skip)
+
+    Returns the number of parameter tensors copied.
+    """
+    ppo_state = model.policy.state_dict()
+    patch: dict[str, torch.Tensor] = {}
+
+    mapping = {
+        "backbone.0.weight": "mlp_extractor.policy_net.0.weight",
+        "backbone.0.bias":   "mlp_extractor.policy_net.0.bias",
+        "backbone.3.weight": "mlp_extractor.policy_net.2.weight",
+        "backbone.3.bias":   "mlp_extractor.policy_net.2.bias",
+    }
+
+    copied = 0
+    for bc_key, ppo_key in mapping.items():
+        if bc_key in bc_state and ppo_key in ppo_state:
+            bc_param = bc_state[bc_key]
+            ppo_param = ppo_state[ppo_key]
+            if bc_param.shape == ppo_param.shape:
+                patch[ppo_key] = bc_param.clone()
+                copied += 1
+            else:
+                logger.warning(
+                    "Shape mismatch %s: BC %s vs PPO %s — skipped",
+                    bc_key, bc_param.shape, ppo_param.shape,
+                )
+
+    if patch:
+        ppo_state.update(patch)
+        model.policy.load_state_dict(ppo_state)
+        logger.info("Copied %d parameter tensors from BC backbone to PPO policy_net", copied)
+    else:
+        logger.warning("No BC weights copied — starting from random initialisation")
+
+    return copied
+
+
+def build_model(env: TORCSGymEnv, bc_checkpoint: dict, model_path: Path) -> PPO:
+    """Build PPO from scratch or load existing checkpoint, then patch in BC weights."""
+    if model_path.exists():
+        logger.info("Loading PPO checkpoint: %s", model_path)
+        model = PPO.load(str(model_path), env=env, device="cpu")
+        logger.info("Checkpoint loaded — skipping BC weight init")
+        return model
+
+    logger.info("Creating fresh PPO model")
     model = PPO(
         "MlpPolicy",
         env,
         verbose=0,
-        learning_rate=policy_lr,
-        n_steps=512,  # Larger buffer than before
+        learning_rate=1e-4,
+        n_steps=STEPS_PER_SESSION,
         batch_size=64,
-        n_epochs=3,   # More training per batch
+        n_epochs=5,
         gamma=0.99,
         gae_lambda=0.95,
-        policy_kwargs=dict(net_arch=dict(pi=[256, 256], vf=[256, 256])),  # Larger network
+        policy_kwargs=dict(net_arch=dict(pi=[256, 256], vf=[256, 256])),
         tensorboard_log=None,
         device="cpu",
     )
-
-    # Try to initialize policy from BC weights
-    try:
-        bc_state = bc_checkpoint["model_state"]
-        ppo_state = model.policy.state_dict()
-
-        # Match BC weights to PPO policy
-        matched = 0
-        for bc_name, bc_param in bc_state.items():
-            # BC uses "steer_head", "accel_head", "brake_head", "backbone"
-            # PPO uses "mlp_extractor.policy_net" and "mlp_extractor.value_net"
-
-            # Try to map BC backbone to PPO mlp_extractor
-            if "backbone" in bc_name and "mlp_extractor" in ppo_state:
-                # Simplified: just log that we found backbone
-                logger.info(f"Found BC backbone layer: {bc_name}")
-                matched += 1
-
-        logger.info(f"Matched {matched} BC layers to PPO. Starting with BC knowledge.")
-    except Exception as e:
-        logger.warning(f"Could not initialize from BC weights: {e}. Starting fresh.")
-
+    _init_ppo_from_bc(model, bc_checkpoint["model_state"])
     return model
 
 
-def train_rl_session(
+def train_session(
     session_num: int,
-    bc_checkpoint: dict,
-    total_target_steps: int,
-    model_dir: Path,
-) -> int:
-    """Run one RL training session with BC warm-start."""
+    model: PPO,
+    model_path: Path,
+) -> tuple[int, subprocess.Popen | None]:
+    """Run one TORCS session and return (real_steps, torcs_proc).
+
+    TORCS is started AFTER the model is ready so the pre-connection
+    timeout cannot fire before the env connects.
+    """
     torcs_proc = start_torcs()
-    time.sleep(2)
+    counter = StepCounter()
+    t0 = time.time()
 
-    env = TORCSGymEnv(host="localhost", port=3001)
-
-    # Create PPO initialized from BC
-    model = create_bc_initialized_ppo(env, bc_checkpoint, policy_lr=1e-4)
-
-    # Load checkpoint from previous session if it exists
-    model_path = model_dir / "model.zip"
-    if model_path.exists():
-        logger.info(f"Loading previous checkpoint: {model_path}")
-        model = PPO.load(str(model_path), env=env, device="cpu")
-
-    steps_this_session = 0
     try:
-        logger.info(f"Session {session_num}: Training with BC warm-start...")
-        t0 = time.time()
-
-        # Learn for remaining steps
-        remaining = total_target_steps
-        model.learn(total_timesteps=remaining, reset_num_timesteps=False, log_interval=None)
-
+        logger.info("Session %d: collecting %d steps...", session_num, STEPS_PER_SESSION)
+        model.learn(
+            total_timesteps=STEPS_PER_SESSION,
+            callback=counter,
+            reset_num_timesteps=False,
+            log_interval=None,
+        )
         elapsed = time.time() - t0
-        steps_this_session = remaining
-        logger.info(f"✓ Session {session_num}: {steps_this_session:,} steps in {elapsed:.1f}s")
+        logger.info(
+            "Session %d done: %d real steps in %.1fs",
+            session_num, counter.real_steps, elapsed,
+        )
 
-    except (ConnectionError, RuntimeError) as e:
-        if "TORCS" in str(e) or "10054" in str(e):
-            elapsed = time.time() - t0
-            steps_this_session = int(600 * elapsed) if elapsed > 0 else 0
-            logger.warning(f"Session {session_num} timeout after {elapsed:.1f}s (~{steps_this_session} steps)")
-        else:
-            logger.error(f"Session {session_num} error: {e}")
+    except (ConnectionError, RuntimeError, OSError) as exc:
+        elapsed = time.time() - t0
+        logger.warning(
+            "Session %d ended early after %.1fs (%d steps): %s",
+            session_num, elapsed, counter.real_steps, exc,
+        )
 
     finally:
         try:
             model.save(str(model_path))
-            logger.info(f"Model checkpoint saved")
-        except:
-            pass
-
-        try:
-            env.close()
-        except:
-            pass
+        except Exception as exc:
+            logger.error("Failed to save checkpoint: %s", exc)
 
         stop_torcs(torcs_proc)
-        time.sleep(2)
+        time.sleep(1)
 
-    return steps_this_session
+    return counter.real_steps
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="RL fine-tuning with BC warm-start")
-    parser.add_argument("--bc-model", default="models/bc_v2.pth", help="BC checkpoint path")
-    parser.add_argument("--target-steps", type=int, default=50000, help="Total target steps")
-    parser.add_argument("--sessions", type=int, default=30, help="Max sessions")
-    parser.add_argument("--save-path", default="models/rl_bc_warmstart")
+    parser.add_argument("--bc-model", default="models/bc_v2.pth")
+    parser.add_argument("--target-steps", type=int, default=100_000)
+    parser.add_argument("--sessions", type=int, default=120)
+    parser.add_argument("--save-path", default="models/rl_bc_warmstart_v3_fixed")
     args = parser.parse_args()
 
     bc_path = Path(args.bc_model)
     if not bc_path.exists():
-        logger.error(f"BC checkpoint not found: {bc_path}")
-        return
+        logger.error("BC checkpoint not found: %s", bc_path)
+        sys.exit(1)
 
     save_path = Path(args.save_path)
     save_path.mkdir(parents=True, exist_ok=True)
+    model_path = save_path / "model.zip"
 
     bc_checkpoint = load_bc_checkpoint(bc_path)
 
-    logger.info(f"🚀 RL Fine-tuning with BC Warm-start")
-    logger.info(f"BC Model: {bc_path}")
-    logger.info(f"Target: {args.target_steps:,} steps across {args.sessions} sessions")
+    # Build a dummy env just for PPO construction (no TORCS needed yet).
+    # A real env connects lazily in reset(), so this is safe.
+    dummy_env = TORCSGymEnv(host="localhost", port=3001)
+    model = build_model(dummy_env, bc_checkpoint, model_path)
+    # The dummy env is discarded; each session creates its own env via model.set_env().
+
+    logger.info("Target: %d steps across up to %d sessions", args.target_steps, args.sessions)
 
     total_steps = 0
-
     for session_num in range(1, args.sessions + 1):
-        steps = train_rl_session(session_num, bc_checkpoint, args.target_steps, save_path)
-        total_steps += steps
-
-        logger.info(f"\n{'='*70}")
-        logger.info(f"Progress: {total_steps:,}/{args.target_steps:,} steps ({100*total_steps//args.target_steps}%)")
-        logger.info(f"{'='*70}\n")
-
-        if total_steps >= args.target_steps:
+        remaining = args.target_steps - total_steps
+        if remaining <= 0:
             break
 
-    logger.info(f"\n{'='*70}")
-    logger.info(f"✓ RL Fine-tuning Complete!")
-    logger.info(f"Total steps: {total_steps:,}")
-    logger.info(f"Sessions: {session_num}")
-    logger.info(f"Model: {save_path}/model.zip")
-    logger.info(f"{'='*70}")
+        # Recreate env each session so TORCS reconnects cleanly.
+        env = TORCSGymEnv(host="localhost", port=3001)
+        model.set_env(env)
 
-    # Create final checkpoint
+        real_steps = train_session(session_num, model, model_path)
+        total_steps += real_steps
+
+        pct = 100 * total_steps // args.target_steps
+        logger.info(
+            "Progress: %d/%d steps (%d%%)", total_steps, args.target_steps, pct
+        )
+
+        try:
+            env.close()
+        except Exception:
+            pass
+
+    # Save final checkpoint
     final_path = save_path / "final.zip"
-    model_path = save_path / "model.zip"
+    import shutil
     if model_path.exists():
-        import shutil
         shutil.copy(model_path, final_path)
-        logger.info(f"Final checkpoint: {final_path}")
+
+    logger.info(
+        "Done. Total real steps: %d. Model: %s", total_steps, final_path
+    )
 
 
 if __name__ == "__main__":
