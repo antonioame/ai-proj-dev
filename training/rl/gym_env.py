@@ -21,6 +21,7 @@ Gear is handled by rule-based logic inside the env to keep the action space smal
 
 from __future__ import annotations
 
+import logging
 import numpy as np
 import gymnasium as gym
 
@@ -28,6 +29,8 @@ from torcs_env.client import TORCSClient, RESTART, SHUTDOWN
 from torcs_env.sensors import SensorState
 from torcs_env.actions import Action
 from training.rl.reward import compute_reward
+
+logger = logging.getLogger(__name__)
 
 # Indices into the 19-element track sensor array that we include in obs
 _TRACK_IDX = (7, 9, 11)   # ≈ −6°, 0°, +6°
@@ -118,12 +121,32 @@ class TORCSGymEnv(gym.Env):
 
     def reset(self, *, seed=None, options=None):
         super().reset(seed=seed)
+        import time
 
         if self._client is None:
+            # Reconnect after timeout or first initialization
+            logger.info("Reconnecting to TORCS...")
+            time.sleep(1)  # Wait for TORCS to settle after timeout
             self._client = TORCSClient(self._host, self._port)
-            self._client.connect()
+            try:
+                self._client.connect()
+            except Exception as e:
+                logger.error(f"Failed to reconnect: {e}")
+                self._client = None
+                raise
         else:
-            self._client.send_restart()
+            try:
+                self._client.send_restart()
+            except Exception as e:
+                logger.warning(f"Restart failed ({e}), reconnecting...")
+                try:
+                    self._client.close()
+                except:
+                    pass
+                self._client = None
+                time.sleep(1)
+                self._client = TORCSClient(self._host, self._port)
+                self._client.connect()
 
         # Drain protocol control messages until we get a real sensor packet
         result = self._client.receive()
@@ -146,15 +169,32 @@ class TORCSGymEnv(gym.Env):
     def step(self, action: np.ndarray):
         assert self._prev_state is not None, "Call reset() before step()"
 
+        # Reconnect if client was cleared (e.g., after timeout recovery)
+        if self._client is None:
+            raise RuntimeError("Client is None; reset() must be called first")
+
         steer = float(np.clip(action[0], -1.0, 1.0))
         accel = float(np.clip(action[1], 0.0, 1.0))
         brake = float(np.clip(action[2], 0.0, 1.0))
 
         self._update_gear(self._prev_state)
         act = Action(steer=steer, accel=accel, brake=brake, gear=self._gear)
-        self._client.send(act)
 
-        result = self._client.receive()
+        # Send action and receive next state (retry on transient failures)
+        try:
+            self._client.send(act)
+            result = self._client.receive()
+        except ConnectionError as e:
+            # On timeout, terminate episode and let reset() handle reconnection
+            logger.warning(f"Timeout: {e}")
+            try:
+                self._client.close()
+            except:
+                pass
+            self._client = None
+            # Return terminal signal with large negative reward
+            obs = self._make_obs(self._prev_state)
+            return obs, -100.0, True, False, {"event": "timeout"}
 
         if result in (RESTART, SHUTDOWN):
             # Server-side forced restart or shutdown — end the episode

@@ -47,13 +47,23 @@ def load_driver(name: str) -> BaseDriver:
         from drivers.rl.driver import RLDriver
         return RLDriver()
     elif name.startswith("rl_"):
-        # rl_ddpg or rl_ppo — pick algorithm from suffix
-        algo = name.split("_", 1)[1]
-        model_path = f"models/{algo}_v1"
+        # rl_ppo, rl_ddpg, rl_direct_v1, rl_persistent_v1, etc.
+        # Detect algorithm from model name or suffix
+        suffix = name.split("_", 1)[1]
+
+        # Check if it's a known pattern (ppo, ddpg) or a custom model name
+        if suffix in ("ppo", "ddpg"):
+            model_path = f"models/{suffix}_v1"
+            algo = suffix
+        else:
+            # Assume custom model name, default to PPO
+            model_path = f"models/{suffix}/final" if (PROJECT_ROOT / "models" / suffix / "final.zip").exists() else f"models/{name}"
+            algo = "ppo"
+
         from drivers.rl.driver import RLDriver
         return RLDriver(model_path=model_path, algo=algo)
     raise ValueError(
-        f"Unknown driver '{name}'. Available: rule_based, bc_model, optimal, rl_model, rl_ddpg, rl_ppo"
+        f"Unknown driver '{name}'. Available: rule_based, bc_model, optimal, rl_model, rl_ppo, rl_ddpg, or rl_<model_name>"
     )
 
 

@@ -11,11 +11,11 @@ import torch
 from torch.utils.data import Dataset
 
 # Sensor columns used as model inputs
-# Supports both old format (speedX, damage) and new format (speed, no damage)
-SENSOR_COLS = ["speed", "trackPos", "angle", "rpm", "gear"]
+# Include track lookahead sensors like RL model for better steering decisions
+SENSOR_COLS = ["speed", "trackPos", "angle", "rpm", "gear", "track_6", "track_12", "track_18"]
 
-# Action columns used as model outputs
-ACTION_COLS = ["steer", "accel", "brake", "gear_cmd"]
+# Action columns used as model outputs (gear is automatic, not learned)
+ACTION_COLS = ["steer", "accel", "brake"]
 
 
 def load_csv(path: str | Path) -> pd.DataFrame:

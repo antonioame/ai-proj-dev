@@ -78,7 +78,6 @@ def train(
                 mse(out["steer"], y[:, 0])
                 + mse(out["accel"], y[:, 1])
                 + mse(out["brake"], y[:, 2])
-                + ce(out["gear_logits"], (y[:, 3].long() + 1))  # shift gear to 0-based
             )
             optimizer.zero_grad()
             loss.backward()
@@ -98,7 +97,6 @@ def train(
                     mse(out["steer"], y[:, 0])
                     + mse(out["accel"], y[:, 1])
                     + mse(out["brake"], y[:, 2])
-                    + ce(out["gear_logits"], (y[:, 3].long() + 1))
                 ).item()
 
         t_loss = train_loss / len(train_loader)

@@ -48,8 +48,8 @@ class TORCSClient:
         host: Optional[str] = None,
         port: Optional[int] = None,
         sensor_angles: list[int] = _DEFAULT_ANGLES,
-        timeout: float = 10.0,
-        max_reconnect_attempts: int = 5,
+        timeout: float = 30.0,
+        max_reconnect_attempts: int = 10,
     ) -> None:
         self.host = host or os.environ.get("TORCS_HOST", "localhost")
         self.port = int(port or os.environ.get("TORCS_PORT", "3001"))

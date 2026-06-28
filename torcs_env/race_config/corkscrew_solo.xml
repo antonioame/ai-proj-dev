@@ -22,7 +22,7 @@
     <section name="1">
       <attstr name="name"     val="Quick Race"/>
       <attstr name="type"     val="race"/>
-      <attnum name="laps"     val="1"/>
+      <attnum name="laps"     val="999"/>
       <attstr name="start"    val="standing"/>
       <attnum name="fuel"     val="0"/>   <!-- 0 = no fuel consumption -->
       <attnum name="damage"   val="0"/>   <!-- 0 = no damage model     -->
