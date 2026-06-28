@@ -1,0 +1,10 @@
+import pandas as pd
+df = pd.read_csv('data/keyboard_20260628_181914.csv')
+print('RPM stats:')
+print(df['rpm'].describe())
+print('\nGear stats:')
+print(df['gear'].describe())
+print('\nSpeed stats:')
+print(df['speed'].describe())
+print('\nFirst 10 rows:')
+print(df[['speed', 'rpm', 'gear']].head(10))

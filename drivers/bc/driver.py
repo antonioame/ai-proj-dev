@@ -32,6 +32,12 @@ class BCDriver(BaseDriver):
         self._mean = None
         self._std = None
         self._loaded = threading.Event()
+        self._current_gear = 1
+        self._last_gear_change_step = -100
+        self._step_count = 0
+        # Auto gear thresholds (RPM)
+        self._gear_up_rpm = 7500
+        self._gear_down_rpm = 2500
         threading.Thread(target=self._load, daemon=True).start()
 
     def _load(self) -> None:
@@ -55,6 +61,7 @@ class BCDriver(BaseDriver):
         logger.info("BCDriver: checkpoint loaded from %s", self._model_path)
 
     def step(self, state: SensorState) -> Action:
+        self._step_count += 1
         if not self._loaded.is_set():
             # Drive gently straight while checkpoint loads in background.
             return Action(accel=0.3, steer=0.0, brake=0.0, gear=1).clamp()
@@ -64,23 +71,30 @@ class BCDriver(BaseDriver):
         import torch  # already in sys.modules once _load() has completed
 
         # Feature order must match SENSOR_COLS in dataset.py:
-        # ["speedX", "trackPos", "angle", "rpm", "gear", "damage"]
+        # ["speed", "trackPos", "angle", "rpm", "gear"]
         x = torch.tensor(
-            [state.speed, state.trackPos, state.angle, state.rpm, state.gear, state.damage],
+            [state.speed, state.trackPos, state.angle, state.rpm, self._current_gear],
             dtype=torch.float32,
         )
         x = (x - self._mean) / self._std
         x = x.unsqueeze(0)
 
         out = self._model.predict(x)
-        gear = int(out["gear"].item())
-        gear = max(-1, min(6, gear))
+
+        # Auto gear management with cooldown (min 5 steps ~250ms between changes)
+        if (self._step_count - self._last_gear_change_step) >= 5:
+            if state.rpm > self._gear_up_rpm and self._current_gear < 6:
+                self._current_gear += 1
+                self._last_gear_change_step = self._step_count
+            elif state.rpm < self._gear_down_rpm and self._current_gear > 1:
+                self._current_gear -= 1
+                self._last_gear_change_step = self._step_count
 
         return Action(
             steer=float(out["steer"].item()),
             accel=float(out["accel"].item()),
             brake=float(out["brake"].item()),
-            gear=gear,
+            gear=self._current_gear,
         ).clamp()
 
     def on_restart(self) -> None:

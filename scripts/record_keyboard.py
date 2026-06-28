@@ -17,7 +17,9 @@ Key bindings:
   S / ↓    : Brake
   A / ←    : Steer left
   D / →    : Steer right
-  (Gear is automatic based on RPM)
+  Q        : Downshift manually
+  E        : Upshift manually
+  (Gear is automatic based on RPM + manual override)
 
 CSV output: data/keyboard_YYYYMMDD_HHMMSS.csv
 """
@@ -71,8 +73,8 @@ class KeyboardController:
         self.brake_scale = 0.8
 
         # Auto gear thresholds (RPM) with hysteresis
-        self.gear_up_rpm = 8500
-        self.gear_down_rpm = 3500
+        self.gear_up_rpm = 7500  # Reduced to shift up earlier
+        self.gear_down_rpm = 2500  # Reduced to shift down more aggressively
         self.last_gear_change_step = -100  # Avoid multiple changes per step
 
     def on_press(self, key):
@@ -120,6 +122,15 @@ class KeyboardController:
         if 's' in keys or keyboard.Key.down in keys:
             brake = self.brake_scale
 
+        # Manual gear control (Q=down, E=up)
+        if (step - self.last_gear_change_step) >= 5:
+            if 'q' in keys and self.current_gear > 1:
+                self.current_gear -= 1
+                self.last_gear_change_step = step
+            elif 'e' in keys and self.current_gear < 6:
+                self.current_gear += 1
+                self.last_gear_change_step = step
+
         # Auto gear management with cooldown (min 5 steps ~250ms between changes)
         if self.auto_gear and (step - self.last_gear_change_step) >= 5:
             if state.rpm > self.gear_up_rpm and self.current_gear < 6:
@@ -166,12 +177,14 @@ def record(host: str | None = None, port: int | None = None) -> Path:
     rows: list[dict] = []
     lap_start: float | None = None
     lap_completed = False
+    lap_complete_step = -1
     step = 0
 
     try:
         with TORCSClient(host=host, port=port) as client:
             logger.info("Connected to TORCS. Recording keyboard-driven lap.")
-            logger.info("Controls: W/↑=accel, S/↓=brake, A/←=steer-left, D/→=steer-right (auto gear)")
+            logger.info("Controls: W/↑=accel, S/↓=brake, A/←=steer-left, D/→=steer-right")
+            logger.info("Gear: auto (2500-7500 RPM), or Q=down-shift, E=up-shift")
 
             while not lap_completed:
                 result = client.receive()
@@ -183,6 +196,7 @@ def record(host: str | None = None, port: int | None = None) -> Path:
                     logger.info("Race restarted.")
                     rows.clear()
                     lap_start = None
+                    lap_complete_step = -1
                     step = 0
                     continue
 
@@ -224,11 +238,18 @@ def record(host: str | None = None, port: int | None = None) -> Path:
                     )
 
                 # Detect lap completion
-                if state.lastLapTime > 0 and rows:
+                if state.lastLapTime > 0 and rows and lap_complete_step < 0:
                     lap_time = state.lastLapTime
                     logger.info("✓ Lap completed in %.3f s", lap_time)
+                    lap_complete_step = step
+
+                # Wait 20 more steps (~1 second) after lap completion before exiting
+                # This gives TORCS time to stabilize before closing
+                if lap_complete_step >= 0 and (step - lap_complete_step) >= 20:
                     lap_completed = True
 
+    except Exception as e:
+        logger.warning("Connection lost: %s (this is normal if TORCS closed after lap)", e)
     finally:
         controller.stop_listening()
 

@@ -38,7 +38,7 @@ wandb/
 lightning_logs/
 
 # Data files (recorded telemetry — large, keep only metadata)
-data/*.csv
+# data/*.csv
 data/*.parquet
 data/*.h5
 

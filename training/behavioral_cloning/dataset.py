@@ -10,12 +10,12 @@ import pandas as pd
 import torch
 from torch.utils.data import Dataset
 
-# Sensor columns used as model inputs (matches old_manual_sessions_dataset schema)
-# speedX in the CSV == state.speed at inference (SCR protocol name)
-SENSOR_COLS = ["speedX", "trackPos", "angle", "rpm", "gear", "damage"]
+# Sensor columns used as model inputs
+# Supports both old format (speedX, damage) and new format (speed, no damage)
+SENSOR_COLS = ["speed", "trackPos", "angle", "rpm", "gear"]
 
 # Action columns used as model outputs
-ACTION_COLS = ["steer", "accel", "brake", "gear_out"]
+ACTION_COLS = ["steer", "accel", "brake", "gear_cmd"]
 
 
 def load_csv(path: str | Path) -> pd.DataFrame:
