@@ -17,9 +17,9 @@ Key bindings:
   S / ↓    : Brake
   A / ←    : Steer left
   D / →    : Steer right
-  Q        : Downshift manually
-  E        : Upshift manually
-  (Gear is automatic based on RPM + manual override)
+  Q        : Downshift (manual control only)
+  E        : Upshift (manual control only)
+  (Gear shifting is manual — YOU have full control)
 
 CSV output: data/keyboard_YYYYMMDD_HHMMSS.csv
 """
@@ -59,11 +59,11 @@ FIELDNAMES = [
 class KeyboardController:
     """Manages keyboard input and translates to TORCS actions."""
 
-    def __init__(self, auto_gear: bool = True):
+    def __init__(self, auto_gear: bool = False):
         self.pressed_keys: set = set()
         self.lock = Lock()
         self.current_gear = 1
-        self.auto_gear = auto_gear
+        self.auto_gear = auto_gear  # Disabled by default (manual only)
 
         # Steering: how much to steer per key press
         self.steer_scale = 0.5
@@ -72,10 +72,9 @@ class KeyboardController:
         self.accel_scale = 0.8
         self.brake_scale = 0.8
 
-        # Auto gear thresholds (RPM) with hysteresis
-        self.gear_up_rpm = 9000  # Shift up at 9000 RPM (matches optimal driver)
-        self.gear_down_rpm = 3500  # Shift down at 3500 RPM
-        self.last_gear_change_step = -100  # Avoid multiple changes per step
+        # Gear change cooldown (0.3s = ~15 steps at 50Hz)
+        self.gear_cooldown_steps = 15
+        self.last_gear_change_step = -100
 
     def on_press(self, key):
         try:
@@ -122,22 +121,14 @@ class KeyboardController:
         if 's' in keys or keyboard.Key.down in keys:
             brake = self.brake_scale
 
-        # Manual gear control (Q=down, E=up)
-        if (step - self.last_gear_change_step) >= 5:
+        # Manual gear control (Q=down, E=up) with cooldown
+        # Cooldown = 15 steps = ~0.3 seconds at 50Hz (matches Friend 3's approach)
+        if (step - self.last_gear_change_step) >= self.gear_cooldown_steps:
             if 'q' in keys and self.current_gear > 1:
                 self.current_gear -= 1
                 self.last_gear_change_step = step
             elif 'e' in keys and self.current_gear < 6:
                 self.current_gear += 1
-                self.last_gear_change_step = step
-
-        # Auto gear management with cooldown (min 5 steps ~250ms between changes)
-        if self.auto_gear and (step - self.last_gear_change_step) >= 5:
-            if state.rpm > self.gear_up_rpm and self.current_gear < 6:
-                self.current_gear += 1
-                self.last_gear_change_step = step
-            elif state.rpm < self.gear_down_rpm and self.current_gear > 1:
-                self.current_gear -= 1
                 self.last_gear_change_step = step
 
         action = Action(
@@ -184,7 +175,7 @@ def record(host: str | None = None, port: int | None = None) -> Path:
         with TORCSClient(host=host, port=port) as client:
             logger.info("Connected to TORCS. Recording keyboard-driven lap.")
             logger.info("Controls: W/↑=accel, S/↓=brake, A/←=steer-left, D/→=steer-right")
-            logger.info("Gear: auto (2500-7500 RPM), or Q=down-shift, E=up-shift")
+            logger.info("Gear: MANUAL CONTROL — Q=downshift, E=upshift (you have full control)")
 
             while not lap_completed:
                 result = client.receive()
