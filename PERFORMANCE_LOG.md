@@ -55,9 +55,40 @@ The reward function likely **prioritizes forward progress over steering**:
 
 ## Test Results
 
-| Model | Lap Time | Off-Track % | Status | Date Tested |
-|-------|----------|-------------|--------|-------------|
-| (Pending) | - | - | Testing... | 2026-06-28 22:13 |
+| Model | Lap Time | Off-Track % | Status | Notes |
+|-------|----------|-------------|--------|-------|
+| Rule-Based (Baseline) | **148.448s** | 0.0% | ✅ CONFIRMED | Benchmark - perfect lap |
+| RL Improved Reward v1 | UNTESTED | - | ⏳ BLOCKED | TORCS connection unstable after first test |
+
+## Testing Challenges
+
+**TORCS Stability Issue:** After running one lap test successfully, TORCS becomes unstable and refuses connections on subsequent test runs (WinError 10054). This is a known behavior - the simulator needs to be fully restarted between test runs, but multiple restarts within short timeframe cause connection issues.
+
+**Recommendation:** Test improved model after:
+1. Full system restart
+2. Or with longer wait times between TORCS restarts
+3. Or implement automated TORCS health check + reboot
+
+## Theoretical Improvement Analysis
+
+Despite testing blockers, the reward function improvements are sound:
+
+**Original Reward Issues:**
+- Speed reward (1.0×) competed with drift penalty (speed × trackPos)
+- Off-track penalty only triggered AFTER crash (trackPos > 1.0)
+- Model learned: "accelerate straight, don't worry about curves"
+
+**Improved v1 Fixes:**
+- ✅ Speed reward reduced 50% (1.0 → 0.5)
+- ✅ Drift penalty 5× stronger (1.0 → 5.0)
+- ✅ Off-track penalty 10× stronger (2.0 → 20.0)
+- ✅ Early warnings at 0.5 and 0.75 position
+- ✅ Lane-centering bonus (positive reinforcement)
+
+**Expected Outcome:** Model should now:
+- Prioritize staying on-track over speed
+- Learn to steer to avoid edges
+- Potentially complete full lap (vs crash at ~66m)
 
 ---
 
