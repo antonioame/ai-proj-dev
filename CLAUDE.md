@@ -28,36 +28,33 @@ TORCS_PORT   (default: 3001)
 
 ---
 
-## Project Phases
+## Project Status
 
-### Phase 1 — DONE ✓ (current)
-- Full SCR UDP client (`torcs_env/client.py`)
-- Typed sensor parsing (`torcs_env/sensors.py`)
-- Action serialisation (`torcs_env/actions.py`)
-- Rule-based baseline driver (`drivers/rule_based/driver.py`)
-- Telemetry recording script (`scripts/record_human.py`)
-- Evaluation script (`scripts/evaluate.py`)
-- Run script (`scripts/run_agent.py`)
-- Race config XML (`torcs_env/race_config/corkscrew_solo.xml`)
-- 37 unit tests — all passing
+### Current Drivers
 
-### Phase 2 — TODO
-**Behavioral Cloning from recorded laps.**
-- Prerequisites: ≥5 clean laps saved in `data/` (run `scripts/record_human.py`)
-- Infrastructure **fully implemented** — dataset, model, train script, and `BCDriver` are all ready
-  - `training/behavioral_cloning/dataset.py` — PyTorch Dataset from CSV
-  - `training/behavioral_cloning/model.py`   — MLP policy (sensors → steer/accel/brake/gear)
-  - `training/behavioral_cloning/train.py`   — training loop (MPS-aware, saves `.pth` checkpoint)
-  - `drivers/bc/driver.py` — BCDriver with lazy checkpoint loading
-- **Only missing:** ≥5 recorded laps + trained `models/bc_v1.pth`
-- See `docs/PHASE2_BEHAVIORAL_CLONING.md` for the complete step-by-step guide.
+**Phase 1: Rule-Based (WORKING)**
+- Lap time: 149 seconds (stable, no crashes)
+- Entry point: `scripts/run_agent.py --driver rule_based`
+- No dependencies; pure algorithmic steering/speed control
+- See `drivers/rule_based/driver.py` for tuning parameters
 
-### Phase 3 — TODO
-**Reinforcement Learning fine-tuning (DDPG or PPO).**
-- Wrap `TORCSClient` as a `gymnasium.Env` (`training/rl/gym_env.py` — not yet created)
-- Use BC checkpoint to warm-start the policy
-- Reward: forward progress minus track-deviation minus damage
-- See `docs/PHASE3_REINFORCEMENT_LEARNING.md` for implementation plan + code templates.
+**Phase 2: Behavioral Cloning (REMOVED)**
+- Attempted to train from recorded human data
+- Issue: Driver crashed immediately (continuous steering, off-track on curves)
+- Deleted: `training/behavioral_cloning/`, `drivers/bc/`, all `bc_*.pth` models
+- Lesson: BC without proper normalization/dataset quality doesn't work
+
+**Phase 3: Reinforcement Learning (REMOVED)**
+- Attempted PPO/DDPG with BC warm-start
+- Issue: Systematic observation space mismatch (env outputs 8 features, models expect 9)
+- All RL models crashed or had zero steering
+- Deleted: `training/rl/`, `drivers/rl/`, all model checkpoints
+
+**Phase C: Optimal Line Driver (IN PROGRESS)**
+- Status: Crashes but shows potential ("so fast")
+- Issue: Too aggressive acceleration; needs speed tuning
+- Entry point: `scripts/run_agent.py --driver optimal`
+- See below for tuning guidance
 
 ---
 
@@ -100,44 +97,66 @@ TORCS_HOST=<windows-ip> python scripts/record_human.py --driver rule_based
 
 ---
 
-## Repository Layout (quick reference)
+## Repository Layout
 
 ```
 torcs_env/        SCR protocol (sensors, actions, UDP client, race XML)
 drivers/          Driving agents
-  rule_based/     Phase 1 baseline (complete)
-  bc/             Phase 2 — BCDriver ready, needs trained .pth
-training/
-  behavioral_cloning/   Dataset + MLP model + train script (all ready)
-  rl/                   Placeholder for Phase 3 (README only)
-scripts/          CLI entry points (run, record, evaluate, launch_race)
-data/             Telemetry CSVs (git-ignored)
+  rule_based/     Phase 1 baseline (complete, working — 149s lap)
+  optimal/        Phase C trajectory follower (in progress, needs speed tuning)
+scripts/          CLI entry points (run_agent.py, record_human.py, evaluate.py)
+tests/            Unit tests (all passing)
+docs/             Documentation (see notes below)
+  ARCHITECTURE.md, API_REFERENCE.md, DEVELOPMENT_GUIDE.md, etc.
+  LAPTIME_OPTIMIZATION_PLAN.md  Performance ideas for Phase C
+data/             Recorded telemetry CSVs (git-ignored)
 results/          Evaluation JSON files (git-ignored)
-models/           Trained checkpoints (git-ignored, created by train.py)
-tests/            37 unit tests
-docs/             Detailed documentation (see below)
-  ARCHITECTURE.md           System design, data flow, SCR protocol
-  API_REFERENCE.md          All public classes and functions
-  DEVELOPMENT_GUIDE.md      Setup, workflows, tuning, troubleshooting
-  PHASE2_BEHAVIORAL_CLONING.md  Step-by-step BC implementation guide
-  PHASE3_REINFORCEMENT_LEARNING.md  RL plan + code templates
-  LAPTIME_OPTIMIZATION_PLAN.md  Performance plan to minimise the Corkscrew lap time
+models/           Trained checkpoints for optimal driver (if applicable)
+dev_scripts/      Temporary test/debug utilities (not part of main pipeline)
 old_project_material/  Legacy reference code (do not import)
 ```
 
+**Deleted (broken):**
+- `training/behavioral_cloning/` — BC training infrastructure
+- `training/rl/` — RL training infrastructure  
+- `drivers/bc/`, `drivers/rl/` — BC and RL drivers
+- All model checkpoints (bc_*.pth, rl_*.zip)
+
 ---
 
-## Open Questions / Handoff Notes
+## Next Priority: Tuning Optimal Line Driver
 
-1. **Corkscrew track length** — needed for accurate lap detection via
-   `distRaced`. Measure empirically after the first successful lap
-   (read `distFromStart` as the car crosses the start/finish line).
-2. **Rule-based tuning** — `STEER_ANGLE_GAIN`, `STEER_TRACK_GAIN`, and
-   `SPEED_*` constants in `drivers/rule_based/driver.py` may need tuning
-   for Corkscrew specifically. Run evaluate.py and iterate.
-3. **SCR `scr_server` module** — confirm the module name matches what the
-   installed SCR patch exposes. Some builds use `scr_server 0`, others `bt`.
-   Adjust `corkscrew_solo.xml` if TORCS cannot find the driver.
-4. **BC dataset quality** — rule-based recordings are useful for BC but
-   may encode sub-optimal behaviour. Consider collecting human keyboard
-   recordings once the basic loop is working.
+The **optimal driver** shows promise ("too fast, but has potential") but crashes at the first curve.
+It needs conservative startup and smoother acceleration ramps.
+
+**Key tuning parameters** in `drivers/optimal/driver.py`:
+- `STARTUP_STEPS` (line 53): Duration of conservative startup phase. Increase from 80 to 150–200
+- `SCAN_AHEAD_M` (line 38): Look-ahead distance for braking. Reduce from 250 to 150–200
+- `BRAKE_MARGIN_M` (line 39): Brake onset buffer. Increase from 12 to 20–30
+- `STEER_ANGLE_GAIN` (line 30): Steering sensitivity. Reduce from 2.0 to 1.0–1.5
+- `STEER_SMOOTH_SPEED` (line 33): Speed threshold for steering smoothing. Increase from 40 to 60–80
+
+**Testing:** After each change, run:
+```bash
+conda run -n ai_env python scripts/run_agent.py --driver optimal --laps 1
+```
+
+**Goal:** Complete a lap without crashing, aiming for lap time < 140 seconds.
+
+---
+
+## Deprecated / Removed
+
+**Phase 2 (Behavioral Cloning)** — REMOVED  
+Attempted to train on recorded human data. Failed due to:
+- Continuous steering output (driver was overfitting to noise)
+- Crashes on curves even with good training data
+- Normalization/training loop issues made debugging difficult
+
+**Phase 3 (Reinforcement Learning)** — REMOVED  
+Attempted PPO/DDPG with BC warm-start. Failed due to:
+- Observation space mismatch (8 vs 9 features) between training and inference
+- All models exhibited zero steering or immediate crashes
+- RL environment complexity + TORCS timeout issues made debugging slow
+
+See commit `074c1ee` ("chore: remove all broken RL and BC models") for details.
