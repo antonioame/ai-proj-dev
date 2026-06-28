@@ -27,11 +27,11 @@ _DEFAULT_MAP_PATH = (
 )
 
 # --------------- Steering ---------------
-STEER_ANGLE_GAIN:   float = 1.3     # Increased to 1.3 for responsive steering
-STEER_LINE_GAIN:    float = 0.30    # Increased to 0.30 for better line tracking
+STEER_ANGLE_GAIN:   float = 1.6     # Increased to 1.6 for aggressive turn entry
+STEER_LINE_GAIN:    float = 0.40    # Increased to 0.40 - strong bias toward inside of turns
 STEER_LOCK:         float = 0.785398
 STEER_SMOOTH_SPEED: float = 50.0    # Adjust for curve sensitivity
-STEER_SMOOTH_ALPHA: float = 0.45    # Reduced to 0.45 for less damping
+STEER_SMOOTH_ALPHA: float = 0.35    # Reduced to 0.35 for sharp, responsive steering
 
 # --------------- Speed control ---------------
 BRAKE_MAX:        float = 1.0       # Maximum brake force
@@ -144,8 +144,8 @@ class OptimalLineDriver(BaseDriver):
         line_err = state.trackPos - target_trackPos
         raw = state.angle * STEER_ANGLE_GAIN - line_err * STEER_LINE_GAIN
         steer = raw / STEER_LOCK
-        # Steering cap: allow up to ±0.70 for full steering potential
-        steer = max(-0.70, min(0.70, steer))
+        # Steering cap: allow up to ±0.85 for aggressive turn entry toward inside line
+        steer = max(-0.85, min(0.85, steer))
         if state.speed < STEER_SMOOTH_SPEED:
             steer = (
                 self._prev_steer * (1.0 - STEER_SMOOTH_ALPHA)
