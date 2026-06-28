@@ -52,7 +52,7 @@ class BCDriver(BaseDriver):
         self.model.load_state_dict(torch.load(self.model_path, map_location=self._device))
         self.model.eval()
 
-        print(f"BC model loaded from {self.model_path}")
+        print(f"BC model loaded from {self.model_path} (4 outputs: steer, accel, brake, gear)")
 
     def reset(self) -> None:
         """Reset driver state (no persistent state in BC)."""
@@ -84,5 +84,9 @@ class BCDriver(BaseDriver):
         with torch.no_grad():
             action_pred = self.model(sensor_tensor).cpu().numpy()
 
-        steer, accel, brake = action_pred
-        return Action(steer=float(steer), accel=float(accel), brake=float(brake), gear=state.gear).clamp()
+        steer, accel, brake, gear_pred = action_pred
+        # Round gear to nearest integer (1-6)
+        gear = int(round(float(gear_pred)))
+        gear = max(1, min(6, gear))  # clamp to valid range
+
+        return Action(steer=float(steer), accel=float(accel), brake=float(brake), gear=gear).clamp()

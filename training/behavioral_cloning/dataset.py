@@ -31,8 +31,8 @@ class TORCSDataset(Dataset):
             'rpm', 'gear'
         ]
 
-        # Action columns: steer, accel, brake (gear auto-managed)
-        action_cols = ['steer', 'accel', 'brake']
+        # Action columns: steer, accel, brake, gear_cmd
+        action_cols = ['steer', 'accel', 'brake', 'gear_cmd']
 
         self.X = df[sensor_cols].values.astype(np.float32)
         self.Y = df[action_cols].values.astype(np.float32)

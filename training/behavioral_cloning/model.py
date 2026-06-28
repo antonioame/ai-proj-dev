@@ -5,7 +5,7 @@ import torch.nn as nn
 
 
 class BCPolicy(nn.Module):
-    """Multi-layer perceptron: 26 inputs (sensors) → 3 outputs (steer, accel, brake)."""
+    """Multi-layer perceptron: 26 inputs (sensors) → 4 outputs (steer, accel, brake, gear)."""
 
     def __init__(self, input_dim: int = 26, hidden_dims: list = None):
         """
@@ -27,8 +27,8 @@ class BCPolicy(nn.Module):
             layers.append(nn.ReLU())
             prev_dim = hidden_dim
 
-        # Output: steer, accel, brake (3 actions)
-        layers.append(nn.Linear(prev_dim, 3))
+        # Output: steer, accel, brake, gear_cmd (4 actions)
+        layers.append(nn.Linear(prev_dim, 4))
         self.net = nn.Sequential(*layers)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
