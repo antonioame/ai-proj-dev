@@ -31,13 +31,13 @@ STEER_ANGLE_GAIN:   float = 0.9     # Reduced to 0.9 - minimal steering aggressi
 STEER_LINE_GAIN:    float = 0.20    # trackPos error → steer correction
 STEER_LOCK:         float = 0.785398
 STEER_SMOOTH_SPEED: float = 50.0    # Adjust for curve sensitivity
-STEER_SMOOTH_ALPHA: float = 0.50    # Increased from 0.35 to 0.50 - much more steering damping
+STEER_SMOOTH_ALPHA: float = 0.60    # Increased to 0.60 - heavier steering damping
 
 # --------------- Speed control ---------------
 BRAKE_MAX:        float = 1.0       # Maximum brake force
-SCAN_AHEAD_M:     float = 300.0     # Extended to 300m - see curves VERY early
-BRAKE_MARGIN_M:   float = 80.0      # Extended to 80m - brake much earlier (more time to slow down)
-THROTTLE_BASE:    float = 0.30      # Reduced to 0.30 - minimal acceleration in slow zones
+SCAN_AHEAD_M:     float = 300.0     # See curves VERY early (300m)
+BRAKE_MARGIN_M:   float = 90.0      # Extended to 90m - brake even earlier
+THROTTLE_BASE:    float = 0.30      # Minimal acceleration in slow zones
 
 # ABS
 WHEEL_RADIUS:        float = 0.33
@@ -144,8 +144,8 @@ class OptimalLineDriver(BaseDriver):
         line_err = state.trackPos - target_trackPos
         raw = state.angle * STEER_ANGLE_GAIN - line_err * STEER_LINE_GAIN
         steer = raw / STEER_LOCK
-        # Hard safety cap: never steer more than ±0.35 (gentle steering for sharp turns)
-        steer = max(-0.35, min(0.35, steer))
+        # Hard safety cap: never steer more than ±0.30 (very gentle steering for sharp turns)
+        steer = max(-0.30, min(0.30, steer))
         if state.speed < STEER_SMOOTH_SPEED:
             steer = (
                 self._prev_steer * (1.0 - STEER_SMOOTH_ALPHA)
