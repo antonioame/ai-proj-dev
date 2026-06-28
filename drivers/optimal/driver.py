@@ -27,16 +27,16 @@ _DEFAULT_MAP_PATH = (
 )
 
 # --------------- Steering ---------------
-STEER_ANGLE_GAIN:   float = 1.5     # Reduced from 2.0 for smoother response
+STEER_ANGLE_GAIN:   float = 1.8     # Restored to 1.8 (need responsive steering for tight 180° turn)
 STEER_LINE_GAIN:    float = 0.20    # trackPos error → steer correction
 STEER_LOCK:         float = 0.785398
-STEER_SMOOTH_SPEED: float = 60.0    # Increased from 40.0 for more smoothing
+STEER_SMOOTH_SPEED: float = 50.0    # Adjust for curve sensitivity
 STEER_SMOOTH_ALPHA: float = 0.35
 
 # --------------- Speed control ---------------
 BRAKE_MAX:        float = 0.90
-SCAN_AHEAD_M:     float = 180.0     # Reduced from 250.0 for shorter look-ahead
-BRAKE_MARGIN_M:   float = 25.0      # Increased from 12.0 to brake earlier
+SCAN_AHEAD_M:     float = 150.0     # Further reduced from 180.0 for sharp curves
+BRAKE_MARGIN_M:   float = 18.0      # Reduced from 25.0 to closer to original (12.0→18.0 compromise)
 THROTTLE_BASE:    float = 0.70      # minimum throttle when below target speed
 
 # ABS
@@ -50,7 +50,7 @@ RPM_DOWNSHIFT_DEFAULT: float = 3000.0
 GEAR_SPEED_CAPS: list[tuple[float, int]] = [(15.0, 1), (45.0, 2), (75.0, 3)]
 
 # --------------- Safety / startup ---------------
-STARTUP_STEPS:     int   = 150      # Increased from 80 for conservative startup
+STARTUP_STEPS:     int   = 120      # Reduced from 150 to exit startup sooner
 FALLBACK_TRACKPOS: float = 1.2      # abs(trackPos) > this → recovery
 
 
