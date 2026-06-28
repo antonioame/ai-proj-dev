@@ -55,10 +55,10 @@ The reward function likely **prioritizes forward progress over steering**:
 
 ## Test Results
 
-| Model | Lap Time | Off-Track % | Status | Notes |
-|-------|----------|-------------|--------|-------|
-| Rule-Based (Baseline) | **148.448s** | 0.0% | ✅ CONFIRMED | Benchmark - perfect lap |
-| RL Improved Reward v1 | UNTESTED | - | ⏳ BLOCKED | TORCS connection unstable after first test |
+| Model | Lap Time | Off-Track % | Steering | Status | Notes |
+|-------|----------|-------------|----------|--------|-------|
+| Rule-Based (Baseline) | **148.448s** | 0.0% | ✅ Active | ✅ WORKS | Benchmark - perfect lap |
+| RL Improved Reward v1 | CRASH | ~100% | ❌ ZERO (0.00) | ❌ FAILED | Crashes at ~3,272m, no steering |
 
 ## Testing Challenges
 
@@ -69,26 +69,48 @@ The reward function likely **prioritizes forward progress over steering**:
 2. Or with longer wait times between TORCS restarts
 3. Or implement automated TORCS health check + reboot
 
-## Theoretical Improvement Analysis
+## Analysis: Why Improved Reward v1 Failed
 
-Despite testing blockers, the reward function improvements are sound:
+**Hypothesis:** Reward function weights are the bottleneck
+- ❌ **DISPROVEN** by test results
+- Model still outputs **zero steering** despite:
+  - 5× stronger drift penalty (1.0 → 5.0)
+  - 10× stronger off-track penalty (2.0 → 20.0)
+  - Progressive edge warnings added
+  - Lane-centering bonus added
 
-**Original Reward Issues:**
-- Speed reward (1.0×) competed with drift penalty (speed × trackPos)
-- Off-track penalty only triggered AFTER crash (trackPos > 1.0)
-- Model learned: "accelerate straight, don't worry about curves"
+**Actual Root Cause:** Problem is deeper than reward weights
 
-**Improved v1 Fixes:**
-- ✅ Speed reward reduced 50% (1.0 → 0.5)
-- ✅ Drift penalty 5× stronger (1.0 → 5.0)
-- ✅ Off-track penalty 10× stronger (2.0 → 20.0)
-- ✅ Early warnings at 0.5 and 0.75 position
-- ✅ Lane-centering bonus (positive reinforcement)
+Possible issues:
+1. **Observation Space Insufficient**
+   - Track sensors may not encode turn geometry
+   - 9 features might miss critical information
+   - Need more look-ahead distance
 
-**Expected Outcome:** Model should now:
-- Prioritize staying on-track over speed
-- Learn to steer to avoid edges
-- Potentially complete full lap (vs crash at ~66m)
+2. **Model Architecture Too Simple**
+   - [64, 64] network might be underfitting
+   - Cannot learn complex steering policy
+   - Need larger networks or different architecture
+
+3. **Action Encoding Issue**
+   - Steering output might be clipped/clamped to zero
+   - Output normalization might be wrong
+   - Check if steer output even reaches model
+
+4. **Input Normalization Problem**
+   - Observation normalization might compress important signals
+   - trackPos ∈ [-1, 1] might not normalize correctly
+   - Normalized inputs might be uninformative
+
+**Conclusion:** Reward engineering alone cannot fix a fundamental observation/action encoding issue. Need to investigate the pipeline, not just tune weights.
+
+## Next Investigation Priorities
+
+1. **Check steering output directly** - is model actually outputting non-zero steering?
+2. **Inspect observation values** - are they normalized correctly?
+3. **Test larger network** - [256, 256] instead of [64, 64]
+4. **Add more track lookahead** - use more sensors from track array
+5. **Debug action encoding** - verify steer value reaches TORCS
 
 ---
 
