@@ -43,8 +43,17 @@ def load_driver(name: str) -> BaseDriver:
     elif name == "optimal":
         from drivers.optimal.driver import OptimalLineDriver
         return OptimalLineDriver()
+    elif name == "rl_model":
+        from drivers.rl.driver import RLDriver
+        return RLDriver()
+    elif name.startswith("rl_"):
+        # rl_ddpg or rl_ppo — pick algorithm from suffix
+        algo = name.split("_", 1)[1]
+        model_path = f"models/{algo}_v1"
+        from drivers.rl.driver import RLDriver
+        return RLDriver(model_path=model_path, algo=algo)
     raise ValueError(
-        f"Unknown driver '{name}'. Available: rule_based, bc_model, optimal"
+        f"Unknown driver '{name}'. Available: rule_based, bc_model, optimal, rl_model, rl_ddpg, rl_ppo"
     )
 
 
@@ -167,7 +176,10 @@ def run(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run a TORCS driver agent")
-    parser.add_argument("--driver", default="rule_based", help="Driver name: rule_based, bc_model")
+    parser.add_argument(
+        "--driver", default="rule_based",
+        help="Driver name: rule_based, bc_model, optimal, rl_model, rl_ddpg, rl_ppo"
+    )
     parser.add_argument("--laps", type=int, default=1)
     parser.add_argument("--host", default=None)
     parser.add_argument("--port", type=int, default=None)
