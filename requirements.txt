@@ -18,5 +18,6 @@ pytest-mock>=3.11.0
 
 # Utilities
 tqdm>=4.66.0
+pynput>=1.7.6
 
 # Note: dataclasses is part of the Python 3.7+ stdlib — no install needed
