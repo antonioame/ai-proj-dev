@@ -1,0 +1,20 @@
+{
+  "rule_based": {
+    "description": "Baseline (Rule-Based)",
+    "lap_time": null,
+    "off_track_pct": null,
+    "error": "Could not extract lap time"
+  },
+  "bc_model": {
+    "description": "BC v2 (35.4k samples)",
+    "lap_time": null,
+    "off_track_pct": null,
+    "error": "Could not extract lap time"
+  },
+  "rl_bc_warmstart": {
+    "description": "RL + BC Warm-Start (50k steps)",
+    "lap_time": null,
+    "off_track_pct": null,
+    "error": "Could not extract lap time"
+  }
+}
