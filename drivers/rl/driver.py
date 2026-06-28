@@ -96,7 +96,9 @@ class RLDriver(BaseDriver):
             ],
             dtype=np.float32,
         )
-        return (raw - _OBS_MEAN) / _OBS_STD
+        # Clamp outliers before normalization to prevent extreme z-scores
+        raw = np.clip(raw, _OBS_MEAN - 3*_OBS_STD, _OBS_MEAN + 3*_OBS_STD)
+        return (raw - _OBS_MEAN) / (_OBS_STD + 1e-8)
 
     # ------------------------------------------------------------------
     # Gear management (mirrors gym_env logic)

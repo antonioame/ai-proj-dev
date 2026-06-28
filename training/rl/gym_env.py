@@ -35,8 +35,9 @@ from training.rl.reward import compute_reward
 
 logger = logging.getLogger(__name__)
 
-# Track sensor indices — must match BC v2 training (dataset.py: track_6, track_12, track_18)
-_TRACK_IDX = (6, 12, 18)
+# Track sensor indices — use tighter lookahead for steering response
+# (7, 9, 11 used in prior 50k-step model, proved effective)
+_TRACK_IDX = (7, 9, 11)
 OBS_DIM = 8  # [speed, trackPos, angle, rpm, gear, track[6], track[12], track[18]]
 
 # Z-score normalisation stats from bc_v2.pth (empirical, 35 k samples).
@@ -118,7 +119,10 @@ class TORCSGymEnv(gym.Env):
             ],
             dtype=np.float32,
         )
-        return (raw - _OBS_MEAN) / _OBS_STD
+        # Clamp outliers before normalization to prevent extreme z-scores
+        # that can break the model (e.g., unexpected track sensor values)
+        raw = np.clip(raw, _OBS_MEAN - 3*_OBS_STD, _OBS_MEAN + 3*_OBS_STD)
+        return (raw - _OBS_MEAN) / (_OBS_STD + 1e-8)
 
     def _update_gear(self, state: SensorState) -> None:
         if (self._steps - self._last_gear_step) < _GEAR_COOLDOWN:
