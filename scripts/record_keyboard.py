@@ -73,8 +73,8 @@ class KeyboardController:
         self.brake_scale = 0.8
 
         # Auto gear thresholds (RPM) with hysteresis
-        self.gear_up_rpm = 7500  # Reduced to shift up earlier
-        self.gear_down_rpm = 2500  # Reduced to shift down more aggressively
+        self.gear_up_rpm = 9000  # Shift up at 9000 RPM (matches optimal driver)
+        self.gear_down_rpm = 3500  # Shift down at 3500 RPM
         self.last_gear_change_step = -100  # Avoid multiple changes per step
 
     def on_press(self, key):
