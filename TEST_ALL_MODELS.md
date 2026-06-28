@@ -32,9 +32,9 @@ conda run -n ai_env python scripts/run_agent.py --driver rule_based --laps 1
 ```
 
 **Result:**
-- Lap time: _____ seconds
-- Status: ☐ Completed  ☐ Crashed  ☐ Timeout
-- Notes: 
+- Lap time: 02:29:00 seconds
+- Status: Completed
+- Notes: The driver can be a lot better
 
 ---
 
@@ -47,9 +47,9 @@ conda run -n ai_env python scripts/run_agent.py --driver bc_model --laps 1
 ```
 
 **Result:**
-- Lap time: _____ seconds
-- Status: ☐ Completed  ☐ Crashed  ☐ Timeout
-- Notes: 
+- Status: Crashed
+- Notes: The driver is continuously steering, then it went off the track on the first curve.
+it drives a shit.
 
 ---
 
@@ -62,9 +62,8 @@ conda run -n ai_env python scripts/run_agent.py --driver rl_bc_warmstart --laps 
 ```
 
 **Result:**
-- Lap time: _____ seconds
-- Status: ☐ Completed  ☐ Crashed  ☐ Timeout
-- Notes: 
+- Status: Crashed
+- Notes: Does not steer at all
 
 ---
 
@@ -77,10 +76,7 @@ conda run -n ai_env python scripts/run_agent.py --driver rl_rl_direct_v1 --laps 
 ```
 
 **Result:**
-- Lap time: _____ seconds
-- Status: ☐ Completed  ☐ Crashed  ☐ Timeout
-- Notes: 
-
+- Error: Unexpected observation shape (8,) for Box environment, please use (9,) or (n_env, 9) for the observation shape.
 ---
 
 ### 5. RL FINAL V1 (Experimental — Phase 3)
@@ -92,9 +88,7 @@ conda run -n ai_env python scripts/run_agent.py --driver rl_rl_final_v1 --laps 1
 ```
 
 **Result:**
-- Lap time: _____ seconds
-- Status: ☐ Completed  ☐ Crashed  ☐ Timeout
-- Notes: 
+- Error: Unexpected observation shape (8,) for Box environment, please use (9,) or (n_env, 9) for the observation shape.
 
 ---
 
@@ -107,9 +101,7 @@ conda run -n ai_env python scripts/run_agent.py --driver rl_rl_marathon_v1 --lap
 ```
 
 **Result:**
-- Lap time: _____ seconds
-- Status: ☐ Completed  ☐ Crashed  ☐ Timeout
-- Notes: 
+- Error: Unexpected observation shape (8,) for Box environment, please use (9,) or (n_env, 9) for the observation shape.
 
 ---
 
@@ -122,9 +114,8 @@ conda run -n ai_env python scripts/run_agent.py --driver rl_rl_bc_warmstart_v3_f
 ```
 
 **Result:**
-- Lap time: _____ seconds
-- Status: ☐ Completed  ☐ Crashed  ☐ Timeout
-- Notes: 
+- Status: Timeout
+- Notes: Went off track for a bit then stopped.
 
 ---
 
@@ -137,9 +128,8 @@ conda run -n ai_env python scripts/run_agent.py --driver rl_rl_bc_warmstart_v4_h
 ```
 
 **Result:**
-- Lap time: _____ seconds
-- Status: ☐ Completed  ☐ Crashed  ☐ Timeout
-- Notes: 
+- Status: Crashed
+- Notes: Gone directly into wall without steering.
 
 ---
 
@@ -152,9 +142,8 @@ conda run -n ai_env python scripts/run_agent.py --driver optimal --laps 1
 ```
 
 **Result:**
-- Lap time: _____ seconds
-- Status: ☐ Completed  ☐ Crashed  ☐ Timeout
-- Notes: 
+- Status: Crashed
+- Notes: So fast, but for this reason gone out at first curve
 
 ---
 
