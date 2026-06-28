@@ -34,10 +34,10 @@ STEER_SMOOTH_SPEED: float = 50.0    # Adjust for curve sensitivity
 STEER_SMOOTH_ALPHA: float = 0.50    # Increased from 0.35 to 0.50 - much more steering damping
 
 # --------------- Speed control ---------------
-BRAKE_MAX:        float = 1.0       # Maximum brake force (was 0.95)
-SCAN_AHEAD_M:     float = 220.0     # See curves early (220m look-ahead)
-BRAKE_MARGIN_M:   float = 50.0      # Extended to 50m - brake very early for tight turns
-THROTTLE_BASE:    float = 0.50      # Reduced to 0.50 - very conservative acceleration
+BRAKE_MAX:        float = 1.0       # Maximum brake force
+SCAN_AHEAD_M:     float = 300.0     # Extended to 300m - see curves VERY early
+BRAKE_MARGIN_M:   float = 80.0      # Extended to 80m - brake much earlier (more time to slow down)
+THROTTLE_BASE:    float = 0.30      # Reduced to 0.30 - minimal acceleration in slow zones
 
 # ABS
 WHEEL_RADIUS:        float = 0.33
