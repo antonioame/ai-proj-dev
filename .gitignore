@@ -30,9 +30,9 @@ ENV/
 env/
 
 # PyTorch / ML
-*.pth
-*.pt
-*.ckpt
+# *.pth
+# *.pt
+# *.ckpt
 runs/
 wandb/
 lightning_logs/
