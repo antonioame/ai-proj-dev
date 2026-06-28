@@ -27,17 +27,17 @@ _DEFAULT_MAP_PATH = (
 )
 
 # --------------- Steering ---------------
-STEER_ANGLE_GAIN:   float = 1.3     # Reduced to 1.3 - let braking dominate in curves, less steering fight
+STEER_ANGLE_GAIN:   float = 0.9     # Reduced to 0.9 - minimal steering aggression in turns
 STEER_LINE_GAIN:    float = 0.20    # trackPos error → steer correction
 STEER_LOCK:         float = 0.785398
 STEER_SMOOTH_SPEED: float = 50.0    # Adjust for curve sensitivity
-STEER_SMOOTH_ALPHA: float = 0.35
+STEER_SMOOTH_ALPHA: float = 0.50    # Increased from 0.35 to 0.50 - much more steering damping
 
 # --------------- Speed control ---------------
 BRAKE_MAX:        float = 0.95      # Increased from 0.90 for harder braking
-SCAN_AHEAD_M:     float = 220.0     # Restored to see curves early (was 150, now 220)
-BRAKE_MARGIN_M:   float = 32.0      # Increased to 32 - brake well before sharp turns
-THROTTLE_BASE:    float = 0.70      # minimum throttle when below target speed
+SCAN_AHEAD_M:     float = 220.0     # See curves early (220m look-ahead)
+BRAKE_MARGIN_M:   float = 45.0      # Increased to 45 - brake very early before turns
+THROTTLE_BASE:    float = 0.60      # Reduced from 0.70 - less aggressive acceleration
 
 # ABS
 WHEEL_RADIUS:        float = 0.33
