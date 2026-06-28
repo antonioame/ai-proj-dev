@@ -134,6 +134,9 @@ class OptimalLineDriver(BaseDriver):
 
         # --- steering and gear ---
         target_tp = traj.lookup_line(state.distFromStart)
+        # Safety: reduce aggressive line deviations, keep car more centered
+        # Multiply by 0.70 to maintain 30% closer to center (trackPos = 0)
+        target_tp = target_tp * 0.70
         steer = self._steer(state, target_tp)
         gear  = self._compute_gear(state, braking=(brake > 0))
 
