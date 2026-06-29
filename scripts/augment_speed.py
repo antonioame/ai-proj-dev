@@ -1,70 +1,70 @@
 """
-Augment telemetry data by increasing speed and acceleration targets.
-Useful for training models to drive more aggressively based on expert demonstrations.
+Augment telemetry data for more aggressive driving performance.
 
-Usage:
-    conda run -n ai_env python scripts/augment_speed.py --input data/friend_model_*.csv --output data/friend_model_augmented_*.csv
+Only OUTPUT columns (steer, accel, brake) are modified.
+INPUT columns (speed, track_*, angle, etc.) are left untouched to avoid
+train/inference distribution mismatch.
 
 Strategy:
-  - Speed: +5% (teaches the model to maintain higher velocity)
-  - Accel: +3% (more aggressive throttle but conservative on braking for safety)
-  - Brake: unchanged (preserve safety margins)
+  - accel:  +7%  (more throttle → faster straights and corner exits)
+  - steer:  +5%  (tighter cornering lines)
+  - brake:  -10% (later braking → more speed into corners)
+  All clipped to valid ranges.
+
+Usage:
+    conda run -n ai_env python scripts/augment_speed.py \
+        --input data/old_driver_*.csv \
+        --output data/old_driver_augmented_*.csv
 """
 
 import pandas as pd
+import numpy as np
 import argparse
-from pathlib import Path
 
 
-def augment_csv(input_path: str, output_path: str, speed_pct: float = 5.0, accel_pct: float = 3.0):
-    """
-    Augment telemetry CSV by increasing speed and accel targets.
-
-    Args:
-        input_path: Path to input CSV
-        output_path: Path to output CSV
-        speed_pct: Percentage increase for speed column (e.g., 5.0 = +5%)
-        accel_pct: Percentage increase for accel column (e.g., 3.0 = +3%)
-    """
+def augment_csv(
+    input_path: str,
+    output_path: str,
+    accel_pct: float = 7.0,
+    steer_pct: float = 5.0,
+    brake_reduction_pct: float = 10.0,
+):
     print(f"[INFO] Loading {input_path}...")
     df = pd.read_csv(input_path)
+    print(f"[INFO] Rows: {len(df)}")
+    print(f"[INFO] Accel range:  {df['accel'].min():.3f} - {df['accel'].max():.3f}")
+    print(f"[INFO] Steer range:  {df['steer'].min():.3f} - {df['steer'].max():.3f}")
+    print(f"[INFO] Brake range:  {df['brake'].min():.3f} - {df['brake'].max():.3f}")
 
-    print(f"[INFO] Original shape: {df.shape}")
-    print(f"[INFO] Speed range: {df['speed'].min():.1f} - {df['speed'].max():.1f} km/h")
-    print(f"[INFO] Accel range: {df['accel'].min():.3f} - {df['accel'].max():.3f}")
+    # Only touch OUTPUT columns — sensor inputs are left untouched
+    df["accel"] = (df["accel"] * (1.0 + accel_pct / 100.0)).clip(0.0, 1.0)
+    df["steer"] = (df["steer"] * (1.0 + steer_pct / 100.0)).clip(-1.0, 1.0)
+    df["brake"] = (df["brake"] * (1.0 - brake_reduction_pct / 100.0)).clip(0.0, 1.0)
 
-    # Increase speed target
-    df['speed'] = df['speed'] * (1.0 + speed_pct / 100.0)
+    print(f"\n[AUGMENTATION] Applied (outputs only, sensor inputs unchanged):")
+    print(f"  - accel: +{accel_pct}%  → {df['accel'].min():.3f} - {df['accel'].max():.3f}")
+    print(f"  - steer: +{steer_pct}%  → {df['steer'].min():.3f} - {df['steer'].max():.3f}")
+    print(f"  - brake: -{brake_reduction_pct}%  → {df['brake'].min():.3f} - {df['brake'].max():.3f}")
 
-    # Increase accel target (clip to [0, 1] range)
-    df['accel'] = (df['accel'] * (1.0 + accel_pct / 100.0)).clip(0, 1.0)
-
-    # Brake unchanged (safety)
-
-    print(f"\n[AUGMENTATION] Applied:")
-    print(f"  - Speed: +{speed_pct}%")
-    print(f"  - Accel: +{accel_pct}% (clipped to [0, 1])")
-    print(f"  - Brake: unchanged")
-
-    print(f"\n[INFO] New speed range: {df['speed'].min():.1f} - {df['speed'].max():.1f} km/h")
-    print(f"[INFO] New accel range: {df['accel'].min():.3f} - {df['accel'].max():.3f}")
-
-    print(f"\n[INFO] Saving to {output_path}...")
     df.to_csv(output_path, index=False)
-    print(f"[OK] Augmented data saved: {output_path}")
-
-    return output_path
+    print(f"\n[OK] Saved: {output_path}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Augment telemetry data for performance")
-    parser.add_argument("--input", type=str, required=True, help="Input CSV path")
-    parser.add_argument("--output", type=str, required=True, help="Output CSV path")
-    parser.add_argument("--speed-pct", type=float, default=5.0, help="Speed increase percentage (default 5)")
-    parser.add_argument("--accel-pct", type=float, default=3.0, help="Accel increase percentage (default 3)")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input", required=True)
+    parser.add_argument("--output", required=True)
+    parser.add_argument("--accel-pct", type=float, default=7.0)
+    parser.add_argument("--steer-pct", type=float, default=5.0)
+    parser.add_argument("--brake-reduction-pct", type=float, default=10.0)
     args = parser.parse_args()
 
-    augment_csv(args.input, args.output, speed_pct=args.speed_pct, accel_pct=args.accel_pct)
+    augment_csv(
+        args.input, args.output,
+        accel_pct=args.accel_pct,
+        steer_pct=args.steer_pct,
+        brake_reduction_pct=args.brake_reduction_pct,
+    )
 
 
 if __name__ == "__main__":
