@@ -28,11 +28,18 @@ _DEFAULT_MAP_PATH = (
 
 # --------------- Steering ---------------
 STEER_ANGLE_GAIN:   float = 1.2    # angle correction (was 1.6 — too twitchy)
-STEER_LINE_GAIN:    float = 0.25   # bias toward racing line (was 0.40 — too aggressive)
+STEER_LINE_GAIN:    float = 0.30   # bias toward target track position
 STEER_LOCK:         float = 0.785398
 STEER_SMOOTH_SPEED: float = 75.0   # apply EMA smoothing below this speed (was 50)
 STEER_SMOOTH_ALPHA: float = 0.25   # EMA weight for new steer (was 0.35 — more damping)
-TARGET_LINE_SCALE:  float = 0.50   # blend trajectory line with centre (was 0.70)
+
+# --------------- Apex-seeking (inside line) ---------------
+# Estimate corner direction from live sensor asymmetry, exactly like the proven
+# rule_based driver, but bias HARDER toward the inside of the bend.
+#   curvature = (left_avg − right_avg) / (left_avg + right_avg)
+#   positive curvature → right-hand corner → target negative trackPos (inside)
+APEX_CURV_GAIN: float = 0.55   # curvature → inside trackPos (rule_based uses 0.30)
+APEX_TP_MAX:    float = 0.45   # max inside offset (rule_based uses 0.28)
 
 # --------------- Speed control ---------------
 BRAKE_MAX:        float = 1.0
@@ -40,6 +47,11 @@ SCAN_AHEAD_M:     float = 200.0   # look-ahead for braking (was 300 — too far 
 BRAKE_MARGIN_M:   float = 40.0    # extra buffer on top of braking distance (was 85)
 THROTTLE_BASE:    float = 0.50    # minimum throttle in slow corners (was 0.35 — anti-crawl)
 CRAWL_SPEED:      float = 25.0    # below this & not braking → force throttle to avoid stalling
+
+# Live forward sensor overrides the (possibly over-conservative) track map:
+# if the narrow forward sector sees more clear road than this, the map's brake
+# command is wrong — the road is genuinely open, so suppress braking.
+FWD_CLEAR_NO_BRAKE: float = 60.0  # m
 
 # ABS
 WHEEL_RADIUS:        float = 0.33
@@ -122,9 +134,15 @@ class OptimalLineDriver(BaseDriver):
         assert self._trajectory is not None
         traj = self._trajectory
         v_cur = state.speed
+        fwd_clear = self._fwd_clear(state)
 
-        # scan ahead for the tightest corner in SCAN_AHEAD_M
-        v_min, d_to_min = traj.min_speed_ahead(state.distFromStart, SCAN_AHEAD_M)
+        # scan ahead for the tightest corner — but never look PAST the finish
+        # line. The map's start/finish buckets hold standing-start speeds (the
+        # car was accelerating from 0 there); scanning into them brakes the car
+        # for no reason on the final straight.
+        remaining = traj.track_length - (state.distFromStart % traj.track_length)
+        scan = max(10.0, min(SCAN_AHEAD_M, remaining))
+        v_min, d_to_min = traj.min_speed_ahead(state.distFromStart, scan)
 
         decel_max = BRAKE_MAX * BACKWARD_DECEL_FACTOR  # (km/h)²/m
         accel: float = 0.0
@@ -142,6 +160,13 @@ class OptimalLineDriver(BaseDriver):
                 bp = min(BRAKE_MAX, required / BACKWARD_DECEL_FACTOR)
                 brake = self._apply_abs(bp, state)
 
+        # LIVE-SENSOR OVERRIDE: the track map flags 84% of the lap as "corner"
+        # and over-brakes. If the forward sensor proves the road is genuinely
+        # open, the map is wrong — cancel the brake and drive.
+        if brake > 0.0 and fwd_clear > FWD_CLEAR_NO_BRAKE:
+            brake = 0.0
+            accel = 1.0
+
         # slow corner: ensure we don't coast
         if brake == 0.0 and v_cur < 80.0:
             target_here = traj.lookup_speed(state.distFromStart)
@@ -157,11 +182,37 @@ class OptimalLineDriver(BaseDriver):
         if accel > 0.0:
             accel = self._apply_tcs(accel, state)
 
-        target_tp = traj.lookup_line(state.distFromStart) * TARGET_LINE_SCALE
+        # Target the INSIDE of the corner from live sensor asymmetry (robust,
+        # independent of the track map). Steers the apex like rule_based but harder.
+        target_tp = self._apex_trackpos(state)
         steer = self._steer(state, target_tp)
         gear = self._compute_gear(state, braking=(brake > 0))
 
         return Action(steer=steer, accel=accel, brake=brake, gear=gear).clamp()
+
+    # ------------------------------------------------------------------
+    def _fwd_clear(self, state: SensorState) -> float:
+        """Narrow forward clearance (m) — min of the ±1–3° sensors (7..11)."""
+        if len(state.track) < 12:
+            return 200.0
+        return min(state.track[7:12])
+
+    def _apex_trackpos(self, state: SensorState) -> float:
+        """Inside-of-corner target trackPos from sensor asymmetry.
+
+        Positive curvature (left sees further) → right-hand corner → aim at the
+        inside, which is a negative trackPos. Returns 0 on straights.
+        """
+        s = state.track
+        if len(s) < 17:
+            return 0.0
+        left_avg = (s[2] + s[3] + s[4]) / 3.0
+        right_avg = (s[14] + s[15] + s[16]) / 3.0
+        total = left_avg + right_avg
+        if total <= 1.0:
+            return 0.0
+        curvature = (left_avg - right_avg) / total
+        return max(-APEX_TP_MAX, min(APEX_TP_MAX, -curvature * APEX_CURV_GAIN))
 
     # ------------------------------------------------------------------
     def _steer(self, state: SensorState, target_tp: float) -> float:

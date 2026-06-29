@@ -105,7 +105,11 @@ def run(
                 lap_count += 1
                 logger.info("Lap %d completed in %.3f s", lap_count, state.lastLapTime)
                 if lap_count >= laps:
-                    client.send_shutdown()
+                    # Do NOT force a meta=2 shutdown — that aborts the session
+                    # before TORCS can display the lap-results screen. For a
+                    # finite-lap race TORCS ends naturally once the line is
+                    # crossed; just stop driving and let it show the results.
+                    logger.info("Target laps reached — releasing control to TORCS.")
                     break
 
     off_track_pct = (off_track_steps / max(total_steps, 1)) * 100.0
