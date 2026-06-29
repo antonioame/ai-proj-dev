@@ -1,0 +1,639 @@
+
+import socket
+import sys
+import getopt
+import os
+import time
+import pickle
+import numpy as np
+PI= 3.14159265359
+
+data_size = 2**17
+
+ophelp=  'Options:\n'
+ophelp+= ' --host, -H <host>    TORCS server host. [localhost]\n'
+ophelp+= ' --port, -p <port>    TORCS port. [3001]\n'
+ophelp+= ' --id, -i <id>        ID for server. [SCR]\n'
+ophelp+= ' --steps, -m <#>      Maximum simulation steps. 1 sec ~ 50 steps. [100000]\n'
+ophelp+= ' --episodes, -e <#>   Maximum learning episodes. [1]\n'
+ophelp+= ' --track, -t <track>  Your name for this track. Used for learning. [unknown]\n'
+ophelp+= ' --stage, -s <#>      0=warm up, 1=qualifying, 2=race, 3=unknown. [3]\n'
+ophelp+= ' --debug, -d          Output full telemetry.\n'
+ophelp+= ' --help, -h           Show this help.\n'
+ophelp+= ' --version, -v        Show current version.'
+usage= 'Usage: %s [ophelp [optargs]] \n' % sys.argv[0]
+usage= usage + ophelp
+version= "20130505-2"
+
+def clip(v,lo,hi):
+    if v<lo: return lo
+    elif v>hi: return hi
+    else: return v
+
+class BehavioralCloningPredictor:
+    """Carica e usa il modello BC per predire azioni"""
+    def __init__(self, model_dir='bc_models'):
+        self.model_dir = model_dir
+        self.is_loaded = False
+        self.input_scaler = None
+        self.output_scalers = {}
+        self.models = {}
+        self.load_models()
+    
+    def load_models(self):
+        """Carica i modelli dal disco"""
+        try:
+            with open(os.path.join(self.model_dir, 'input_scaler.pkl'), 'rb') as f:
+                self.input_scaler = pickle.load(f)
+            
+            for action in ['steer', 'accel', 'brake', 'gear']:
+                scaler_path = os.path.join(self.model_dir, f'{action}_scaler.pkl')
+                model_path = os.path.join(self.model_dir, f'{action}_model.pkl')
+                
+                with open(scaler_path, 'rb') as f:
+                    self.output_scalers[action] = pickle.load(f)
+                with open(model_path, 'rb') as f:
+                    self.models[action] = pickle.load(f)
+            
+            self.is_loaded = True
+            print(f"Modello BC caricato da {self.model_dir}/")
+        except Exception as e:
+            print(f"Avviso: Non riuscito a caricare modello BC: {e}")
+            print("Userò solo l'algoritmo euristico")
+            self.is_loaded = False
+    
+    def predict_actions(self, state_dict):
+        """Predice le azioni basate sullo stato corrente"""
+        if not self.is_loaded:
+            return None
+        
+        try:
+            # Estrarre i sensori dal dizionario di stato
+            state_values = np.array([[
+                state_dict.get('speedX', 0),
+                state_dict.get('trackPos', 0),
+                state_dict.get('angle', 0),
+                state_dict.get('rpm', 0),
+                state_dict.get('damage', 0)
+            ]])
+            
+            # Normalizzare
+            state_scaled = self.input_scaler.transform(state_values)
+            
+            # Predire (output è normalizzato, bisogna denormalizzare)
+            steer_scaled = self.models['steer'].predict(state_scaled)[0].reshape(1, -1)
+            accel_scaled = self.models['accel'].predict(state_scaled)[0].reshape(1, -1)
+            brake_scaled = self.models['brake'].predict(state_scaled)[0].reshape(1, -1)
+            gear_scaled = self.models['gear'].predict(state_scaled)[0].reshape(1, -1)
+            
+            # Denormalizzare
+            steer = self.output_scalers['steer'].inverse_transform(steer_scaled)[0, 0]
+            accel = self.output_scalers['accel'].inverse_transform(accel_scaled)[0, 0]
+            brake = self.output_scalers['brake'].inverse_transform(brake_scaled)[0, 0]
+            gear = round(float(self.output_scalers['gear'].inverse_transform(gear_scaled)[0, 0]))
+            
+            return {
+                'steer': float(np.clip(steer, -1.0, 1.0)),
+                'accel': float(np.clip(accel, 0.0, 1.0)),
+                'brake': float(np.clip(brake, 0.0, 1.0)),
+                'gear': int(np.clip(gear, 1, 5))
+            }
+        except Exception as e:
+            print(f"Errore nella predizione BC: {e}")
+            return None
+
+def clip(v,lo,hi):
+    if v<lo: return lo
+    elif v>hi: return hi
+    else: return v
+
+def bargraph(x,mn,mx,w,c='X'):
+    '''Draws a simple asciiart bar graph. Very handy for
+    visualizing what's going on with the data.
+    x= Value from sensor, mn= minimum plottable value,
+    mx= maximum plottable value, w= width of plot in chars,
+    c= the character to plot with.'''
+    if not w: return '' # No width!
+    if x<mn: x= mn      # Clip to bounds.
+    if x>mx: x= mx      # Clip to bounds.
+    tx= mx-mn # Total real units possible to show on graph.
+    if tx<=0: return 'backwards' # Stupid bounds.
+    upw= tx/float(w) # X Units per output char width.
+    if upw<=0: return 'what?' # Don't let this happen.
+    negpu, pospu, negnonpu, posnonpu= 0,0,0,0
+    if mn < 0: # Then there is a negative part to graph.
+        if x < 0: # And the plot is on the negative side.
+            negpu= -x + min(0,mx)
+            negnonpu= -mn + x
+        else: # Plot is on pos. Neg side is empty.
+            negnonpu= -mn + min(0,mx) # But still show some empty neg.
+    if mx > 0: # There is a positive part to the graph
+        if x > 0: # And the plot is on the positive side.
+            pospu= x - max(0,mn)
+            posnonpu= mx - x
+        else: # Plot is on neg. Pos side is empty.
+            posnonpu= mx - max(0,mn) # But still show some empty pos.
+    nnc= int(negnonpu/upw)*'-'
+    npc= int(negpu/upw)*c
+    ppc= int(pospu/upw)*c
+    pnc= int(posnonpu/upw)*'_'
+    return '[%s]' % (nnc+npc+ppc+pnc)
+
+class Client():
+    def __init__(self,H=None,p=None,i=None,e=None,t=None,s=None,d=None,vision=False):
+        self.vision = vision
+
+        self.host= 'localhost'
+        self.port= 3001
+        self.sid= 'SCR'
+        self.maxEpisodes=1 # "Maximum number of learning episodes to perform"
+        self.trackname= 'unknown'
+        self.stage= 3 # 0=Warm-up, 1=Qualifying 2=Race, 3=unknown <Default=3>
+        self.debug= False
+        self.maxSteps= 100000  # 50steps/second
+        self.parse_the_command_line()
+        if H: self.host= H
+        if p: self.port= p
+        if i: self.sid= i
+        if e: self.maxEpisodes= e
+        if t: self.trackname= t
+        if s: self.stage= s
+        if d: self.debug= d
+        self.S= ServerState()
+        self.R= DriverAction()
+        self.bc_model = BehavioralCloningPredictor('bc_models')  # Carica il modello BC
+        self.setup_connection()
+
+    def setup_connection(self):
+        try:
+            self.so= socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        except socket.error as emsg:
+            print('Error: Could not create socket...')
+            sys.exit(-1)
+        self.so.settimeout(1)
+
+        n_fail = 5
+        while True:
+            a= "-45 -19 -12 -7 -4 -2.5 -1.7 -1 -.5 0 .5 1 1.7 2.5 4 7 12 19 45"
+
+            initmsg='%s(init %s)' % (self.sid,a)
+
+            try:
+                self.so.sendto(initmsg.encode(), (self.host, self.port))
+            except socket.error as emsg:
+                sys.exit(-1)
+            sockdata= str()
+            try:
+                sockdata,addr= self.so.recvfrom(data_size)
+                sockdata = sockdata.decode('utf-8')
+            except socket.error as emsg:
+                print("Waiting for server on %d............" % self.port)
+                print("Count Down : " + str(n_fail))
+                if n_fail < 0:
+                    print("relaunch torcs")
+                    os.system('pkill torcs')
+                    time.sleep(1.0)
+                    if self.vision is False:
+                        os.system('torcs -nofuel -nodamage -nolaptime &')
+                    else:
+                        os.system('torcs -nofuel -nodamage -nolaptime -vision &')
+
+                    time.sleep(1.0)
+                    os.system('sh autostart.sh')
+                    n_fail = 5
+                n_fail -= 1
+
+            identify = '***identified***'
+            if identify in sockdata:
+                print("Client connected on %d.............." % self.port)
+                break
+
+    def parse_the_command_line(self):
+        try:
+            (opts, args) = getopt.getopt(sys.argv[1:], 'H:p:i:m:e:t:s:dhv',
+                       ['host=','port=','id=','steps=',
+                        'episodes=','track=','stage=',
+                        'debug','help','version'])
+        except getopt.error as why:
+            print('getopt error: %s\n%s' % (why, usage))
+            sys.exit(-1)
+        try:
+            for opt in opts:
+                if opt[0] == '-h' or opt[0] == '--help':
+                    print(usage)
+                    sys.exit(0)
+                if opt[0] == '-d' or opt[0] == '--debug':
+                    self.debug= True
+                if opt[0] == '-H' or opt[0] == '--host':
+                    self.host= opt[1]
+                if opt[0] == '-i' or opt[0] == '--id':
+                    self.sid= opt[1]
+                if opt[0] == '-t' or opt[0] == '--track':
+                    self.trackname= opt[1]
+                if opt[0] == '-s' or opt[0] == '--stage':
+                    self.stage= int(opt[1])
+                if opt[0] == '-p' or opt[0] == '--port':
+                    self.port= int(opt[1])
+                if opt[0] == '-e' or opt[0] == '--episodes':
+                    self.maxEpisodes= int(opt[1])
+                if opt[0] == '-m' or opt[0] == '--steps':
+                    self.maxSteps= int(opt[1])
+                if opt[0] == '-v' or opt[0] == '--version':
+                    print('%s %s' % (sys.argv[0], version))
+                    sys.exit(0)
+        except ValueError as why:
+            print('Bad parameter \'%s\' for option %s: %s\n%s' % (
+                                       opt[1], opt[0], why, usage))
+            sys.exit(-1)
+        if len(args) > 0:
+            print('Superflous input? %s\n%s' % (', '.join(args), usage))
+            sys.exit(-1)
+
+    def get_servers_input(self):
+        '''Server's input is stored in a ServerState object'''
+        if not self.so: return
+        sockdata= str()
+
+        while True:
+            try:
+                sockdata,addr= self.so.recvfrom(data_size)
+                sockdata = sockdata.decode('utf-8')
+            except socket.error as emsg:
+                print('.', end=' ')
+            if '***identified***' in sockdata:
+                print("Client connected on %d.............." % self.port)
+                continue
+            elif '***shutdown***' in sockdata:
+                print((("Server has stopped the race on %d. "+
+                        "You were in %d place.") %
+                        (self.port,self.S.d['racePos'])))
+                self.shutdown()
+                return
+            elif '***restart***' in sockdata:
+                print("Server has restarted the race on %d." % self.port)
+                self.shutdown()
+                return
+            elif not sockdata: # Empty?
+                continue       # Try again.
+            else:
+                self.S.parse_server_str(sockdata)
+                if self.debug:
+                    sys.stderr.write("\x1b[2J\x1b[H") # Clear for steady output.
+                    print(self.S)
+                break # Can now return from this function.
+
+    def respond_to_server(self):
+        if not self.so: return
+        try:
+            message = repr(self.R)
+            self.so.sendto(message.encode(), (self.host, self.port))
+        except socket.error as emsg:
+            print("Error sending to server: %s Message %s" % (emsg[1],str(emsg[0])))
+            sys.exit(-1)
+        if self.debug: print(self.R.fancyout())
+
+    def shutdown(self):
+        if not self.so: return
+        print(("Race terminated or %d steps elapsed. Shutting down %d."
+               % (self.maxSteps,self.port)))
+        self.so.close()
+        self.so = None
+
+class ServerState():
+    '''What the server is reporting right now.'''
+    def __init__(self):
+        self.servstr= str()
+        self.d= dict()
+
+    def parse_server_str(self, server_string):
+        '''Parse the server string.'''
+        self.servstr= server_string.strip()[:-1]
+        sslisted= self.servstr.strip().lstrip('(').rstrip(')').split(')(')
+        for i in sslisted:
+            w= i.split(' ')
+            self.d[w[0]]= destringify(w[1:])
+
+    def __repr__(self):
+        return self.fancyout()
+        out= str()
+        for k in sorted(self.d):
+            strout= str(self.d[k])
+            if type(self.d[k]) is list:
+                strlist= [str(i) for i in self.d[k]]
+                strout= ', '.join(strlist)
+            out+= "%s: %s\n" % (k,strout)
+        return out
+
+    def fancyout(self):
+        '''Specialty output for useful ServerState monitoring.'''
+        out= str()
+        sensors= [ # Select the ones you want in the order you want them.
+        'stucktimer',
+        'fuel',
+        'distRaced',
+        'distFromStart',
+        'opponents',
+        'wheelSpinVel',
+        'z',
+        'speedZ',
+        'speedY',
+        'speedX',
+        'targetSpeed',
+        'rpm',
+        'skid',
+        'slip',
+        'track',
+        'trackPos',
+        'angle',
+        ]
+
+        for k in sensors:
+            if type(self.d.get(k)) is list: # Handle list type data.
+                if k == 'track': # Nice display for track sensors.
+                    strout= str()
+                    raw_tsens= ['%.1f'%x for x in self.d['track']]
+                    strout+= ' '.join(raw_tsens[:9])+'_'+raw_tsens[9]+'_'+' '.join(raw_tsens[10:])
+                elif k == 'opponents': # Nice display for opponent sensors.
+                    strout= str()
+                    for osensor in self.d['opponents']:
+                        if   osensor >190: oc= '_'
+                        elif osensor > 90: oc= '.'
+                        elif osensor > 39: oc= chr(int(osensor/2)+97-19)
+                        elif osensor > 13: oc= chr(int(osensor)+65-13)
+                        elif osensor >  3: oc= chr(int(osensor)+48-3)
+                        else: oc= '?'
+                        strout+= oc
+                    strout= ' -> '+strout[:18] + ' ' + strout[18:]+' <-'
+                else:
+                    strlist= [str(i) for i in self.d[k]]
+                    strout= ', '.join(strlist)
+            else: # Not a list type of value.
+                if k == 'gear': # This is redundant now since it's part of RPM.
+                    gs= '_._._._._._._._._'
+                    p= int(self.d['gear']) * 2 + 2  # Position
+                    l= '%d'%self.d['gear'] # Label
+                    if l=='-1': l= 'R'
+                    if l=='0':  l= 'N'
+                    strout= gs[:p]+ '(%s)'%l + gs[p+3:]
+                elif k == 'damage':
+                    strout= '%6.0f %s' % (self.d[k], bargraph(self.d[k],0,10000,50,'~'))
+                elif k == 'fuel':
+                    strout= '%6.0f %s' % (self.d[k], bargraph(self.d[k],0,100,50,'f'))
+                elif k == 'speedX':
+                    cx= 'X'
+                    if self.d[k]<0: cx= 'R'
+                    strout= '%6.1f %s' % (self.d[k], bargraph(self.d[k],-30,300,50,cx))
+                elif k == 'speedY': # This gets reversed for display to make sense.
+                    strout= '%6.1f %s' % (self.d[k], bargraph(self.d[k]*-1,-25,25,50,'Y'))
+                elif k == 'speedZ':
+                    strout= '%6.1f %s' % (self.d[k], bargraph(self.d[k],-13,13,50,'Z'))
+                elif k == 'z':
+                    strout= '%6.3f %s' % (self.d[k], bargraph(self.d[k],.3,.5,50,'z'))
+                elif k == 'trackPos': # This gets reversed for display to make sense.
+                    cx='<'
+                    if self.d[k]<0: cx= '>'
+                    strout= '%6.3f %s' % (self.d[k], bargraph(self.d[k]*-1,-1,1,50,cx))
+                elif k == 'stucktimer':
+                    if self.d[k]:
+                        strout= '%3d %s' % (self.d[k], bargraph(self.d[k],0,300,50,"'"))
+                    else: strout= 'Not stuck!'
+                elif k == 'rpm':
+                    g= self.d['gear']
+                    if g < 0:
+                        g= 'R'
+                    else:
+                        g= '%1d'% g
+                    strout= bargraph(self.d[k],0,10000,50,g)
+                elif k == 'angle':
+                    asyms= [
+                          "  !  ", ".|'  ", "./'  ", "_.-  ", ".--  ", "..-  ",
+                          "---  ", ".__  ", "-._  ", "'-.  ", "'\.  ", "'|.  ",
+                          "  |  ", "  .|'", "  ./'", "  .-'", "  _.-", "  __.",
+                          "  ---", "  --.", "  -._", "  -..", "  '\.", "  '|."  ]
+                    rad= self.d[k]
+                    deg= int(rad*180/PI)
+                    symno= int(.5+ (rad+PI) / (PI/12) )
+                    symno= symno % (len(asyms)-1)
+                    strout= '%5.2f %3d (%s)' % (rad,deg,asyms[symno])
+                elif k == 'skid': # A sensible interpretation of wheel spin.
+                    frontwheelradpersec= self.d['wheelSpinVel'][0]
+                    skid= 0
+                    if frontwheelradpersec:
+                        skid= .5555555555*self.d['speedX']/frontwheelradpersec - .66124
+                    strout= bargraph(skid,-.05,.4,50,'*')
+                elif k == 'slip': # A sensible interpretation of wheel spin.
+                    frontwheelradpersec= self.d['wheelSpinVel'][0]
+                    slip= 0
+                    if frontwheelradpersec:
+                        slip= ((self.d['wheelSpinVel'][2]+self.d['wheelSpinVel'][3]) -
+                              (self.d['wheelSpinVel'][0]+self.d['wheelSpinVel'][1]))
+                    strout= bargraph(slip,-5,150,50,'@')
+                else:
+                    strout= str(self.d[k])
+            out+= "%s: %s\n" % (k,strout)
+        return out
+
+class DriverAction():
+    '''What the driver is intending to do (i.e. send to the server).
+    Composes something like this for the server:
+    (accel 1)(brake 0)(gear 1)(steer 0)(clutch 0)(focus 0)(meta 0) or
+    (accel 1)(brake 0)(gear 1)(steer 0)(clutch 0)(focus -90 -45 0 45 90)(meta 0)'''
+    def __init__(self):
+       self.actionstr= str()
+       self.d= { 'accel':0.2,
+                   'brake':0,
+                  'clutch':0,
+                    'gear':1,
+                   'steer':0,
+                   'focus':[-90,-45,0,45,90],
+                    'meta':0
+                    }
+
+    def clip_to_limits(self):
+        """There pretty much is never a reason to send the server
+        something like (steer 9483.323). This comes up all the time
+        and it's probably just more sensible to always clip it than to
+        worry about when to. The "clip" command is still a snakeoil
+        utility function, but it should be used only for non standard
+        things or non obvious limits (limit the steering to the left,
+        for example). For normal limits, simply don't worry about it."""
+        self.d['steer']= clip(self.d['steer'], -1, 1)
+        self.d['brake']= clip(self.d['brake'], 0, 1)
+        self.d['accel']= clip(self.d['accel'], 0, 1)
+        self.d['clutch']= clip(self.d['clutch'], 0, 1)
+        if self.d['gear'] not in [-1, 0, 1, 2, 3, 4, 5, 6]:
+            self.d['gear']= 0
+        if self.d['meta'] not in [0,1]:
+            self.d['meta']= 0
+        if type(self.d['focus']) is not list or min(self.d['focus'])<-180 or max(self.d['focus'])>180:
+            self.d['focus']= 0
+
+    def __repr__(self):
+        self.clip_to_limits()
+        out= str()
+        for k in self.d:
+            out+= '('+k+' '
+            v= self.d[k]
+            if not type(v) is list:
+                out+= '%.3f' % v
+            else:
+                out+= ' '.join([str(x) for x in v])
+            out+= ')'
+        return out
+        return out+'\n'
+
+    def fancyout(self):
+        '''Specialty output for useful monitoring of bot's effectors.'''
+        out= str()
+        od= self.d.copy()
+        od.pop('gear','') # Not interesting.
+        od.pop('meta','') # Not interesting.
+        od.pop('focus','') # Not interesting. Yet.
+        for k in sorted(od):
+            if k == 'clutch' or k == 'brake' or k == 'accel':
+                strout=''
+                strout= '%6.3f %s' % (od[k], bargraph(od[k],0,1,50,k[0].upper()))
+            elif k == 'steer': # Reverse the graph to make sense.
+                strout= '%6.3f %s' % (od[k], bargraph(od[k]*-1,-1,1,50,'S'))
+            else:
+                strout= str(od[k])
+            out+= "%s: %s\n" % (k,strout)
+        return out
+
+def destringify(s):
+    '''makes a string into a value or a list of strings into a list of
+    values (if possible)'''
+    if not s: return s
+    if type(s) is str:
+        try:
+            return float(s)
+        except ValueError:
+            print("Could not find a value in %s" % s)
+            return s
+    elif type(s) is list:
+        if len(s) < 2:
+            return destringify(s[0])
+        else:
+            return [destringify(i) for i in s]
+
+def drive_example(c):
+    '''Hybrid: Original steering (proven) + BC acceleration hints.
+    The original algorithm works great - this only enhances it safely.'''
+    S, R = c.S.d, c.R.d
+    
+    # === STEP 1: PROVEN ORIGINAL STEERING (DO NOT MODIFY) ===
+    # This steering logic completes laps successfully
+    R['steer'] = S['angle'] * 25 / PI
+    R['steer'] -= S['trackPos'] * 0.25
+    R['steer'] = clip(R['steer'], -1, 1)
+    
+    # === STEP 2: ORIGINAL ACCELERATION LOGIC (PROVEN) ===
+    # Dynamic target speed based on track curvature
+    track = S['track']
+    front_dist = 100.0
+    if len(track) >= 19:
+        front_dist = track[9]
+    
+    if front_dist > 150:
+        target_speed = 210
+    elif front_dist > 100:
+        target_speed = 185
+    else:
+        target_speed = 160
+        
+    R['accel'] = max(0.0, min(1.0, R['accel']))
+    
+    if S['speedX'] < target_speed - (R['steer'] * 2.5):
+        R['accel'] += 0.4
+    else:
+        R['accel'] -= 0.2
+    if S['speedX'] < 10:
+        R['accel'] += 1.0 / (S['speedX'] + 0.1)
+    
+    # Aggressive curve entry guard: reduce accel when steering or off-center
+    steer_abs = abs(R['steer'])
+    track_abs = abs(S['trackPos'])
+    if steer_abs > 0.15 or track_abs > 0.25:
+        # Scale down acceleration proportionally to steering and track position
+        curve_penalty = max(steer_abs, track_abs)
+        R['accel'] *= (1.0 - 0.75 * min(1.0, curve_penalty))
+    
+    wheel_slip = ((S['wheelSpinVel'][2] + S['wheelSpinVel'][3]) -
+                  (S['wheelSpinVel'][0] + S['wheelSpinVel'][1]))
+    if wheel_slip > 2.5:
+        R['accel'] -= 0.1
+    
+    R['accel'] = clip(R['accel'], 0, 1)
+    
+    # === STEP 3: BC ENHANCEMENT (OPTIONAL, CONSERVATIVE) ===
+    # Only use BC if available AND we're in a safe situation
+    state_dict = {
+        'speedX': S['speedX'],
+        'trackPos': S['trackPos'],
+        'angle': S['angle'],
+        'rpm': S['rpm'],
+        'damage': S['damage']
+    }
+    
+    bc_actions = None
+    if c.bc_model and c.bc_model.is_loaded:
+        bc_actions = c.bc_model.predict_actions(state_dict)
+    
+    # Apply BC ONLY for accel hint, very conservatively
+    if bc_actions is not None:
+        # Only trust BC in safe conditions (centered on track, low steering)
+        safety_margin = min(1.0 - abs(S['trackPos']), 1.0 - abs(R['steer']))
+        
+        if safety_margin > 0.5:
+            # Let BC have more influence in safe conditions
+            bc_accel_hint = 0.85 * R['accel'] + 0.15 * bc_actions['accel']
+            R['accel'] = min(R['accel'], bc_accel_hint)
+    
+    # === STEP 4: GEAR CONTROL (ORIGINAL SIMPLE STRATEGY) ===
+    R['gear'] = 1
+    if S['speedX'] > 60:
+        R['gear'] = 2
+    if S['speedX'] > 100:
+        R['gear'] = 3
+    if S['speedX'] > 140:
+        R['gear'] = 4
+    if S['speedX'] > 190:
+        R['gear'] = 5
+    if S['speedX'] > 220:
+        R['gear'] = 6
+    
+    # Final safety clip
+    R['steer'] = clip(R['steer'], -1, 1)
+    
+    # Active braking logic for violent curves - adaptive to speed
+    track = S['track']
+    if len(track) >= 19:
+        front_dist = track[9]
+        # Brake threshold scales with speed for better anticipation
+        brake_dist_threshold = 70.0 + (S['speedX'] - 80.0) * 0.3  # More anticipation at high speed
+        brake_dist_threshold = max(70.0, min(120.0, brake_dist_threshold))
+        
+        if front_dist < brake_dist_threshold and S['speedX'] > 70:
+            brake_intensity = (1.0 - (front_dist / brake_dist_threshold)) * (S['speedX'] / 180.0)
+            R['brake'] = clip(brake_intensity, 0, 1)
+            R['accel'] = 0.0 # Non accelerare mentre si frena
+        elif abs(R['steer']) > 0.4 and S['speedX'] > 60:
+            # Frenata di emergenza mentre si sterza forte
+            R['brake'] = clip(abs(R['steer']) * 0.5, 0, 1)
+            R['accel'] = 0.0
+        else:
+            R['brake'] = 0.0
+    else:
+        R['brake'] = 0.0
+    
+    R['accel'] = clip(R['accel'], 0, 1)
+    
+    return
+
+if __name__ == "__main__":
+    C= Client(p=3001)
+    for step in range(C.maxSteps,0,-1):
+        C.get_servers_input()
+        drive_example(C)
+        C.respond_to_server()
+    C.shutdown()

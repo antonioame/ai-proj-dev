@@ -1,0 +1,13 @@
+personal_files/
+
+torcs/gym_torcs/.idea
+torcs/gym_torcs/vtorcs-RL-color
+
+torcs/gym_torcs/autostart.sh
+torcs/gym_torcs/LICENSE
+torcs/gym_torcs/practice.xml
+torcs/gym_torcs/README.md
+
+__pycache__
+
+scripts/

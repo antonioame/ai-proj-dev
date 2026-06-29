@@ -7,15 +7,48 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 import numpy as np
 import torch
+import torch.nn as nn
 
 from drivers.base_driver import BaseDriver
 from torcs_env.actions import Action
 from torcs_env.sensors import SensorState
-from training.behavioral_cloning.model import BCPolicy
+
+
+class BCPolicy(nn.Module):
+    """Behavioral Cloning MLP for TORCS driving."""
+    def __init__(self, input_dim: int = 26, hidden_dims: list = None):
+        super().__init__()
+        if hidden_dims is None:
+            hidden_dims = [128, 64]
+
+        layers = []
+        prev_dim = input_dim
+        for hidden_dim in hidden_dims:
+            layers.append(nn.Linear(prev_dim, hidden_dim))
+            layers.append(nn.ReLU())
+            prev_dim = hidden_dim
+
+        self.backbone = nn.Sequential(*layers)
+        self.head_steer = nn.Linear(prev_dim, 1)
+        self.head_accel = nn.Linear(prev_dim, 1)
+        self.head_brake = nn.Linear(prev_dim, 1)
+        self.head_gear = nn.Linear(prev_dim, 1)
+
+    def forward(self, x):
+        features = self.backbone(x)
+        return {
+            "steer": torch.tanh(self.head_steer(features)),
+            "accel": torch.sigmoid(self.head_accel(features)),
+            "brake": torch.sigmoid(self.head_brake(features)),
+            "gear": self.head_gear(features),
+        }
 
 
 class BCDriver(BaseDriver):
     """Drives using a trained behavioral cloning policy."""
+
+    STEER_GAIN = 1.8  # Amplify steering to force tighter turns and inner-track positioning
+    ACCEL_GAIN = 1.25  # Amplify acceleration to maintain higher speeds through curves
 
     def __init__(self, model_path: str | Path = "models/bc_from_rulefriend_v1.pth", stats_path: str | Path = "models/bc_from_rulefriend_v1.npz"):
         """Load trained BC model and normalization stats.
@@ -84,12 +117,19 @@ class BCDriver(BaseDriver):
         sensor_tensor = torch.from_numpy(sensor_vec).float().to(self._device)
         sensor_tensor = (sensor_tensor - self.X_mean) / self.X_std
 
-        # Forward pass — model outputs [steer, accel, brake, gear_pred]
-        # We only use the first 3 (gear is managed separately below)
+        # Forward pass — model outputs dict: {steer, accel, brake, gear}
+        # We use steer, accel, brake; gear is managed separately via RPM heuristic
         with torch.no_grad():
-            action_pred = self.model(sensor_tensor).cpu().numpy()
+            action_pred = self.model(sensor_tensor)
 
-        steer, accel, brake = action_pred[0], action_pred[1], action_pred[2]
+        steer = float(action_pred["steer"].squeeze().item())
+        accel = float(action_pred["accel"].squeeze().item())
+        brake = float(action_pred["brake"].squeeze().item())
+
+        # Amplify steering to follow tighter racing line
+        steer = max(-1.0, min(1.0, steer * self.STEER_GAIN))
+        # Amplify acceleration to maintain speed through curves
+        accel = max(0.0, min(1.0, accel * self.ACCEL_GAIN))
 
         # Gear management: RPM-based upshift/downshift
         upshift_rpm = 12000
