@@ -1,4 +1,4 @@
-"""Behavioral Cloning driver — runs trained BC policy on TORCS."""
+"""Behavioral Cloning driver — hybrid of two BC models blended by track context."""
 
 import sys
 from pathlib import Path
@@ -44,105 +44,116 @@ class BCPolicy(nn.Module):
         }
 
 
+def _load_bc_model(model_path: Path, stats_path: Path, device: torch.device):
+    """Load a BCPolicy model and its normalization stats."""
+    stats = np.load(stats_path)
+    X_mean = torch.from_numpy(stats["mean"]).float().to(device)
+    X_std = torch.from_numpy(stats["std"]).float().to(device)
+    model = BCPolicy(input_dim=26, hidden_dims=[128, 64]).to(device)
+    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.eval()
+    return model, X_mean, X_std
+
+
 class BCDriver(BaseDriver):
-    """Drives using a trained behavioral cloning policy."""
+    """Hybrid BC driver: blends two models based on straight vs corner context.
 
-    STEER_GAIN = 1.8  # Amplify steering to force tighter turns and inner-track positioning
-    ACCEL_GAIN = 1.25  # Amplify acceleration to maintain higher speeds through curves
+    - straight_model: trained on rule_based data — better on straights
+    - corner_model:   trained on old hybrid driver data — better in corners
 
-    def __init__(self, model_path: str | Path = "models/bc_from_olddriver_v1.pth", stats_path: str | Path = "models/bc_from_olddriver_v1.npz"):
-        """Load trained BC model and normalization stats.
+    Blend weight is determined by track[9] (front distance sensor):
+      - track[9] > STRAIGHT_THRESHOLD → full straight model
+      - track[9] < CORNER_THRESHOLD   → full corner model
+      - between the two               → smooth linear blend
+    """
 
-        Parameters
-        ----------
-        model_path : str | Path
-            Path to saved BCPolicy weights
-        stats_path : str | Path
-            Path to saved normalization stats (mean, std)
-        """
-        self.model_path = Path(model_path)
-        self.stats_path = Path(stats_path)
-        self.model = None
-        self.X_mean = None
-        self.X_std = None
+    STEER_GAIN = 1.8   # Applied to the blended steer output
+    ACCEL_GAIN = 1.25  # Applied to the blended accel output
+
+    STRAIGHT_THRESHOLD = 120.0  # m — above this: pure straight model
+    CORNER_THRESHOLD   = 60.0   # m — below this: pure corner model
+
+    def __init__(self):
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.current_gear = 1
-        self._load_model()
 
-    def _load_model(self) -> None:
-        """Load model and normalization stats."""
-        if not self.model_path.exists():
-            raise FileNotFoundError(f"Model not found: {self.model_path}")
-        if not self.stats_path.exists():
-            raise FileNotFoundError(f"Stats not found: {self.stats_path}")
+        straight_model_path = Path("models/bc_from_rulefriend_v1.pth")
+        straight_stats_path = Path("models/bc_from_rulefriend_v1.npz")
+        corner_model_path   = Path("models/bc_from_olddriver_v1.pth")
+        corner_stats_path   = Path("models/bc_from_olddriver_v1.npz")
 
-        # Load stats
-        stats = np.load(self.stats_path)
-        self.X_mean = torch.from_numpy(stats["mean"]).float().to(self._device)
-        self.X_std = torch.from_numpy(stats["std"]).float().to(self._device)
+        for p in [straight_model_path, straight_stats_path, corner_model_path, corner_stats_path]:
+            if not p.exists():
+                raise FileNotFoundError(f"Model file not found: {p}")
 
-        # Load model
-        self.model = BCPolicy(input_dim=26, hidden_dims=[128, 64]).to(self._device)
-        self.model.load_state_dict(torch.load(self.model_path, map_location=self._device))
-        self.model.eval()
-
-        print(f"BC model loaded from {self.model_path} (3 outputs: steer, accel, brake; gear managed separately)")
+        self.straight_model, self.straight_mean, self.straight_std = _load_bc_model(
+            straight_model_path, straight_stats_path, self._device
+        )
+        self.corner_model, self.corner_mean, self.corner_std = _load_bc_model(
+            corner_model_path, corner_stats_path, self._device
+        )
+        print(f"[BCDriver] Hybrid model loaded: straight=bc_from_rulefriend_v1, corner=bc_from_olddriver_v1")
 
     def reset(self) -> None:
-        """Reset driver state (no persistent state in BC)."""
         pass
 
     def on_restart(self) -> None:
-        """Called when race restarts."""
-        pass
+        self.current_gear = 1
+
+    def _infer(self, model, X_mean, X_std, sensor_vec: np.ndarray) -> dict:
+        """Run inference on a single model."""
+        t = torch.from_numpy(sensor_vec).float().to(self._device)
+        t = (t - X_mean) / X_std
+        with torch.no_grad():
+            out = model(t)
+        return {k: float(v.squeeze().item()) for k, v in out.items()}
+
+    def _blend_weight(self, front_dist: float) -> float:
+        """Return corner weight in [0, 1]. 0 = pure straight, 1 = pure corner."""
+        if front_dist >= self.STRAIGHT_THRESHOLD:
+            return 0.0
+        if front_dist <= self.CORNER_THRESHOLD:
+            return 1.0
+        return 1.0 - (front_dist - self.CORNER_THRESHOLD) / (self.STRAIGHT_THRESHOLD - self.CORNER_THRESHOLD)
 
     def step(self, state: SensorState) -> Action:
-        """Inference: sensor state → action using trained BC policy.
-
-        Gear management is handled separately (not predicted by model).
-        """
-        # Build sensor vector: [angle, speed, speedY, speedZ, trackPos, track_0-18, rpm, gear]
         sensor_vec = np.array([
             state.angle,
             state.speed,
             state.speedY,
             state.speedZ,
             state.trackPos,
-            *state.track,  # track_0 through track_18 (19 values)
+            *state.track,
             state.rpm,
             float(state.gear),
         ], dtype=np.float32)
 
-        # Normalize
-        sensor_tensor = torch.from_numpy(sensor_vec).float().to(self._device)
-        sensor_tensor = (sensor_tensor - self.X_mean) / self.X_std
+        # Infer from both models
+        straight_out = self._infer(self.straight_model, self.straight_mean, self.straight_std, sensor_vec)
+        corner_out   = self._infer(self.corner_model,   self.corner_mean,   self.corner_std,   sensor_vec)
 
-        # Forward pass — model outputs dict: {steer, accel, brake, gear}
-        # We use steer, accel, brake; gear is managed separately via RPM heuristic
-        with torch.no_grad():
-            action_pred = self.model(sensor_tensor)
+        # Blend based on front sensor distance
+        front_dist = state.track[9] if len(state.track) > 9 else 100.0
+        w_corner = self._blend_weight(front_dist)
+        w_straight = 1.0 - w_corner
 
-        steer = float(action_pred["steer"].squeeze().item())
-        accel = float(action_pred["accel"].squeeze().item())
-        brake = float(action_pred["brake"].squeeze().item())
+        steer = w_straight * straight_out["steer"] + w_corner * corner_out["steer"]
+        accel = w_straight * straight_out["accel"] + w_corner * corner_out["accel"]
+        brake = w_straight * straight_out["brake"] + w_corner * corner_out["brake"]
 
-        # Amplify steering to follow tighter racing line
+        # Apply gains
         steer = max(-1.0, min(1.0, steer * self.STEER_GAIN))
-        # Amplify acceleration to maintain speed through curves
-        accel = max(0.0, min(1.0, accel * self.ACCEL_GAIN))
+        accel = max(0.0,  min(1.0, accel * self.ACCEL_GAIN))
 
-        # Gear management: RPM-based upshift/downshift
-        upshift_rpm = 12000
-        downshift_rpm = 6000
-
-        if state.rpm > upshift_rpm and self.current_gear < 6:
+        # RPM-based gear management
+        if state.rpm > 12000 and self.current_gear < 6:
             self.current_gear += 1
-        elif state.rpm < downshift_rpm and self.current_gear > 1:
+        elif state.rpm < 6000 and self.current_gear > 1:
             self.current_gear -= 1
 
         return Action(
             steer=float(steer),
             accel=float(accel),
             brake=float(brake),
-            gear=self.current_gear
+            gear=self.current_gear,
         ).clamp()
