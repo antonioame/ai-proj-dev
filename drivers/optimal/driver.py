@@ -12,6 +12,7 @@ Build map: python scripts/build_track_map.py --telemetry data/<file>.csv
 from __future__ import annotations
 
 import math
+import time
 from pathlib import Path
 
 from drivers.base_driver import BaseDriver
@@ -37,7 +38,8 @@ TARGET_LINE_SCALE:  float = 0.50   # blend trajectory line with centre (was 0.70
 BRAKE_MAX:        float = 1.0
 SCAN_AHEAD_M:     float = 200.0   # look-ahead for braking (was 300 — too far ahead)
 BRAKE_MARGIN_M:   float = 40.0    # extra buffer on top of braking distance (was 85)
-THROTTLE_BASE:    float = 0.35    # minimum throttle in slow corners
+THROTTLE_BASE:    float = 0.50    # minimum throttle in slow corners (was 0.35 — anti-crawl)
+CRAWL_SPEED:      float = 25.0    # below this & not braking → force throttle to avoid stalling
 
 # ABS
 WHEEL_RADIUS:        float = 0.33
@@ -56,7 +58,14 @@ GEAR_SPEED_CAPS: list[tuple[float, int]] = [(15.0, 1), (45.0, 2), (75.0, 3)]
 
 # --------------- Safety / startup ---------------
 STARTUP_STEPS:     int   = 200    # conservative start phase (was 120)
-FALLBACK_TRACKPOS: float = 1.0    # abs(trackPos) > this → recovery (was 1.2)
+FALLBACK_TRACKPOS: float = 1.05   # abs(trackPos) > this → off-track recovery
+
+# Stuck detection: if pinned near a wall or barely moving for too long,
+# reverse out instead of crawling forward into the barrier.
+STUCK_SPEED_THRESH:    float = 5.0   # km/h — below this counts as "not moving"
+STUCK_TIME_LIMIT:      float = 2.0   # s of being stuck before reversing
+REVERSE_DURATION:      float = 1.5   # s to hold reverse once triggered
+STUCK_STARTUP_IMMUNITY: float = 6.0  # s after start before stuck logic arms
 
 
 class OptimalLineDriver(BaseDriver):
@@ -67,6 +76,9 @@ class OptimalLineDriver(BaseDriver):
         self._trajectory: Trajectory | None = None
         self._step_count: int = 0
         self._prev_steer: float = 0.0
+        self._start_time: float | None = None
+        self._stuck_since: float | None = None
+        self._reversing_until: float | None = None
 
     def _load_trajectory(self) -> None:
         track_map = TrackMap.load(self._map_path)
@@ -75,6 +87,9 @@ class OptimalLineDriver(BaseDriver):
     def reset(self) -> None:
         self._step_count = 0
         self._prev_steer = 0.0
+        self._start_time = None
+        self._stuck_since = None
+        self._reversing_until = None
 
     def on_restart(self) -> None:
         self.reset()
@@ -84,6 +99,9 @@ class OptimalLineDriver(BaseDriver):
         if self._trajectory is None:
             self._load_trajectory()
 
+        now = time.monotonic()
+        if self._start_time is None:
+            self._start_time = now
         self._step_count += 1
 
         # startup: conservative steer (0.4×), full throttle, speed-capped gear
@@ -93,7 +111,11 @@ class OptimalLineDriver(BaseDriver):
             return Action(steer=steer, accel=1.0, brake=0.0,
                           gear=self._startup_gear(state)).clamp()
 
-        # off-track: recovery
+        # highest priority: if we're stuck against a wall, reverse out
+        if self._handle_stuck(state, now):
+            return self._reverse_action(state)
+
+        # off-track but still moving: steer back toward centre (no braking)
         if abs(state.trackPos) > FALLBACK_TRACKPOS:
             return self._recovery(state)
 
@@ -125,6 +147,11 @@ class OptimalLineDriver(BaseDriver):
             target_here = traj.lookup_speed(state.distFromStart)
             if v_cur < target_here:
                 accel = max(accel, min(1.0, THROTTLE_BASE + (target_here - v_cur) * 0.02))
+
+        # anti-crawl: never stall near walls — if barely moving and not braking,
+        # apply firm throttle to keep the car driving forward out of the corner.
+        if brake == 0.0 and v_cur < CRAWL_SPEED:
+            accel = max(accel, 0.6)
 
         # traction control: cut accel if rear wheels spin
         if accel > 0.0:
@@ -199,9 +226,47 @@ class OptimalLineDriver(BaseDriver):
         return g
 
     def _recovery(self, state: SensorState) -> Action:
-        steer = -math.copysign(0.5, state.trackPos)
-        # light brake to kill speed, then steer back
-        brake = 0.2 if state.speed > 30.0 else 0.0
-        accel = 0.0 if brake > 0 else 0.3
-        return Action(steer=steer, accel=accel, brake=brake,
+        """Off-track but still rolling: steer back toward centre, keep driving.
+
+        We deliberately do NOT brake here — braking off-line is what makes the
+        car bog down and get pinned. Steer toward the track centre and maintain
+        moderate throttle so it drives itself back on.
+        """
+        steer = -math.copysign(0.6, state.trackPos)
+        return Action(steer=steer, accel=0.45, brake=0.0,
                       gear=max(1, state.gear)).clamp()
+
+    # ------------------------------------------------------------------
+    # Stuck detection + reverse recovery
+    # ------------------------------------------------------------------
+    def _handle_stuck(self, state: SensorState, now: float) -> bool:
+        """Return True while the car should be reversing out of a stuck spot."""
+        elapsed = now - self._start_time if self._start_time is not None else 0.0
+        if elapsed < STUCK_STARTUP_IMMUNITY:
+            return False
+
+        # already committed to a reverse manoeuvre
+        if self._reversing_until is not None:
+            if now < self._reversing_until:
+                return True
+            self._reversing_until = None
+            self._stuck_since = None
+            return False
+
+        # near a wall (off-track) AND barely moving → start the stuck timer
+        pinned = abs(state.trackPos) > 0.9 and state.speed < STUCK_SPEED_THRESH
+        if pinned:
+            if self._stuck_since is None:
+                self._stuck_since = now
+            elif now - self._stuck_since > STUCK_TIME_LIMIT:
+                self._reversing_until = now + REVERSE_DURATION
+                return True
+        else:
+            self._stuck_since = None
+        return False
+
+    def _reverse_action(self, state: SensorState) -> Action:
+        # steer the nose away from the wall while backing up
+        steer = -math.copysign(0.5, state.trackPos)
+        self._prev_steer = 0.0
+        return Action(steer=steer, accel=0.3, brake=0.0, gear=-1).clamp()
