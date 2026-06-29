@@ -1,5 +1,14 @@
-"""Record lap telemetry from any agent driver."""
+"""Record a lap with any registered driver and save telemetry to CSV.
 
+Usage:
+    python scripts/record_agent.py --driver rule_based [--laps 1] [--host HOST] [--port PORT]
+
+Output: data/recorded_<driver>_<timestamp>.csv
+"""
+
+from __future__ import annotations
+
+import argparse
 import csv
 import logging
 import sys
@@ -9,78 +18,54 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from drivers.registry import load_driver
 from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
-from torcs_env.actions import Action
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-
-def _track_cols() -> list[str]:
-    return [f"track_{i}" for i in range(19)]
-
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 FIELDNAMES = [
     "timestamp", "angle", "speed", "speedY", "speedZ", "trackPos",
-    *_track_cols(),
-    "rpm", "gear", "distRaced", "curLapTime",
+    *[f"track_{i}" for i in range(19)],
+    "rpm", "gear", "distFromStart", "distRaced", "curLapTime",
     "steer", "accel", "brake", "gear_cmd",
 ]
 
 
-def record_agent(driver_name: str = "rule_based", laps: int = 1, host: str | None = None, port: int | None = None) -> Path:
-    """Record telemetry from an agent driver.
+def record(
+    driver_name: str = "rule_based",
+    laps: int = 1,
+    host: str | None = None,
+    port: int | None = None,
+) -> Path:
+    driver = load_driver(driver_name)
 
-    Parameters
-    ----------
-    driver_name : str
-        Name of driver to use: 'rule_based', 'optimal', 'bc_model'
-    laps : int
-        Number of laps to record
-    host : str | None
-        TORCS server host (default: localhost)
-    port : int | None
-        TORCS server port (default: 3001)
-    """
-    # Dynamically import the driver
-    if driver_name == "rule_based":
-        from drivers.rule_based.driver import RuleBasedDriver
-        driver = RuleBasedDriver()
-    elif driver_name == "optimal":
-        from drivers.optimal.driver import OptimalLineDriver
-        driver = OptimalLineDriver()
-    elif driver_name == "bc_model":
-        from drivers.bc.driver import BCDriver
-        driver = BCDriver()
-    else:
-        raise ValueError(f"Unknown driver: {driver_name}")
-
-    out_dir = Path(__file__).resolve().parent.parent / "data"
+    out_dir = PROJECT_ROOT / "data"
     out_dir.mkdir(exist_ok=True)
-    timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    out_path = out_dir / f"recorded_{driver_name}_{timestamp_str}.csv"
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    out_path = out_dir / f"recorded_{driver_name}_{ts}.csv"
 
     rows: list[dict] = []
-    laps_completed = 0
-    lap_start: float | None = None
+    laps_done = 0
     lap_complete_step = -1
     step = 0
 
     try:
         with TORCSClient(host=host, port=port) as client:
-            logger.info(f"Connected to TORCS. Recording {laps} lap(s) with {driver_name} driver.")
+            logger.info("Connected. Recording %d lap(s) with '%s'.", laps, driver_name)
 
-            while laps_completed < laps:
+            while laps_done < laps:
                 result = client.receive()
 
                 if result == SHUTDOWN:
                     logger.info("Server shutdown.")
                     break
                 if result == RESTART:
-                    logger.info("Race restarted.")
+                    logger.info("Race restarted — clearing recorded data.")
                     rows.clear()
-                    laps_completed = 0
-                    lap_start = None
+                    laps_done = 0
                     lap_complete_step = -1
                     step = 0
                     driver.reset()
@@ -91,12 +76,8 @@ def record_agent(driver_name: str = "rule_based", laps: int = 1, host: str | Non
                 client.send(action)
                 step += 1
 
-                now = time.time()
-                if lap_start is None:
-                    lap_start = now
-
-                row = {
-                    "timestamp": now,
+                rows.append({
+                    "timestamp": time.time(),
                     "angle": state.angle,
                     "speed": state.speed,
                     "speedY": state.speedY,
@@ -105,63 +86,56 @@ def record_agent(driver_name: str = "rule_based", laps: int = 1, host: str | Non
                     **{f"track_{i}": state.track[i] for i in range(min(19, len(state.track)))},
                     "rpm": state.rpm,
                     "gear": state.gear,
+                    "distFromStart": state.distFromStart,
                     "distRaced": state.distRaced,
                     "curLapTime": state.curLapTime,
                     "steer": action.steer,
                     "accel": action.accel,
                     "brake": action.brake,
                     "gear_cmd": action.gear,
-                }
-                rows.append(row)
+                })
 
-                # Live status every ~1 second (20 steps @ 50ms each)
-                if len(rows) % 20 == 0:
+                if len(rows) % 50 == 0:
                     logger.info(
-                        "time=%.1f speed=%.1f gear=%d trackPos=%.2f angle=%.2f "
-                        "steer=%.2f accel=%.2f brake=%.2f",
+                        "t=%.1f  %.1f km/h  gear %d  pos %.2f  steer %.2f  acc %.1f  brk %.1f",
                         state.curLapTime, state.speed, state.gear, state.trackPos,
-                        state.angle, action.steer, action.accel, action.brake
+                        action.steer, action.accel, action.brake,
                     )
 
-                # Detect lap completion
-                if state.lastLapTime > 0 and rows and lap_complete_step < 0:
-                    lap_time = state.lastLapTime
-                    laps_completed += 1
-                    logger.info("✓ Lap %d completed in %.1f s", laps_completed, lap_time)
+                if state.lastLapTime > 0 and lap_complete_step < 0:
+                    laps_done += 1
+                    logger.info("Lap %d done in %.1f s", laps_done, state.lastLapTime)
                     lap_complete_step = step
 
-                # Wait 20 more steps (~1 second) after lap completion before continuing
-                if lap_complete_step >= 0 and (step - lap_complete_step) >= 20:
-                    if laps_completed >= laps:
+                # Allow ~1 s of data after lap ends before stopping / resetting
+                if lap_complete_step >= 0 and (step - lap_complete_step) >= 50:
+                    if laps_done >= laps:
                         break
-                    else:
-                        lap_start = None
-                        lap_complete_step = -1
+                    lap_complete_step = -1
 
-    except Exception as e:
-        logger.warning("Connection lost: %s", e)
+    except Exception as exc:
+        logger.warning("Connection lost: %s", exc)
     finally:
         driver.reset()
 
-    # Write CSV
-    with out_path.open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=FIELDNAMES)
+    with out_path.open("w", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=FIELDNAMES)
         writer.writeheader()
         writer.writerows(rows)
 
-    logger.info("Saved %d rows to %s", len(rows), out_path)
+    logger.info("Saved %d rows → %s", len(rows), out_path)
     return out_path
 
 
 def main() -> None:
-    import argparse
-    parser = argparse.ArgumentParser(description="Record agent-driven laps with telemetry")
-    parser.add_argument("--driver", default="rule_based", help="Driver to use: rule_based, optimal, bc_model")
-    parser.add_argument("--laps", type=int, default=1, help="Number of laps to record")
-    parser.add_argument("--host", default=None, help="TORCS server host (default: localhost)")
-    parser.add_argument("--port", type=int, default=None, help="TORCS server port (default: 3001)")
+    parser = argparse.ArgumentParser(description="Record agent telemetry for a lap")
+    parser.add_argument("--driver", default="rule_based",
+                        help="Driver: rule_based | optimal")
+    parser.add_argument("--laps", type=int, default=1)
+    parser.add_argument("--host", default=None)
+    parser.add_argument("--port", type=int, default=None)
     args = parser.parse_args()
-    record_agent(driver_name=args.driver, laps=args.laps, host=args.host, port=args.port)
+    record(driver_name=args.driver, laps=args.laps, host=args.host, port=args.port)
 
 
 if __name__ == "__main__":

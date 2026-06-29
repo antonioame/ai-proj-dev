@@ -28,57 +28,53 @@ TORCS_PORT   (default: 3001)
 
 ---
 
-## Project Status
+## Driver Status
 
-### Current Drivers
+### Phase 1: Rule-Based — DONE ✓ (stable baseline)
+- **Lap time: ~148 s**, no crashes
+- Entry point: `python scripts/run_agent.py --driver rule_based`
+- Tuned with ABS, TCS, apex-seeking, PI throttle control
+- See `drivers/rule_based/driver.py` for all constants
 
-**Phase 1: Rule-Based (WORKING)**
-- Lap time: 149 seconds (stable, no crashes)
-- Entry point: `scripts/run_agent.py --driver rule_based`
-- No dependencies; pure algorithmic steering/speed control
-- See `drivers/rule_based/driver.py` for tuning parameters
+### Phase C: Optimal Line Driver — IN PROGRESS (crashes, needs testing)
+- **Target: < 140 s** — trajectory-follower with late braking
+- Entry point: `python scripts/run_agent.py --driver optimal`
+- Requires `torcs_env/track_data/track_map.json` (already built from rule_based telemetry)
+- **Known tuning as of this restructure:**
+  - STARTUP_STEPS = 200 (conservative 4-second standing-start phase)
+  - STEER_ANGLE_GAIN = 1.2 (was 1.6 — reduced to prevent twitching)
+  - STEER_LINE_GAIN = 0.25 (was 0.40 — less aggressive line tracking)
+  - STEER_SMOOTH_SPEED = 75 (apply EMA smoothing up to 75 km/h)
+  - SCAN_AHEAD_M = 200 (was 300 — more focused look-ahead)
+  - BRAKE_MARGIN_M = 40 (extra safety buffer on braking distance)
+  - TARGET_LINE_SCALE = 0.50 (blend 50% toward racing line, 50% centre)
+  - TCS added (prevents wheelspin on acceleration)
+- **Rebuild map** if you record new telemetry:
+  ```bash
+  python scripts/build_track_map.py --telemetry data/<file>.csv
+  ```
 
-**Phase 2: Behavioral Cloning (REMOVED)**
-- Attempted to train from recorded human data
-- Issue: Driver crashed immediately (continuous steering, off-track on curves)
-- Deleted: `training/behavioral_cloning/`, `drivers/bc/`, all `bc_*.pth` models
-- Lesson: BC without proper normalization/dataset quality doesn't work
-
-**Phase 3: Reinforcement Learning (REMOVED)**
-- Attempted PPO/DDPG with BC warm-start
-- Issue: Systematic observation space mismatch (env outputs 8 features, models expect 9)
-- All RL models crashed or had zero steering
-- Deleted: `training/rl/`, `drivers/rl/`, all model checkpoints
-
-**Phase C: Optimal Line Driver (IN PROGRESS)**
-- Status: Crashes but shows potential ("so fast")
-- Issue: Too aggressive acceleration; needs speed tuning
-- Entry point: `scripts/run_agent.py --driver optimal`
-- See below for tuning guidance
-
----
-
-## How to Run the Rule-Based Driver
-
-```bash
-# Windows: start TORCS server
-torcs -r torcs_env/race_config/corkscrew_solo.xml
-
-# Mac (or same machine): run the agent
-TORCS_HOST=<windows-ip> python scripts/run_agent.py --driver rule_based
-```
+### Removed (broken, do not recreate without a plan)
+- **Phase 2 Behavioral Cloning** — crashed immediately; continuous steering, no normalisation
+- **Phase 3 Reinforcement Learning** — observation space mismatch; deleted
 
 ---
 
-## How to Record Human / Baseline Data
+## How to Run
 
 ```bash
-# Windows: start TORCS server (same config)
+# 1. Start TORCS server (Windows)
 torcs -r torcs_env/race_config/corkscrew_solo.xml
 
-# Mac: record one lap
-TORCS_HOST=<windows-ip> python scripts/record_human.py --driver rule_based
-# Output: data/human_YYYYMMDD_HHMMSS.csv
+# 2. Run a driver (Mac or same machine)
+conda run -n ai_env python scripts/run_agent.py --driver rule_based
+conda run -n ai_env python scripts/run_agent.py --driver optimal
+
+# 3. Record telemetry
+conda run -n ai_env python scripts/record_agent.py --driver rule_based
+
+# 4. Evaluate (saves JSON to results/)
+conda run -n ai_env python scripts/evaluate.py --driver rule_based --laps 1
 ```
 
 ---
@@ -89,74 +85,55 @@ TORCS_HOST=<windows-ip> python scripts/record_human.py --driver rule_based
 |----------|-----------|
 | UDP client only (no TORCS plugin) | SCR patch exposes a clean UDP interface; no C++ needed |
 | `distRaced` reset detection for lap counting | `lastLapTime` only updates once per lap; distRaced is continuous |
-| Proportional steering with `angle + trackPos` | Classic SCR baseline; works without a map |
-| Curvature estimate from symmetric track sensor pairs | Simple, fast, no preprocessing required |
-| Separate `clamp()` on Action | Keeps driver logic clean; clamping at the boundary not in every formula |
-| PyTorch MPS device auto-detection | Mac M2 is the training machine; CUDA fallback for Linux/Windows |
-| No hardcoded IP | `TORCS_HOST` env var — two-machine setup with no code changes |
+| `drivers/registry.py` for driver loading | Single source of truth — run_agent, record_agent, evaluate all use it |
+| Physics-based speed target in rule_based | Braking distance formula, not lookup table — no step discontinuities |
+| ABS on both drivers | Prevents lockup at high BRAKE_MAX values |
+| TCS on both drivers | Prevents wheelspin on acceleration |
+| Backward-pass trajectory | Propagates corner speed limits backwards to set braking points |
+| `TARGET_LINE_SCALE = 0.50` | Blend racing line with centre to reduce off-track risk |
 
 ---
 
 ## Repository Layout
 
 ```
-torcs_env/        SCR protocol (sensors, actions, UDP client, race XML)
-drivers/          Driving agents
-  rule_based/     Phase 1 baseline (complete, working — 149s lap)
-  optimal/        Phase C trajectory follower (in progress, needs speed tuning)
-scripts/          CLI entry points (run_agent.py, record_human.py, evaluate.py)
-tests/            Unit tests (all passing)
-docs/             Documentation (see notes below)
-  ARCHITECTURE.md, API_REFERENCE.md, DEVELOPMENT_GUIDE.md, etc.
-  LAPTIME_OPTIMIZATION_PLAN.md  Performance ideas for Phase C
-data/             Recorded telemetry CSVs (git-ignored)
-results/          Evaluation JSON files (git-ignored)
-models/           Trained checkpoints for optimal driver (if applicable)
-dev_scripts/      Temporary test/debug utilities (not part of main pipeline)
-old_project_material/  Legacy reference code (do not import)
+torcs_env/          SCR protocol (sensors, actions, UDP client, race XML)
+  track_data/       track_map.json — prebuilt from rule_based telemetry
+drivers/
+  base_driver.py    Abstract interface
+  registry.py       load_driver(name) — single loader used by all scripts
+  rule_based/       Phase 1 baseline (~148 s, stable)
+  optimal/          Phase C trajectory follower (in progress)
+scripts/
+  run_agent.py      Run any driver, optionally save telemetry + results JSON
+  record_agent.py   Record a lap to data/recorded_<driver>_<ts>.csv
+  evaluate.py       Evaluate and save structured results JSON
+  build_track_map.py  Build track_map.json from a telemetry CSV
+tests/              Unit tests
+data/               Telemetry CSVs (git-ignored)
+results/            Evaluation JSON files (git-ignored)
+laptime_ledger.csv  Manual log of tuning experiments
 ```
-
-**Deleted (broken):**
-- `training/behavioral_cloning/` — BC training infrastructure
-- `training/rl/` — RL training infrastructure  
-- `drivers/bc/`, `drivers/rl/` — BC and RL drivers
-- All model checkpoints (bc_*.pth, rl_*.zip)
 
 ---
 
-## Next Priority: Tuning Optimal Line Driver
+## Lap Time Ledger
 
-The **optimal driver** shows promise ("too fast, but has potential") but crashes at the first curve.
-It needs conservative startup and smoother acceleration ramps.
-
-**Key tuning parameters** in `drivers/optimal/driver.py`:
-- `STARTUP_STEPS` (line 53): Duration of conservative startup phase. Increase from 80 to 150–200
-- `SCAN_AHEAD_M` (line 38): Look-ahead distance for braking. Reduce from 250 to 150–200
-- `BRAKE_MARGIN_M` (line 39): Brake onset buffer. Increase from 12 to 20–30
-- `STEER_ANGLE_GAIN` (line 30): Steering sensitivity. Reduce from 2.0 to 1.0–1.5
-- `STEER_SMOOTH_SPEED` (line 33): Speed threshold for steering smoothing. Increase from 40 to 60–80
-
-**Testing:** After each change, run:
-```bash
-conda run -n ai_env python scripts/run_agent.py --driver optimal --laps 1
+Record every benchmark run in `laptime_ledger.csv`:
+```
+timestamp,config_id,git_sha,best_lap_s,median_lap_s,top_speed_kmh,off_track_pct,damage,valid,notes
 ```
 
-**Goal:** Complete a lap without crashing, aiming for lap time < 140 seconds.
+Current best: **148.4 s** (rule_based, ABS + higher brake pressure, commit ca54fea)
 
 ---
 
-## Deprecated / Removed
+## Next Steps (ordered by priority)
 
-**Phase 2 (Behavioral Cloning)** — REMOVED  
-Attempted to train on recorded human data. Failed due to:
-- Continuous steering output (driver was overfitting to noise)
-- Crashes on curves even with good training data
-- Normalization/training loop issues made debugging difficult
-
-**Phase 3 (Reinforcement Learning)** — REMOVED  
-Attempted PPO/DDPG with BC warm-start. Failed due to:
-- Observation space mismatch (8 vs 9 features) between training and inference
-- All models exhibited zero steering or immediate crashes
-- RL environment complexity + TORCS timeout issues made debugging slow
-
-See commit `074c1ee` ("chore: remove all broken RL and BC models") for details.
+1. **Test optimal driver** — does it complete a lap without crashing?
+   ```bash
+   conda run -n ai_env python scripts/run_agent.py --driver optimal --laps 1
+   ```
+2. **If still crashing** — reduce `STEER_ANGLE_GAIN` further (try 1.0) or increase `BRAKE_MARGIN_M` (try 60)
+3. **If stable but slow** — increase `CORNER_SPEED_SCALE` in `drivers/optimal/trajectory.py` (try 1.1)
+4. **Rebuild track map** with more laps of telemetry for better corner speed estimates
