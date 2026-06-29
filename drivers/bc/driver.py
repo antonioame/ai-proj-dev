@@ -33,6 +33,7 @@ class BCDriver(BaseDriver):
         self.X_mean = None
         self.X_std = None
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.current_gear = 1
         self._load_model()
 
     def _load_model(self) -> None:
@@ -52,7 +53,7 @@ class BCDriver(BaseDriver):
         self.model.load_state_dict(torch.load(self.model_path, map_location=self._device))
         self.model.eval()
 
-        print(f"BC model loaded from {self.model_path} (4 outputs: steer, accel, brake, gear)")
+        print(f"BC model loaded from {self.model_path} (3 outputs: steer, accel, brake; gear managed separately)")
 
     def reset(self) -> None:
         """Reset driver state (no persistent state in BC)."""
@@ -63,7 +64,10 @@ class BCDriver(BaseDriver):
         pass
 
     def step(self, state: SensorState) -> Action:
-        """Inference: sensor state → action using trained BC policy."""
+        """Inference: sensor state → action using trained BC policy.
+
+        Gear management is handled separately (not predicted by model).
+        """
         # Build sensor vector: [angle, speed, speedY, speedZ, trackPos, track_0-18, rpm, gear]
         sensor_vec = np.array([
             state.angle,
@@ -80,19 +84,26 @@ class BCDriver(BaseDriver):
         sensor_tensor = torch.from_numpy(sensor_vec).float().to(self._device)
         sensor_tensor = (sensor_tensor - self.X_mean) / self.X_std
 
-        # Forward pass
+        # Forward pass — model outputs [steer, accel, brake, gear_pred]
+        # We only use the first 3 (gear is managed separately below)
         with torch.no_grad():
             action_pred = self.model(sensor_tensor).cpu().numpy()
 
-        steer, accel, brake, gear_pred = action_pred
+        steer, accel, brake = action_pred[0], action_pred[1], action_pred[2]
 
-        # Bartolo dataset has constant gear, so gear_pred is noisy.
-        # Use fixed gear strategy: upshift based on RPM (similar to keyboard control)
-        if state.rpm > 7000 and state.gear < 6:
-            gear = state.gear + 1
-        elif state.rpm < 5000 and state.gear > 1:
-            gear = state.gear - 1
-        else:
-            gear = state.gear
+        # Gear management: simple RPM-based upshift/downshift
+        # Thresholds chosen to match typical manual driving behavior
+        upshift_rpm = 6500
+        downshift_rpm = 3000
 
-        return Action(steer=float(steer), accel=float(accel), brake=float(brake), gear=gear).clamp()
+        if state.rpm > upshift_rpm and self.current_gear < 6:
+            self.current_gear += 1
+        elif state.rpm < downshift_rpm and self.current_gear > 1:
+            self.current_gear -= 1
+
+        return Action(
+            steer=float(steer),
+            accel=float(accel),
+            brake=float(brake),
+            gear=self.current_gear
+        ).clamp()
