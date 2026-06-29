@@ -91,14 +91,20 @@ class BCDriver(BaseDriver):
 
         steer, accel, brake = action_pred[0], action_pred[1], action_pred[2]
 
-        # Gear management: simple RPM-based upshift/downshift
+        # Gear management: RPM-based with minimum gear threshold
+        # Don't use gears 1-2 except at startup
         upshift_rpm = 12000
         downshift_rpm = 6000
+        min_gear = 3  # Never downshift below gear 3 (except at start)
 
         if state.rpm > upshift_rpm and self.current_gear < 6:
             self.current_gear += 1
-        elif state.rpm < downshift_rpm and self.current_gear > 1:
+        elif state.rpm < downshift_rpm and self.current_gear > min_gear:
             self.current_gear -= 1
+
+        # Upshift from 1→2→3 at startup to get into normal range
+        if self.current_gear < min_gear and state.rpm > 5000:
+            self.current_gear = min_gear
 
         return Action(
             steer=float(steer),
