@@ -17,7 +17,7 @@ from training.behavioral_cloning.model import BCPolicy
 class BCDriver(BaseDriver):
     """Drives using a trained behavioral cloning policy."""
 
-    def __init__(self, model_path: str | Path = "models/bc_bartolo.pth", stats_path: str | Path = "models/bc_bartolo.npz"):
+    def __init__(self, model_path: str | Path = "models/bc_rulebased.pth", stats_path: str | Path = "models/bc_rulebased.npz"):
         """Load trained BC model and normalization stats.
 
         Parameters
