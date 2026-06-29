@@ -16,17 +16,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from drivers.registry import load_driver
 from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
-
-
-def load_driver(name: str):
-    if name == "rule_based":
-        from drivers.rule_based.driver import RuleBasedDriver
-        return RuleBasedDriver()
-    raise ValueError(f"Unknown driver: {name}")
 
 
 def evaluate(
