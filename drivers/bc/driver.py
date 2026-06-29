@@ -92,9 +92,8 @@ class BCDriver(BaseDriver):
         steer, accel, brake = action_pred[0], action_pred[1], action_pred[2]
 
         # Gear management: simple RPM-based upshift/downshift
-        # Thresholds chosen to match typical manual driving behavior
-        upshift_rpm = 6500
-        downshift_rpm = 3000
+        upshift_rpm = 12000
+        downshift_rpm = 6000
 
         if state.rpm > upshift_rpm and self.current_gear < 6:
             self.current_gear += 1
