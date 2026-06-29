@@ -27,19 +27,20 @@ _DEFAULT_MAP_PATH = (
 )
 
 # --------------- Steering ---------------
-STEER_ANGLE_GAIN:   float = 1.2    # angle correction (was 1.6 — too twitchy)
-STEER_LINE_GAIN:    float = 0.30   # bias toward target track position
+STEER_ANGLE_GAIN:   float = 1.8    # angle correction — turn in harder
+STEER_LINE_GAIN:    float = 0.45   # pull toward the inside-line target harder
 STEER_LOCK:         float = 0.785398
-STEER_SMOOTH_SPEED: float = 75.0   # apply EMA smoothing below this speed (was 50)
-STEER_SMOOTH_ALPHA: float = 0.25   # EMA weight for new steer (was 0.35 — more damping)
+STEER_CAP:          float = 1.0    # allow full lock for tight corners (was 0.85)
+STEER_SMOOTH_SPEED: float = 65.0   # smooth only below this speed (was 75)
+STEER_SMOOTH_ALPHA: float = 0.40   # more responsive turn-in (was 0.25)
 
 # --------------- Apex-seeking (inside line) ---------------
 # Estimate corner direction from live sensor asymmetry, exactly like the proven
 # rule_based driver, but bias HARDER toward the inside of the bend.
 #   curvature = (left_avg − right_avg) / (left_avg + right_avg)
 #   positive curvature → right-hand corner → target negative trackPos (inside)
-APEX_CURV_GAIN: float = 0.55   # curvature → inside trackPos (rule_based uses 0.30)
-APEX_TP_MAX:    float = 0.45   # max inside offset (rule_based uses 0.28)
+APEX_CURV_GAIN: float = 0.80   # curvature → inside trackPos (rule_based uses 0.30)
+APEX_TP_MAX:    float = 0.58   # max inside offset — sit close to the inside edge
 
 # --------------- Speed control ---------------
 BRAKE_MAX:        float = 1.0
@@ -218,7 +219,7 @@ class OptimalLineDriver(BaseDriver):
     def _steer(self, state: SensorState, target_tp: float) -> float:
         line_err = state.trackPos - target_tp
         raw = state.angle * STEER_ANGLE_GAIN - line_err * STEER_LINE_GAIN
-        steer = max(-0.85, min(0.85, raw / STEER_LOCK))
+        steer = max(-STEER_CAP, min(STEER_CAP, raw / STEER_LOCK))
         if state.speed < STEER_SMOOTH_SPEED:
             steer = (
                 self._prev_steer * (1.0 - STEER_SMOOTH_ALPHA)
