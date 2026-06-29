@@ -19,7 +19,7 @@ from drivers.base_driver import BaseDriver
 from drivers.optimal.trajectory import Trajectory, BACKWARD_DECEL_FACTOR
 from torcs_env.actions import Action
 from torcs_env.sensors import SensorState
-from torcs_env.track_map import TrackMap
+from torcs_env.track_map import TrackMap, BUCKET_M
 
 _DEFAULT_MAP_PATH = (
     Path(__file__).resolve().parent.parent.parent
@@ -31,16 +31,19 @@ STEER_ANGLE_GAIN:   float = 1.8    # angle correction — turn in harder
 STEER_LINE_GAIN:    float = 0.45   # pull toward the inside-line target harder
 STEER_LOCK:         float = 0.785398
 STEER_CAP:          float = 1.0    # allow full lock for tight corners (was 0.85)
-STEER_SMOOTH_SPEED: float = 65.0   # smooth only below this speed (was 75)
-STEER_SMOOTH_ALPHA: float = 0.40   # more responsive turn-in (was 0.25)
+STEER_SMOOTH_SPEED: float = 30.0   # smooth only at manoeuvring speed (was 65)
+STEER_SMOOTH_ALPHA: float = 0.60   # minimal lag — deliver commanded lock fast
 
 # --------------- Apex-seeking (inside line) ---------------
 # Estimate corner direction from live sensor asymmetry, exactly like the proven
 # rule_based driver, but bias HARDER toward the inside of the bend.
 #   curvature = (left_avg − right_avg) / (left_avg + right_avg)
 #   positive curvature → right-hand corner → target negative trackPos (inside)
-APEX_CURV_GAIN: float = 0.80   # curvature → inside trackPos (rule_based uses 0.30)
-APEX_TP_MAX:    float = 0.58   # max inside offset — sit close to the inside edge
+APEX_CURV_GAIN: float = 0.90   # curvature → inside trackPos (rule_based uses 0.30)
+APEX_TP_MAX:    float = 0.60   # max inside offset — sit close to the inside edge
+# Anticipation: look this far ahead in the MAP for the upcoming corner so the
+# car commits to the inside line BEFORE the live sensors can see the bend.
+LOOKAHEAD_APEX_M: float = 35.0
 
 # --------------- Speed control ---------------
 BRAKE_MAX:        float = 1.0
@@ -86,6 +89,7 @@ class OptimalLineDriver(BaseDriver):
 
     def __init__(self, map_path: Path | None = None) -> None:
         self._map_path = map_path or _DEFAULT_MAP_PATH
+        self._track_map: TrackMap | None = None
         self._trajectory: Trajectory | None = None
         self._step_count: int = 0
         self._prev_steer: float = 0.0
@@ -94,8 +98,8 @@ class OptimalLineDriver(BaseDriver):
         self._reversing_until: float | None = None
 
     def _load_trajectory(self) -> None:
-        track_map = TrackMap.load(self._map_path)
-        self._trajectory = Trajectory.from_track_map(track_map)
+        self._track_map = TrackMap.load(self._map_path)
+        self._trajectory = Trajectory.from_track_map(self._track_map)
 
     def reset(self) -> None:
         self._step_count = 0
@@ -199,11 +203,23 @@ class OptimalLineDriver(BaseDriver):
         return min(state.track[7:12])
 
     def _apex_trackpos(self, state: SensorState) -> float:
-        """Inside-of-corner target trackPos from sensor asymmetry.
+        """Inside-of-corner target trackPos.
+
+        Combines two curvature estimates and uses whichever is stronger:
+          * anticipatory — the upcoming corner from the track MAP (commits the
+            car to the inside line BEFORE the live sensors see the bend);
+          * reactive — live sensor asymmetry (holds the inside through the apex).
 
         Positive curvature (left sees further) → right-hand corner → aim at the
         inside, which is a negative trackPos. Returns 0 on straights.
         """
+        curv_map = self._curv_ahead(state.distFromStart)
+        curv_sensor = self._sensor_curvature(state)
+        curv = curv_map if abs(curv_map) > abs(curv_sensor) else curv_sensor
+        return max(-APEX_TP_MAX, min(APEX_TP_MAX, -curv * APEX_CURV_GAIN))
+
+    def _sensor_curvature(self, state: SensorState) -> float:
+        """Signed curvature from live track-sensor asymmetry (0 on straights)."""
         s = state.track
         if len(s) < 17:
             return 0.0
@@ -212,8 +228,25 @@ class OptimalLineDriver(BaseDriver):
         total = left_avg + right_avg
         if total <= 1.0:
             return 0.0
-        curvature = (left_avg - right_avg) / total
-        return max(-APEX_TP_MAX, min(APEX_TP_MAX, -curvature * APEX_CURV_GAIN))
+        return (left_avg - right_avg) / total
+
+    def _curv_ahead(self, s: float) -> float:
+        """Strongest signed curvature in the next LOOKAHEAD_APEX_M of the map.
+
+        Does not look past the finish line (start/finish buckets are noise).
+        """
+        tm = self._track_map
+        if tm is None:
+            return 0.0
+        remaining = tm.track_length - (s % tm.track_length)
+        scan = max(BUCKET_M, min(LOOKAHEAD_APEX_M, remaining))
+        steps = int(scan / BUCKET_M)
+        best = 0.0
+        for k in range(steps + 1):
+            c = tm.lookup(s + k * BUCKET_M).curvature
+            if abs(c) > abs(best):
+                best = c
+        return best
 
     # ------------------------------------------------------------------
     def _steer(self, state: SensorState, target_tp: float) -> float:
