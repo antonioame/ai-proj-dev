@@ -49,7 +49,7 @@ def run(host: str = "localhost", port: int = 3001, laps: int = 5):
         "track_6", "track_7", "track_8", "track_9", "track_10", "track_11",
         "track_12", "track_13", "track_14", "track_15", "track_16", "track_17",
         "track_18", "rpm", "gear", "damage", "distRaced", "curLapTime",
-        "steer", "accel", "brake", "speedY", "speedZ"
+        "steer", "accel", "brake"
     ]
 
     rows = []
@@ -103,8 +103,6 @@ def run(host: str = "localhost", port: int = 3001, laps: int = 5):
             row["steer"] = R.get("steer", 0.0)
             row["accel"] = R.get("accel", 0.0)
             row["brake"] = R.get("brake", 0.0)
-            row["speedY"] = S.get("speedY", 0.0)
-            row["speedZ"] = S.get("speedZ", 0.0)
 
             rows.append(row)
             contatore_passi += 1

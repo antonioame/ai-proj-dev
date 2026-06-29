@@ -50,7 +50,7 @@ class BCDriver(BaseDriver):
     STEER_GAIN = 1.8  # Amplify steering to force tighter turns and inner-track positioning
     ACCEL_GAIN = 1.25  # Amplify acceleration to maintain higher speeds through curves
 
-    def __init__(self, model_path: str | Path = "models/bc_from_rulefriend_v1.pth", stats_path: str | Path = "models/bc_from_rulefriend_v1.npz"):
+    def __init__(self, model_path: str | Path = "models/bc_from_olddriver_v1.pth", stats_path: str | Path = "models/bc_from_olddriver_v1.npz"):
         """Load trained BC model and normalization stats.
 
         Parameters
