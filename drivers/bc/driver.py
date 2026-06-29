@@ -85,8 +85,14 @@ class BCDriver(BaseDriver):
             action_pred = self.model(sensor_tensor).cpu().numpy()
 
         steer, accel, brake, gear_pred = action_pred
-        # Round gear to nearest integer (1-6)
-        gear = int(round(float(gear_pred)))
-        gear = max(1, min(6, gear))  # clamp to valid range
+
+        # Bartolo dataset has constant gear, so gear_pred is noisy.
+        # Use fixed gear strategy: upshift based on RPM (similar to keyboard control)
+        if state.rpm > 7000 and state.gear < 6:
+            gear = state.gear + 1
+        elif state.rpm < 5000 and state.gear > 1:
+            gear = state.gear - 1
+        else:
+            gear = state.gear
 
         return Action(steer=float(steer), accel=float(accel), brake=float(brake), gear=gear).clamp()

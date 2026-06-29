@@ -11,30 +11,33 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 def convert_h5_to_csv(h5_path, csv_output):
     """Convert HDF5 dataset to CSV.
 
-    H5 format (from train_input.py):
-    - Column 0: steering
-    - Column 1: acceleration
-    - Column 2: brake
-    - Column 3+: 29 sensors
+    Bartolo format inspection via train_input.py:
+    - Load 'sa' array from HDF5
+    - Delete column 2 (gear)
+    - If merged: accel_merged = accel - brake, delete brake col
 
-    CSV format (for our BC):
-    - Sensors: angle, speed, speedY, speedZ, trackPos, track_0-18, rpm, gear (26 total)
-    - Actions: steer, accel, brake, gear_cmd (4 total)
+    This means original format before deletions:
+    [steer, accel, gear, brake, sensor_0-28]  (34 cols)
+
+    After first delete (gear): [steer, accel, brake, sensor_0-28]  (33 cols)
+    After merge: [steer, accel_merged, sensor_0-28]  (32 cols)
+
+    We keep ALL 4 separate actions for better control.
     """
     print(f"Loading HDF5 from {h5_path}...")
 
     with h5py.File(h5_path, 'r') as f:
-        data = np.array(f.get('sa'))  # shape: (N, 32) — steering, accel, brake, + 29 sensors
+        data = np.array(f.get('sa'))
 
     print(f"Loaded {data.shape[0]} samples")
     print(f"Data shape: {data.shape}")
+    print(f"Columns: 0=steer, 1=accel, 2=gear, 3=brake, 4-32=sensors(29)")
 
     # Write CSV
     with open(csv_output, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
 
         # Header (matching our dataset.py expectations)
-        # Note: Bartolo's data doesn't have all sensor types, so we'll map generically
         header = [
             'angle', 'speed', 'speedY', 'speedZ', 'trackPos',
             'track_0', 'track_1', 'track_2', 'track_3', 'track_4',
@@ -47,24 +50,25 @@ def convert_h5_to_csv(h5_path, csv_output):
         writer.writerow(header)
 
         # Write data rows
-        # Bartolo's data: [steering, accel, brake, sensor_0, ..., sensor_28]
+        # Original: [steer, accel, gear, brake, sensor_0-28]
         for i, row in enumerate(data):
-            steer = row[0]
-            accel = row[1]
-            brake = row[2]
-            sensors = row[3:]  # 29 sensors
+            steer = float(row[0])
+            accel = float(row[1])
+            # gear = float(row[2])  # Skip gear from input; it's part of sensor
+            brake = float(row[3])
+            sensors = row[4:]  # 29 sensors (indices 4-32)
 
-            # Map sensors: assume they're track range-finders + some others
-            # Bartolo's 29 sensors → our 26 (take first 26, skip last 3)
-            sensor_data = sensors[:26] if len(sensors) >= 26 else list(sensors) + [0] * (26 - len(sensors))
+            # Bartolo's 29 sensors → our 26 (take first 26)
+            sensor_data = sensors[:26].tolist() if len(sensors) >= 26 else list(sensors[:26]) + [0] * (26 - len(sensors))
 
-            # Assume gear is constant (auto)
-            gear_cmd = 3  # mid-range gear
+            # Gear is not an action output for Bartolo, but part of state
+            # So we just use a fixed gear for the action column
+            gear_cmd = 3
 
-            row_data = list(sensor_data) + [steer, accel, brake, gear_cmd]
+            row_data = sensor_data + [steer, accel, brake, gear_cmd]
             writer.writerow(row_data)
 
-            if (i + 1) % 50000 == 0:
+            if (i + 1) % 10000 == 0:
                 print(f"  Wrote {i + 1} rows...")
 
     print(f"✓ Converted to CSV: {csv_output}")
