@@ -1,7 +1,7 @@
-"""Evaluate a driver and save a structured results JSON.
+"""Evaluate the BC driver (bc_driver/) and save a structured results JSON.
 
 Usage:
-    python scripts/evaluate.py --driver rule_based [--laps 1] [--output results/eval.json]
+    python scripts/evaluate.py [--laps 1] [--output results/eval.json]
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from drivers.registry import load_driver
+from bc_driver.driver import BCDriver
 from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -24,13 +24,13 @@ logger = logging.getLogger(__name__)
 
 
 def evaluate(
-    driver_name: str,
     laps: int = 1,
     host: str | None = None,
     port: int | None = None,
     output_path: Path | None = None,
 ) -> dict:
-    driver = load_driver(driver_name)
+    driver_name = "bc"
+    driver = BCDriver()
 
     lap_times: list[float] = []
     speed_samples: list[float] = []
@@ -108,8 +108,7 @@ def evaluate(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Evaluate a TORCS driver")
-    parser.add_argument("--driver", default="rule_based")
+    parser = argparse.ArgumentParser(description="Evaluate the BC TORCS driver")
     parser.add_argument("--laps", type=int, default=1)
     parser.add_argument("--host", default=None)
     parser.add_argument("--port", type=int, default=None)
@@ -117,7 +116,6 @@ def main() -> None:
     args = parser.parse_args()
 
     evaluate(
-        driver_name=args.driver,
         laps=args.laps,
         host=args.host,
         port=args.port,

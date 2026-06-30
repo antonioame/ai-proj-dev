@@ -1,11 +1,11 @@
 """Record sensor + action telemetry to CSV for one lap.
 
 Because SCR has no true observer mode, this script drives in "shadow mode":
-it forwards a fixed neutral action (or the rule-based driver) while
-recording every sensor frame.  The intended workflow:
+it forwards a fixed neutral action while recording every sensor frame.
+The intended workflow:
 
   Windows: launch TORCS headlessly with corkscrew_solo.xml
-  Mac:     python scripts/record_human.py [--driver rule_based]
+  Mac:     python scripts/record_human.py
 
 The CSV is saved as data/human_YYYYMMDD_HHMMSS.csv.
 One row = one simulation step (~50 ms).
@@ -47,20 +47,14 @@ FIELDNAMES = [
 ]
 
 
-def load_driver(name: str) -> BaseDriver:
-    if name == "rule_based":
-        from drivers.rule_based.driver import RuleBasedDriver
-        return RuleBasedDriver()
-    if name == "neutral":
-        class NeutralDriver(BaseDriver):
-            def step(self, _):
-                return Action(accel=0.3, gear=1)
-        return NeutralDriver()
-    raise ValueError(f"Unknown driver: {name}")
+class NeutralDriver(BaseDriver):
+    def step(self, _):
+        return Action(accel=0.3, gear=1)
 
 
-def record(driver_name: str = "rule_based", host: str | None = None, port: int | None = None) -> Path:
-    driver = load_driver(driver_name)
+def record(host: str | None = None, port: int | None = None) -> Path:
+    driver_name = "neutral"
+    driver = NeutralDriver()
     out_dir = Path(__file__).resolve().parent.parent / "data"
     out_dir.mkdir(exist_ok=True)
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -129,12 +123,11 @@ def record(driver_name: str = "rule_based", host: str | None = None, port: int |
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Record one lap of TORCS telemetry")
-    parser.add_argument("--driver", default="rule_based", choices=["rule_based", "neutral"])
+    parser = argparse.ArgumentParser(description="Record one lap of TORCS telemetry (neutral shadow driver)")
     parser.add_argument("--host", default=None)
     parser.add_argument("--port", type=int, default=None)
     args = parser.parse_args()
-    record(driver_name=args.driver, host=args.host, port=args.port)
+    record(host=args.host, port=args.port)
 
 
 if __name__ == "__main__":

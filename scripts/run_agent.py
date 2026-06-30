@@ -1,7 +1,7 @@
-"""Run any registered driver against a TORCS server.
+"""Run the BC driver (bc_driver/) against a TORCS server.
 
 Usage:
-    python scripts/run_agent.py --driver rule_based [--laps 1] [--host HOST] [--port PORT] [--telemetry]
+    python scripts/run_agent.py [--laps 1] [--host HOST] [--port PORT] [--telemetry]
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from drivers.registry import load_driver
+from bc_driver.driver import BCDriver
 from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -26,16 +26,17 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 STATUS_EVERY = 50  # log one status line per simulated second (~50 steps/s)
+DRIVER_NAME = "bc"
 
 
 def run(
-    driver_name: str,
     laps: int = 1,
     host: Optional[str] = None,
     port: Optional[int] = None,
     save_telemetry: bool = False,
 ) -> dict:
-    driver = load_driver(driver_name)
+    driver_name = DRIVER_NAME
+    driver = BCDriver()
 
     rows: list[dict] = []
     lap_times: list[float] = []
@@ -145,17 +146,14 @@ def run(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Run a TORCS driver agent")
-    parser.add_argument("--driver", default="rule_based",
-                        help="Driver: rule_based | bc")
+    parser = argparse.ArgumentParser(description="Run the BC driver agent")
     parser.add_argument("--laps", type=int, default=1)
     parser.add_argument("--host", default=None)
     parser.add_argument("--port", type=int, default=None)
     parser.add_argument("--telemetry", action="store_true",
                         help="Save full telemetry to data/<driver>_<ts>.csv")
     args = parser.parse_args()
-    run(driver_name=args.driver, laps=args.laps, host=args.host,
-        port=args.port, save_telemetry=args.telemetry)
+    run(laps=args.laps, host=args.host, port=args.port, save_telemetry=args.telemetry)
 
 
 if __name__ == "__main__":

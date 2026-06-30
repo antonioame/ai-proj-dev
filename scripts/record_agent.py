@@ -1,9 +1,9 @@
-"""Record a lap with any registered driver and save telemetry to CSV.
+"""Record a lap with the BC driver (bc_driver/) and save telemetry to CSV.
 
 Usage:
-    python scripts/record_agent.py --driver rule_based [--laps 1] [--host HOST] [--port PORT]
+    python scripts/record_agent.py [--laps 1] [--host HOST] [--port PORT]
 
-Output: data/recorded_<driver>_<timestamp>.csv
+Output: data/recorded_bc_<timestamp>.csv
 """
 
 from __future__ import annotations
@@ -18,13 +18,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from drivers.registry import load_driver
+from bc_driver.driver import BCDriver
 from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+DRIVER_NAME = "bc"
 
 FIELDNAMES = [
     "timestamp", "angle", "speed", "speedY", "speedZ", "trackPos",
@@ -35,12 +36,12 @@ FIELDNAMES = [
 
 
 def record(
-    driver_name: str = "rule_based",
     laps: int = 1,
     host: str | None = None,
     port: int | None = None,
 ) -> Path:
-    driver = load_driver(driver_name)
+    driver_name = DRIVER_NAME
+    driver = BCDriver()
 
     out_dir = PROJECT_ROOT / "data"
     out_dir.mkdir(exist_ok=True)
@@ -128,14 +129,12 @@ def record(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Record agent telemetry for a lap")
-    parser.add_argument("--driver", default="rule_based",
-                        help="Driver: rule_based | bc")
+    parser = argparse.ArgumentParser(description="Record BC driver telemetry for a lap")
     parser.add_argument("--laps", type=int, default=1)
     parser.add_argument("--host", default=None)
     parser.add_argument("--port", type=int, default=None)
     args = parser.parse_args()
-    record(driver_name=args.driver, laps=args.laps, host=args.host, port=args.port)
+    record(laps=args.laps, host=args.host, port=args.port)
 
 
 if __name__ == "__main__":

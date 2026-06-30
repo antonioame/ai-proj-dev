@@ -8,7 +8,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from drivers.bc.driver import BCDriver
+from bc_driver.driver import BCDriver
 from torcs_env.sensors import SensorState
 
 # Load a sample from the CSV

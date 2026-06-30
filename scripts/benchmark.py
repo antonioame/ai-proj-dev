@@ -1,7 +1,7 @@
 """Benchmark a driver over K laps and append metrics to laptime_ledger.csv.
 
 Usage:
-    python scripts/benchmark.py --driver rule_based [--laps 3] [--config-id my_config] [--compare baseline_rule_based] [--notes "ABS added"]
+    python scripts/benchmark.py [--laps 3] [--config-id my_config] [--compare baseline_rule_based] [--notes "ABS added"]
 """
 from __future__ import annotations
 
@@ -34,17 +34,16 @@ def _git_sha() -> str:
         return "unknown"
 
 
-def _run_race(driver: str, laps: int) -> dict:
+def _run_race(laps: int) -> dict:
     cmd = [
         sys.executable,
         str(PROJECT_ROOT / "scripts" / "launch_race.py"),
-        "--driver", driver,
         "--laps", str(laps),
     ]
     subprocess.run(cmd, cwd=PROJECT_ROOT)
-    # find the freshest JSON result for this driver
+    # find the freshest JSON result for the BC driver
     results_dir = PROJECT_ROOT / "results"
-    candidates = sorted(results_dir.glob(f"{driver}_*.json"), key=lambda p: p.stat().st_mtime)
+    candidates = sorted(results_dir.glob("bc_*.json"), key=lambda p: p.stat().st_mtime)
     if not candidates:
         raise RuntimeError(f"No results JSON found in {results_dir} after race")
     return json.loads(candidates[-1].read_text())
@@ -67,8 +66,7 @@ def _load_ledger() -> list[dict]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="K-lap benchmark → laptime_ledger.csv")
-    parser.add_argument("--driver", default="rule_based")
+    parser = argparse.ArgumentParser(description="K-lap benchmark of the BC driver → laptime_ledger.csv")
     parser.add_argument("--laps", type=int, default=1, help="Laps per session")
     parser.add_argument("--sessions", type=int, default=1,
                         help="Independent race sessions (each is a standing-start lap)")
@@ -77,7 +75,7 @@ def main() -> None:
     parser.add_argument("--notes", default="")
     args = parser.parse_args()
 
-    config_id = args.config_id or f"{args.driver}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    config_id = args.config_id or f"bc_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
     all_lap_times: list[float] = []
     max_speed = 0.0
@@ -86,7 +84,7 @@ def main() -> None:
 
     for s in range(args.sessions):
         print(f"\n--- Session {s+1}/{args.sessions} ---")
-        r = _run_race(args.driver, args.laps)
+        r = _run_race(args.laps)
         lap_times: list[float] = r.get("lap_times", [])
         all_lap_times.extend(lap_times)
         max_speed = max(max_speed, r.get("max_speed_kmh", 0.0))

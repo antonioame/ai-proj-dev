@@ -1,7 +1,7 @@
 """
 Train friend's DrivingNet model using existing telemetry CSV.
 Usage:
-    conda run -n ai_env python bc_source_driver/train_friend_model.py --csv data/rule_based_20260628_203648.csv
+    conda run -n ai_env python bc_driver/bc_source_driver/train_friend_model.py --csv data/rule_based_20260628_203648.csv
 """
 
 import sys

@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import numpy as np
 import torch
@@ -83,10 +83,11 @@ class BCDriver(BaseDriver):
         self.current_gear = 1
         self._step_count = 0
 
-        straight_model_path = Path("models/bc_from_rulefriend_v1.pth")
-        straight_stats_path = Path("models/bc_from_rulefriend_v1.npz")
-        corner_model_path   = Path("models/bc_from_olddriver_v1.pth")
-        corner_stats_path   = Path("models/bc_from_olddriver_v1.npz")
+        models_dir = Path(__file__).resolve().parent / "models"
+        straight_model_path = models_dir / "bc_from_rulefriend_v1.pth"
+        straight_stats_path = models_dir / "bc_from_rulefriend_v1.npz"
+        corner_model_path   = models_dir / "bc_from_olddriver_v1.pth"
+        corner_stats_path   = models_dir / "bc_from_olddriver_v1.npz"
 
         for p in [straight_model_path, straight_stats_path, corner_model_path, corner_stats_path]:
             if not p.exists():

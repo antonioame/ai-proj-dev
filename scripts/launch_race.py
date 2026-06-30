@@ -1,7 +1,7 @@
 """Autonomous launcher: starts TORCS headless then runs the Python agent.
 
 Usage:
-    python scripts/launch_race.py [--driver rule_based] [--laps 1] [--telemetry]
+    python scripts/launch_race.py [--laps 1] [--telemetry]
 
 The script discovers the TORCS installation under U:\\AI-Partition\\torcs\\torcs,
 starts wtorcs.exe with -r (race mode), waits for the server to open its UDP
@@ -73,11 +73,10 @@ def start_torcs() -> subprocess.Popen:
     return proc
 
 
-def run_agent(driver: str, laps: int, telemetry: bool) -> int:
+def run_agent(laps: int, telemetry: bool) -> int:
     cmd = [
         sys.executable,
         str(PROJECT_ROOT / "scripts" / "run_agent.py"),
-        "--driver", driver,
         "--laps", str(laps),
     ]
     if telemetry:
@@ -89,8 +88,7 @@ def run_agent(driver: str, laps: int, telemetry: bool) -> int:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Autonomous TORCS race launcher")
-    parser.add_argument("--driver", default="rule_based")
+    parser = argparse.ArgumentParser(description="Autonomous TORCS race launcher (BC driver)")
     parser.add_argument("--laps", type=int, default=1)
     parser.add_argument("--telemetry", action="store_true")
     args = parser.parse_args()
@@ -105,7 +103,7 @@ def main() -> None:
             sys.exit(1)
         logger.info("TORCS is ready.")
 
-        exit_code = run_agent(args.driver, args.laps, args.telemetry)
+        exit_code = run_agent(args.laps, args.telemetry)
         logger.info("Agent finished with exit code %d.", exit_code)
 
     finally:

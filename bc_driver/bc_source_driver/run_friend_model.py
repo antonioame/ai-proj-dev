@@ -1,12 +1,12 @@
 """
-Source driver used to generate the telemetry that trained models/bc_from_rulefriend_v1.
+Source driver used to generate the telemetry that trained bc_driver/models/bc_from_rulefriend_v1.
 Run this again if you need fresh samples to retrain that BC model.
 
 Usage:
-    conda run -n ai_env python bc_source_driver/run_friend_model.py [--host localhost] [--port 3001]
+    conda run -n ai_env python bc_driver/bc_source_driver/run_friend_model.py [--host localhost] [--port 3001]
 
 The model must be pre-trained:
-    conda run -n ai_env python bc_source_driver/train_friend_model.py --csv data/<telemetry>.csv
+    conda run -n ai_env python bc_driver/bc_source_driver/train_friend_model.py --csv data/<telemetry>.csv
 """
 
 import sys
@@ -20,7 +20,7 @@ import joblib
 import torch
 import torch.nn as nn
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "friend_model"))
 
 import snakeoil3_jm2 as snakeoil3
 
@@ -79,7 +79,7 @@ def main(host: str = "localhost", port: int = 3001):
 
     if not model_path.exists():
         print(f"[ERROR] Model not found: {model_path}")
-        print("Run: conda run -n ai_env python bc_source_driver/train_friend_model.py --csv data/<telemetry>.csv")
+        print("Run: conda run -n ai_env python bc_driver/bc_source_driver/train_friend_model.py --csv data/<telemetry>.csv")
         sys.exit(1)
 
     if not scaler_path.exists():
@@ -108,7 +108,7 @@ def main(host: str = "localhost", port: int = 3001):
 
     # Output CSV
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_file = Path(__file__).resolve().parent.parent / "data" / f"friend_model_{timestamp}.csv"
+    output_file = Path(__file__).resolve().parents[2] / "data" / f"friend_model_{timestamp}.csv"
     output_file.parent.mkdir(exist_ok=True)
 
     # CSV columns: mirror friend's project format

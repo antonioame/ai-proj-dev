@@ -57,25 +57,25 @@ conda run -n ai_env python scripts/setup_livery.py --rollback
 
 ## Stato dei driver
 
-### Fase 1: Basato su regole — COMPLETATO ✓ (baseline stabile)
-- **Tempo giro: ~148 s**, nessuno schianto
-- Punto di ingresso: `python scripts/run_agent.py --driver rule_based`
-- Sintonizzato con ABS, TCS, ricerca dell'apice, controllo PI della spinta
-- Vedi `drivers/rule_based/driver.py` per tutte le costanti
-
-### Driver BC ibrido — CANDIDATO ALLA CONSEGNA ✓
+### Driver BC ibrido — CANDIDATO ALLA CONSEGNA, IN PRIMO PIANO ✓
 - **Tempo giro: 125.790 s**, top speed 199.0 km/h (test del 2026-07-01, commit bcfe1f9) — migliore di rule_based
-- Punto di ingresso: `python scripts/run_agent.py --driver bc`
-- Blend di due modelli: `models/bc_from_rulefriend_v1.*` (rettilineo) + `models/bc_from_olddriver_v1.*` (curva)
-- `bc_from_rulefriend_v1` è stato allenato su telemetria generata da `bc_source_driver/run_friend_model.py`
-  (driver sorgente conservato in una cartella separata in root — riesegui quello script per nuovi campioni)
-- Vedi `drivers/bc/driver.py` per i dettagli del blend
+- Punto di ingresso: `python scripts/run_agent.py --laps 1` (nessun `--driver`, è l'unico driver collegato agli script)
+- Tutte le risorse vivono in `bc_driver/` (livello radice): `driver.py`, `models/` (i due modelli del blend),
+  `bc_source_driver/` (driver sorgente usato per generare i dati di training, riesegui per nuovi campioni)
+- Blend di due modelli: `bc_driver/models/bc_from_rulefriend_v1.*` (rettilineo) + `bc_driver/models/bc_from_olddriver_v1.*` (curva)
+
+### Fase 1: Basato su regole — ISOLATO (di riferimento, non più in primo piano)
+- **Tempo giro: ~148 s**, nessuno schianto — ma più lento del driver bc
+- Spostato interamente in `rule_based_archived/` (livello radice), **non più collegato** a
+  `scripts/run_agent.py`/`registry.py` (rimosso)
+- Punto di ingresso dedicato: `python rule_based_archived/run_rule_based.py --laps 1`
 
 ### Rimossi (rotti, non ricreare senza un piano)
 - **Fase 2 Behavioral Cloning (versione iniziale)** — si schiantato immediatamente; sterzo continuo, nessuna normalizzazione
 - **Fase 3 Reinforcement Learning** — mismatch dello spazio di osservazione; eliminato
 - **Fase C Driver linea ottimale** (`drivers/optimal/`) — non funzionante in pista, rimosso insieme a `scripts/build_track_map.py`, `torcs_env/track_map.py`, `torcs_env/track_data/`, e i relativi doc in `docs/`
-- **Progetti degli amici** (`old_project_material/project_made_by_my_friend/`, `_V2/`, `old_project_material/Friends_Projects/`) — testati uno per uno, tutti non funzionanti (modelli mancanti, import rotti, dataset mancanti). Rimossi interamente. L'unica parte "amico-derivata" ancora in uso è `bc_source_driver/` (vedi sopra), conservata perché serve a rigenerare i dati di training del driver `bc`.
+- **Progetti degli amici** (`old_project_material/project_made_by_my_friend/`, `_V2/`, `old_project_material/Friends_Projects/`) — testati uno per uno, tutti non funzionanti (modelli mancanti, import rotti, dataset mancanti). Rimossi interamente. L'unica parte "amico-derivata" ancora in uso è `bc_driver/bc_source_driver/` (vedi sopra), conservata perché serve a rigenerare i dati di training del driver `bc`.
+- **Vecchio driver personale** (`old_project_material/torcs_jm_par.py`) — testato: tempo 123.0 s, ma marce che vanno a limitatore in 1ª/2ª; tenuto solo come riferimento, non integrato negli script.
 
 ---
 
@@ -85,14 +85,17 @@ conda run -n ai_env python scripts/setup_livery.py --rollback
 # 1. Avvia server TORCS (Windows)
 torcs -r torcs_env/race_config/corkscrew_solo.xml
 
-# 2. Esegui un driver (Mac o stessa macchina)
-conda run -n ai_env python scripts/run_agent.py --driver rule_based
+# 2. Esegui il driver bc (Mac o stessa macchina)
+conda run -n ai_env python scripts/run_agent.py --laps 1
 
 # 3. Registra telemetria
-conda run -n ai_env python scripts/record_agent.py --driver rule_based
+conda run -n ai_env python scripts/record_agent.py --laps 1
 
 # 4. Valuta (salva JSON in results/)
-conda run -n ai_env python scripts/evaluate.py --driver rule_based --laps 1
+conda run -n ai_env python scripts/evaluate.py --laps 1
+
+# (riferimento, isolato) rule_based archiviato
+conda run -n ai_env python rule_based_archived/run_rule_based.py --laps 1
 ```
 
 ---
@@ -103,7 +106,7 @@ conda run -n ai_env python scripts/evaluate.py --driver rule_based --laps 1
 |-----------|-----------|
 | Solo client UDP (nessun plugin TORCS) | La patch SCR espone un'interfaccia UDP pulita; nessun C++ necessario |
 | Rilevamento reset `distRaced` per conteggio giri | `lastLapTime` aggiorna solo una volta per giro; distRaced è continuo |
-| `drivers/registry.py` per caricamento driver | Unica fonte di verità — run_agent, record_agent, evaluate la usano tutti |
+| `bc_driver/driver.py` importato direttamente (no registry) | Un solo driver in uso — l'indirezione registry/`--driver` è stata rimossa quando rule_based è stato isolato |
 | Target di velocità basato su fisica in rule_based | Formula di distanza di frenata, non tabella di ricerca — nessuna discontinuità |
 | ABS su entrambi i driver | Previene il bloccaggio con valori alti di BRAKE_MAX |
 | TCS su entrambi i driver | Previene il pattinamento all'accelerazione |
@@ -117,15 +120,17 @@ conda run -n ai_env python scripts/evaluate.py --driver rule_based --laps 1
 ```
 torcs_env/          Protocollo SCR (sensori, azioni, client UDP, XML gara)
 drivers/
-  base_driver.py    Interfaccia astratta
-  registry.py       load_driver(name) — caricatore unico usato da tutti gli script
-  rule_based/       Baseline Fase 1 (~148 s, stabile)
-  bc/                Behavioral cloning ibrido (125.8 s, candidato consegna)
-bc_source_driver/    Driver sorgente usato per generare i dati di bc_from_rulefriend_v1
-                      (rieseguire run_friend_model.py per nuovi campioni)
+  base_driver.py    Interfaccia astratta condivisa (BaseDriver)
+bc_driver/           Driver IN PRIMO PIANO — candidato alla consegna (125.8 s)
+  driver.py          BCDriver, blend di due modelli
+  models/             bc_from_rulefriend_v1.*, bc_from_olddriver_v1.*
+  bc_source_driver/   Driver sorgente per rigenerare i dati di bc_from_rulefriend_v1
+rule_based_archived/  Driver ISOLATO, di solo riferimento (~148 s, non in registry/run_agent)
+  driver.py
+  run_rule_based.py   Script minimale per eseguirlo standalone
 scripts/
-  run_agent.py      Esegui un qualsiasi driver, opzionalmente salva telemetria + JSON risultati
-  record_agent.py   Registra un giro su data/recorded_<driver>_<ts>.csv
+  run_agent.py      Esegue il driver bc, opzionalmente salva telemetria + JSON risultati
+  record_agent.py   Registra un giro su data/recorded_bc_<ts>.csv
   evaluate.py       Valuta e salva risultati strutturati JSON
 tests/              Unit test
 data/               CSV telemetria (git-ignored)
@@ -148,4 +153,6 @@ Migliore attuale: **125.790 s** (bc, hybrid rulefriend/olddriver, commit bcfe1f9
 
 ## Prossimi passi
 
-Driver `optimal` e tutti i progetti degli amici non funzionanti sono stati rimossi. `bc` è il candidato alla consegna (125.8 s, batte rule_based). Prossimo passo: confermare la stabilità di `bc` su più giri prima della consegna finale.
+Repository riorganizzato attorno al driver `bc` (in `bc_driver/`, in primo piano, candidato alla consegna).
+`rule_based` è isolato in `rule_based_archived/`, scollegato dagli script principali. Prossimo passo:
+confermare la stabilità di `bc` su più giri prima della consegna finale.
