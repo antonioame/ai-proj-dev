@@ -1,102 +1,102 @@
-# torcs-ai — AI Racing Agent for TORCS / Corkscrew
+# torcs-ai — Agente AI per le corse in TORCS / Circuito Corkscrew
 
-An AI agent that drives the Corkscrew circuit in TORCS as fast as possible,
-built in three phases: rule-based baseline → behavioral cloning → RL fine-tuning.
+Un agente AI che guida il circuito Corkscrew in TORCS il più velocemente possibile,
+costruito in tre fasi: baseline basato su regole → behavioral cloning → ottimizzazione RL.
 
-## Architecture
+## Architettura
 
 ```
-Windows PC  ─── TORCS headless server (UDP :3001)
+Windows PC  ─── Server TORCS headless (UDP :3001)
                         │
-                   SCR protocol (UDP)
+                   Protocollo SCR (UDP)
                         │
-MacBook Air M2 ─── Python client + AI driver
+MacBook Air M2 ─── Client Python + driver AI
 ```
 
 ---
 
-## 1. Windows Setup (TORCS Server)
+## 1. Configurazione Windows (Server TORCS)
 
-### 1a. Install TORCS 1.3.x
+### 1a. Installa TORCS 1.3.x
 
-Download the TORCS 1.3.7 Windows installer from the official site and install to
-`C:\torcs` (or any path without spaces).
+Scarica l'installer di TORCS 1.3.7 da Windows dal sito ufficiale e installa in
+`C:\torcs` (o in qualsiasi percorso senza spazi).
 
-### 1b. Install the SCR Patch
+### 1b. Installa la patch SCR
 
-The SCR (Simulated Car Racing) patch adds a UDP server mode to TORCS.
+La patch SCR (Simulated Car Racing) aggiunge una modalità server UDP a TORCS.
 
-1. Download the SCR patch for TORCS 1.3.x.
-2. Copy `scr_server.dll` (and any companion files) into `C:\torcs\drivers\scr_server\`.
-3. Verify TORCS can find the driver: start TORCS normally and check the driver list.
+1. Scarica la patch SCR per TORCS 1.3.x.
+2. Copia `scr_server.dll` (e i file correlati) in `C:\torcs\drivers\scr_server\`.
+3. Verifica che TORCS trovi il driver: avvia TORCS normalmente e controlla l'elenco dei driver.
 
-### 1c. Copy the Race Config
+### 1c. Copia la configurazione di gara
 
-From this repository, copy `torcs_env/race_config/corkscrew_solo.xml` to any
-convenient location on the Windows machine (e.g., `C:\torcs\race_config\`).
+Da questo repository, copia `torcs_env/race_config/corkscrew_solo.xml` in qualsiasi
+posizione conveniente sulla macchina Windows (es. `C:\torcs\race_config\`).
 
-### 1d. Run TORCS Headlessly
+### 1d. Avvia TORCS in modalità headless
 
 ```batch
 cd C:\torcs
 torcs.exe -r C:\torcs\race_config\corkscrew_solo.xml
 ```
 
-TORCS will start without a window, load the Corkscrew track, and wait for a
-UDP client on port 3001.
+TORCS si avvierà senza finestra, caricherà il circuito Corkscrew e attenderà un
+client UDP sulla porta 3001.
 
-> **Firewall note:** Allow inbound UDP on port 3001 in Windows Firewall.
-> Both machines must be on the same LAN (or route traffic appropriately).
+> **Nota Firewall:** Consenti UDP in ingresso sulla porta 3001 nel Firewall Windows.
+> Entrambe le macchine devono essere sulla stessa LAN (o instradare il traffico opportunamente).
 
 ---
 
-## 2. Mac M2 Setup (Python Client)
+## 2. Configurazione Mac M2 (Client Python)
 
-### 2a. Python Environment
+### 2a. Ambiente Python
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
 
-### 2b. Install PyTorch for Apple Silicon
+### 2b. Installa PyTorch per Apple Silicon
 
 ```bash
-# CPU build (also uses MPS automatically):
+# Build CPU (usa automaticamente MPS):
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
 ```
 
-### 2c. Install Project Dependencies
+### 2c. Installa dipendenze del progetto
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2d. Confirm Tests Pass
+### 2d. Conferma che i test passano
 
 ```bash
 pytest tests/ -v
-# Expected: 37 passed
+# Atteso: 37 passed
 ```
 
 ---
 
-## 3. Running the Agent
+## 3. Esecuzione dell'agente
 
-### Quick Start
+### Avvio rapido
 
 ```bash
-# Terminal 1 — Windows PC:
+# Terminale 1 — Windows PC:
 torcs.exe -r C:\torcs\race_config\corkscrew_solo.xml
 
-# Terminal 2 — Mac (replace with your Windows LAN IP):
+# Terminale 2 — Mac (sostituisci con l'IP LAN del tuo Windows):
 export TORCS_HOST=192.168.1.100
 python scripts/run_agent.py --driver rule_based
 ```
 
-The agent will connect, complete one lap, print the lap time, and exit.
+L'agente si collegherà, completerà un giro, stamperà il tempo del giro ed uscirà.
 
-### Options
+### Opzioni
 
 ```
 python scripts/run_agent.py --driver rule_based --laps 3 --host 192.168.1.100 --port 3001
@@ -104,32 +104,32 @@ python scripts/run_agent.py --driver rule_based --laps 3 --host 192.168.1.100 --
 
 ---
 
-## 4. Recording Telemetry (Phase 2 Prep)
+## 4. Registrazione telemetria (Preparazione Fase 2)
 
 ```bash
 export TORCS_HOST=192.168.1.100
 python scripts/record_human.py --driver rule_based
-# Saves: data/human_YYYYMMDD_HHMMSS.csv
+# Salva: data/human_YYYYMMDD_HHMMSS.csv
 ```
 
-See `data/README.md` for the CSV schema and guidance on data quality.
+Vedi `data/README.md` per lo schema CSV e la guida sulla qualità dei dati.
 
 ---
 
-## 5. Evaluation
+## 5. Valutazione
 
 ```bash
 python scripts/evaluate.py --driver rule_based --laps 1
-# Saves: results/eval_rule_based_YYYYMMDD_HHMMSS.json
+# Salva: results/eval_rule_based_YYYYMMDD_HHMMSS.json
 ```
 
-Reported metrics: lap time, max speed, avg speed, off-track %, damage.
+Metriche riportate: tempo del giro, velocità massima, velocità media, % fuori pista, danno.
 
 ---
 
-## 6. Phase 2 — Behavioral Cloning
+## 6. Fase 2 — Behavioral Cloning
 
-Once you have ≥5 clean laps recorded:
+Una volta che hai ≥5 giri puliti registrati:
 
 ```bash
 python -m training.behavioral_cloning.train \
@@ -138,53 +138,53 @@ python -m training.behavioral_cloning.train \
     --epochs 50
 ```
 
-Then implement `drivers/bc/driver.py` that loads `models/bc_v1.pth` and feeds
-sensor observations through the MLP policy.
+Poi implementa `drivers/bc/driver.py` che carica `models/bc_v1.pth` e passa
+le osservazioni dei sensori attraverso la policy MLP.
 
 ---
 
-## 7. Project Structure
+## 7. Struttura del progetto
 
 ```
 torcs_env/
   __init__.py
-  client.py           # UDP client (SCR protocol)
-  sensors.py          # Sensor string → SensorState dataclass
-  actions.py          # Action dataclass → SCR control string
+  client.py           # Client UDP (protocollo SCR)
+  sensors.py          # Stringa sensori → dataclass SensorState
+  actions.py          # Dataclass Action → stringa di controllo SCR
   race_config/
     corkscrew_solo.xml
 
 drivers/
-  base_driver.py      # Abstract BaseDriver
+  base_driver.py      # BaseDriver astratto
   rule_based/
-    driver.py         # Phase 1: P-steering + PI speed control
+    driver.py         # Fase 1: controllo sterzo P + velocità PI
 
 training/
   behavioral_cloning/
-    dataset.py        # PyTorch Dataset from CSV
-    model.py          # MLP policy network
-    train.py          # Training script (MPS-aware)
+    dataset.py        # PyTorch Dataset da CSV
+    model.py          # Rete policy MLP
+    train.py          # Script di allenamento (consapevole di MPS)
   rl/
-    README.md         # Phase 3 plan
+    README.md         # Piano Fase 3
 
 scripts/
-  run_agent.py        # Run any driver
-  record_human.py     # Record one lap to CSV
-  evaluate.py         # Structured evaluation + JSON output
+  run_agent.py        # Esegui un qualsiasi driver
+  record_human.py     # Registra un giro su CSV
+  evaluate.py         # Valutazione strutturata → output JSON
 
-tests/                # 37 unit tests (pytest)
-data/                 # Telemetry CSVs (git-ignored)
-results/              # Evaluation JSONs (git-ignored)
+tests/                # 37 unit test (pytest)
+data/                 # CSV telemetria (git-ignored)
+results/              # File JSON valutazione (git-ignored)
 ```
 
 ---
 
-## Troubleshooting
+## Risoluzione problemi
 
-| Symptom | Fix |
-|---------|-----|
-| `ConnectionError: Could not connect to TORCS` | Check TORCS is running and `TORCS_HOST` / `TORCS_PORT` are correct; check Windows Firewall |
-| TORCS exits immediately | Driver module name mismatch — edit `corkscrew_solo.xml` → `<attstr name="module" val="scr_server"/>` |
-| Car immediately crashes | Tune `STEER_ANGLE_GAIN` and `STEER_TRACK_GAIN` in `drivers/rule_based/driver.py` |
-| `TimeoutError` after a few seconds | TORCS lost the connection; restart both TORCS and the agent |
-| MPS not available | Ensure PyTorch ≥ 2.1 and macOS ≥ 12.3; training falls back to CPU automatically |
+| Sintomo | Soluzione |
+|---------|-----------|
+| `ConnectionError: Could not connect to TORCS` | Controlla che TORCS sia in esecuzione e che `TORCS_HOST` / `TORCS_PORT` siano corretti; controlla Windows Firewall |
+| TORCS esce immediatamente | Mismatch del nome modulo driver — modifica `corkscrew_solo.xml` → `<attstr name="module" val="scr_server"/>` |
+| L'auto si schianta immediatamente | Sintonizza `STEER_ANGLE_GAIN` e `STEER_TRACK_GAIN` in `drivers/rule_based/driver.py` |
+| `TimeoutError` dopo pochi secondi | TORCS ha perso la connessione; riavvia sia TORCS che l'agente |
+| MPS non disponibile | Assicurati che PyTorch ≥ 2.1 e macOS ≥ 12.3; l'allenamento ricade automaticamente su CPU |

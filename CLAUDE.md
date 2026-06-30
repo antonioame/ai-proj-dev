@@ -1,26 +1,26 @@
-# TORCS AI — Project Context for Claude Code Sessions
+# TORCS AI — Contesto del progetto per sessioni Claude Code
 
-## Goal
+## Obiettivo
 
-Train an AI agent to complete a single lap of the **Corkscrew** circuit in TORCS
-as fast as possible from a standing start, without crashing.
+Allenare un agente AI per completare un singolo giro del circuito **Corkscrew** in TORCS
+il più velocemente possibile da una partenza da fermo, senza schiantarsi.
 
-**Success metric:** Lap time (lower is better).  
-**Constraints:** No crashes, minimal off-track excursions.
+**Metrica di successo:** Tempo del giro (più basso è meglio).  
+**Vincoli:** Nessuno schianto, escursioni minime fuori pista.
 
 ---
 
-## Hardware Setup
+## Configurazione hardware
 
-| Machine | Role | Notes |
-|---------|------|-------|
-| Windows PC | TORCS headless server | Runs `torcs -r`, UDP port 3001 |
-| MacBook Air M2 | Python client + training | PyTorch with MPS backend |
+| Macchina | Ruolo | Note |
+|---------|-------|-------|
+| Windows PC | Server TORCS headless | Esegue `torcs -r`, porta UDP 3001 |
+| MacBook Air M2 | Client Python + allenamento | PyTorch con backend MPS |
 
-Both machines are on the same LAN. The Mac connects to the TORCS UDP server
-via `TORCS_HOST=<windows-LAN-IP>` environment variable.
+Entrambe le macchine sono sulla stessa LAN. Il Mac si connette al server UDP TORCS
+tramite la variabile d'ambiente `TORCS_HOST=<windows-LAN-IP>`.
 
-Key env vars:
+Variabili d'ambiente principali:
 ```
 TORCS_HOST   (default: localhost)
 TORCS_PORT   (default: 3001)
@@ -28,139 +28,139 @@ TORCS_PORT   (default: 3001)
 
 ---
 
-## Car Livery Setup
+## Configurazione livrea auto
 
-The project includes a custom car livery (`livrea.png`) that is applied safely and reversibly.
+Il progetto include una livrea auto personalizzata (`livrea.png`) applicata in modo sicuro e reversibile.
 
-**Install livery:**
+**Installa livrea:**
 ```bash
 conda run -n ai_env python scripts/setup_livery.py --install
 ```
 
-**Check status:**
+**Controlla stato:**
 ```bash
 conda run -n ai_env python scripts/setup_livery.py --status
 ```
 
-**Rollback to original (fully reversible):**
+**Ripristina originale (completamente reversibile):**
 ```bash
 conda run -n ai_env python scripts/setup_livery.py --rollback
 ```
 
-**How it works:**
-- Converts `livrea.png` (PNG) → Radiance RGB format (TORCS native)
-- Applies to `car1-stock1` car texture
-- Automatic backup of original `car1-stock1.rgb` to `.rgb.backup`
-- Can be rolled back to original without any loss
+**Come funziona:**
+- Converte `livrea.png` (PNG) → formato RGB Radiance (nativo TORCS)
+- Applica alla texture dell'auto `car1-stock1`
+- Backup automatico dell'originale `car1-stock1.rgb` in `.rgb.backup`
+- Può essere ripristinato all'originale senza alcuna perdita
 
 ---
 
-## Driver Status
+## Stato dei driver
 
-### Phase 1: Rule-Based — DONE ✓ (stable baseline)
-- **Lap time: ~148 s**, no crashes
-- Entry point: `python scripts/run_agent.py --driver rule_based`
-- Tuned with ABS, TCS, apex-seeking, PI throttle control
-- See `drivers/rule_based/driver.py` for all constants
+### Fase 1: Basato su regole — COMPLETATO ✓ (baseline stabile)
+- **Tempo giro: ~148 s**, nessuno schianto
+- Punto di ingresso: `python scripts/run_agent.py --driver rule_based`
+- Sintonizzato con ABS, TCS, ricerca dell'apice, controllo PI della spinta
+- Vedi `drivers/rule_based/driver.py` per tutte le costanti
 
-### Phase C: Optimal Line Driver — IN PROGRESS (crashes, needs testing)
-- **Target: < 140 s** — trajectory-follower with late braking
-- Entry point: `python scripts/run_agent.py --driver optimal`
-- Requires `torcs_env/track_data/track_map.json` (already built from rule_based telemetry)
-- **Known tuning as of this restructure:**
-  - STARTUP_STEPS = 200 (conservative 4-second standing-start phase)
-  - STEER_ANGLE_GAIN = 1.2 (was 1.6 — reduced to prevent twitching)
-  - STEER_LINE_GAIN = 0.25 (was 0.40 — less aggressive line tracking)
-  - STEER_SMOOTH_SPEED = 75 (apply EMA smoothing up to 75 km/h)
-  - SCAN_AHEAD_M = 200 (was 300 — more focused look-ahead)
-  - BRAKE_MARGIN_M = 40 (extra safety buffer on braking distance)
-  - TARGET_LINE_SCALE = 0.50 (blend 50% toward racing line, 50% centre)
-  - TCS added (prevents wheelspin on acceleration)
-- **Rebuild map** if you record new telemetry:
+### Fase C: Driver linea ottimale — IN PROGRESS (si schianta, necessita test)
+- **Target: < 140 s** — follower della traiettoria con frenata tardiva
+- Punto di ingresso: `python scripts/run_agent.py --driver optimal`
+- Richiede `torcs_env/track_data/track_map.json` (già costruito dalla telemetria rule_based)
+- **Sintonia conosciuta a partire da questa ristrutturazione:**
+  - STARTUP_STEPS = 200 (fase di partenza da fermo conservativa, 4 secondi)
+  - STEER_ANGLE_GAIN = 1.2 (era 1.6 — ridotto per prevenire tremolii)
+  - STEER_LINE_GAIN = 0.25 (era 0.40 — tracciamento della linea meno aggressivo)
+  - STEER_SMOOTH_SPEED = 75 (applica livellamento EMA fino a 75 km/h)
+  - SCAN_AHEAD_M = 200 (era 300 — sguardo in avanti più focalizzato)
+  - BRAKE_MARGIN_M = 40 (buffer di sicurezza extra sulla distanza di frenata)
+  - TARGET_LINE_SCALE = 0.50 (miscela 50% verso la linea di gara, 50% centro)
+  - TCS aggiunto (previene il pattinamento all'accelerazione)
+- **Ricostruisci mappa** se registri nuova telemetria:
   ```bash
   python scripts/build_track_map.py --telemetry data/<file>.csv
   ```
 
-### Removed (broken, do not recreate without a plan)
-- **Phase 2 Behavioral Cloning** — crashed immediately; continuous steering, no normalisation
-- **Phase 3 Reinforcement Learning** — observation space mismatch; deleted
+### Rimossi (rotti, non ricreare senza un piano)
+- **Fase 2 Behavioral Cloning** — si schiantato immediatamente; sterzo continuo, nessuna normalizzazione
+- **Fase 3 Reinforcement Learning** — mismatch dello spazio di osservazione; eliminato
 
 ---
 
-## How to Run
+## Come eseguire
 
 ```bash
-# 1. Start TORCS server (Windows)
+# 1. Avvia server TORCS (Windows)
 torcs -r torcs_env/race_config/corkscrew_solo.xml
 
-# 2. Run a driver (Mac or same machine)
+# 2. Esegui un driver (Mac o stessa macchina)
 conda run -n ai_env python scripts/run_agent.py --driver rule_based
 conda run -n ai_env python scripts/run_agent.py --driver optimal
 
-# 3. Record telemetry
+# 3. Registra telemetria
 conda run -n ai_env python scripts/record_agent.py --driver rule_based
 
-# 4. Evaluate (saves JSON to results/)
+# 4. Valuta (salva JSON in results/)
 conda run -n ai_env python scripts/evaluate.py --driver rule_based --laps 1
 ```
 
 ---
 
-## Key Design Decisions
+## Decisioni progettuali principali
 
-| Decision | Rationale |
-|----------|-----------|
-| UDP client only (no TORCS plugin) | SCR patch exposes a clean UDP interface; no C++ needed |
-| `distRaced` reset detection for lap counting | `lastLapTime` only updates once per lap; distRaced is continuous |
-| `drivers/registry.py` for driver loading | Single source of truth — run_agent, record_agent, evaluate all use it |
-| Physics-based speed target in rule_based | Braking distance formula, not lookup table — no step discontinuities |
-| ABS on both drivers | Prevents lockup at high BRAKE_MAX values |
-| TCS on both drivers | Prevents wheelspin on acceleration |
-| Backward-pass trajectory | Propagates corner speed limits backwards to set braking points |
-| `TARGET_LINE_SCALE = 0.50` | Blend racing line with centre to reduce off-track risk |
+| Decisione | Razionale |
+|-----------|-----------|
+| Solo client UDP (nessun plugin TORCS) | La patch SCR espone un'interfaccia UDP pulita; nessun C++ necessario |
+| Rilevamento reset `distRaced` per conteggio giri | `lastLapTime` aggiorna solo una volta per giro; distRaced è continuo |
+| `drivers/registry.py` per caricamento driver | Unica fonte di verità — run_agent, record_agent, evaluate la usano tutti |
+| Target di velocità basato su fisica in rule_based | Formula di distanza di frenata, non tabella di ricerca — nessuna discontinuità |
+| ABS su entrambi i driver | Previene il bloccaggio con valori alti di BRAKE_MAX |
+| TCS su entrambi i driver | Previene il pattinamento all'accelerazione |
+| Traiettoria con retropassaggio | Propaga i limiti di velocità delle curve all'indietro per impostare i punti di frenata |
+| `TARGET_LINE_SCALE = 0.50` | Miscela la linea di gara con il centro per ridurre il rischio di uscite di pista |
 
 ---
 
-## Repository Layout
+## Layout del repository
 
 ```
-torcs_env/          SCR protocol (sensors, actions, UDP client, race XML)
-  track_data/       track_map.json — prebuilt from rule_based telemetry
+torcs_env/          Protocollo SCR (sensori, azioni, client UDP, XML gara)
+  track_data/       track_map.json — precostruito dalla telemetria rule_based
 drivers/
-  base_driver.py    Abstract interface
-  registry.py       load_driver(name) — single loader used by all scripts
-  rule_based/       Phase 1 baseline (~148 s, stable)
-  optimal/          Phase C trajectory follower (in progress)
+  base_driver.py    Interfaccia astratta
+  registry.py       load_driver(name) — caricatore unico usato da tutti gli script
+  rule_based/       Baseline Fase 1 (~148 s, stabile)
+  optimal/          Follower traiettoria Fase C (in progress)
 scripts/
-  run_agent.py      Run any driver, optionally save telemetry + results JSON
-  record_agent.py   Record a lap to data/recorded_<driver>_<ts>.csv
-  evaluate.py       Evaluate and save structured results JSON
-  build_track_map.py  Build track_map.json from a telemetry CSV
-tests/              Unit tests
-data/               Telemetry CSVs (git-ignored)
-results/            Evaluation JSON files (git-ignored)
-laptime_ledger.csv  Manual log of tuning experiments
+  run_agent.py      Esegui un qualsiasi driver, opzionalmente salva telemetria + JSON risultati
+  record_agent.py   Registra un giro su data/recorded_<driver>_<ts>.csv
+  evaluate.py       Valuta e salva risultati strutturati JSON
+  build_track_map.py  Costruisci track_map.json da CSV telemetria
+tests/              Unit test
+data/               CSV telemetria (git-ignored)
+results/            File JSON valutazione (git-ignored)
+laptime_ledger.csv  Log manuale di esperimenti di sintonia
 ```
 
 ---
 
-## Lap Time Ledger
+## Registro tempo giro
 
-Record every benchmark run in `laptime_ledger.csv`:
+Registra ogni esecuzione di benchmark in `laptime_ledger.csv`:
 ```
 timestamp,config_id,git_sha,best_lap_s,median_lap_s,top_speed_kmh,off_track_pct,damage,valid,notes
 ```
 
-Current best: **148.4 s** (rule_based, ABS + higher brake pressure, commit ca54fea)
+Migliore attuale: **148.4 s** (rule_based, ABS + pressione freno più alta, commit ca54fea)
 
 ---
 
-## Next Steps (ordered by priority)
+## Prossimi passi (ordinati per priorità)
 
-1. **Test optimal driver** — does it complete a lap without crashing?
+1. **Test driver ottimale** — completa un giro senza schiantarsi?
    ```bash
    conda run -n ai_env python scripts/run_agent.py --driver optimal --laps 1
    ```
-2. **If still crashing** — reduce `STEER_ANGLE_GAIN` further (try 1.0) or increase `BRAKE_MARGIN_M` (try 60)
-3. **If stable but slow** — increase `CORNER_SPEED_SCALE` in `drivers/optimal/trajectory.py` (try 1.1)
-4. **Rebuild track map** with more laps of telemetry for better corner speed estimates
+2. **Se ancora si schianta** — riduci ulteriormente `STEER_ANGLE_GAIN` (prova 1.0) o aumenta `BRAKE_MARGIN_M` (prova 60)
+3. **Se stabile ma lento** — aumenta `CORNER_SPEED_SCALE` in `drivers/optimal/trajectory.py` (prova 1.1)
+4. **Ricostruisci mappa tracciato** con più giri di telemetria per migliori stime della velocità in curva
