@@ -28,6 +28,33 @@ TORCS_PORT   (default: 3001)
 
 ---
 
+## Car Livery Setup
+
+The project includes a custom car livery (`livrea.png`) that is applied safely and reversibly.
+
+**Install livery:**
+```bash
+conda run -n ai_env python scripts/setup_livery.py --install
+```
+
+**Check status:**
+```bash
+conda run -n ai_env python scripts/setup_livery.py --status
+```
+
+**Rollback to original (fully reversible):**
+```bash
+conda run -n ai_env python scripts/setup_livery.py --rollback
+```
+
+**How it works:**
+- Converts `livrea.png` (PNG) → Radiance RGB format (TORCS native)
+- Applies to `car1-stock1` car texture
+- Automatic backup of original `car1-stock1.rgb` to `.rgb.backup`
+- Can be rolled back to original without any loss
+
+---
+
 ## Driver Status
 
 ### Phase 1: Rule-Based — DONE ✓ (stable baseline)
