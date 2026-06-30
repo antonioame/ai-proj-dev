@@ -1,1 +1,0 @@
-The Python script in this directory worked correctly to lauch a driver in TORCS. You can use this script as reference to see if something is missing in the script you are working for.
