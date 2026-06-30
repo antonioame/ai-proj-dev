@@ -68,15 +68,20 @@ class BCDriver(BaseDriver):
     """
 
     STEER_GAIN = 1.8   # Applied to the blended steer output
-    ACCEL_GAIN = 1.40  # More aggressive throttle on exits and straights
-    BRAKE_GAIN = 0.80  # Reduce brake output → later braking point → higher entry speed
+    ACCEL_GAIN = 1.40  # Applied to the blended accel output
+    BRAKE_GAIN = 0.80  # Applied to the blended brake output
 
-    STRAIGHT_THRESHOLD = 150.0  # m — above this: pure straight model (extended for fast sections)
-    CORNER_THRESHOLD   = 50.0   # m — below this: pure corner model (tighter threshold)
+    STRAIGHT_THRESHOLD = 120.0  # m — above this: pure straight model
+    CORNER_THRESHOLD   = 60.0   # m — below this: pure corner model
+
+    # Startup phase: feed full throttle with zero steer for this many steps.
+    # Keeps the car straight while the models receive OOD inputs (speed≈0, gear=0).
+    STARTUP_STEPS = 80
 
     def __init__(self):
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.current_gear = 1
+        self._step_count = 0
 
         straight_model_path = Path("models/bc_from_rulefriend_v1.pth")
         straight_stats_path = Path("models/bc_from_rulefriend_v1.npz")
@@ -100,6 +105,7 @@ class BCDriver(BaseDriver):
 
     def on_restart(self) -> None:
         self.current_gear = 1
+        self._step_count = 0
 
     def _infer(self, model, X_mean, X_std, sensor_vec: np.ndarray) -> dict:
         """Run inference on a single model."""
@@ -117,7 +123,21 @@ class BCDriver(BaseDriver):
             return 1.0
         return 1.0 - (front_dist - self.CORNER_THRESHOLD) / (self.STRAIGHT_THRESHOLD - self.CORNER_THRESHOLD)
 
+    def _startup_gear(self, speed: float) -> int:
+        if speed < 15.0:
+            return 1
+        if speed < 45.0:
+            return 2
+        return 3
+
     def step(self, state: SensorState) -> Action:
+        self._step_count += 1
+
+        if self._step_count <= self.STARTUP_STEPS:
+            gear = self._startup_gear(state.speed)
+            self.current_gear = gear
+            return Action(steer=0.0, accel=1.0, brake=0.0, gear=gear).clamp()
+
         sensor_vec = np.array([
             state.angle,
             state.speed,
