@@ -74,13 +74,6 @@ class BCDriver(BaseDriver):
     STRAIGHT_THRESHOLD = 120.0  # m — above this: pure straight model
     CORNER_THRESHOLD   = 60.0   # m — below this: pure corner model
 
-    RPM_UPSHIFT   = 12000  # shift points unchanged — only hunting is suppressed
-    RPM_DOWNSHIFT = 6000
-    # Anti-hunting: after a shift, hold the new gear for at least this many steps
-    # (~0.3 s at 50 Hz) before allowing another shift. Telemetry showed 19 up/down
-    # reversals within 0.5 s on the baseline lap — wasted torque + unsettled car.
-    GEAR_HOLD_STEPS = 15
-
     # Startup phase: feed full throttle with zero steer for this many steps.
     # Keeps the car straight while the models receive OOD inputs (speed≈0, gear=0).
     STARTUP_STEPS = 80
@@ -89,7 +82,6 @@ class BCDriver(BaseDriver):
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.current_gear = 1
         self._step_count = 0
-        self._steps_since_shift = self.GEAR_HOLD_STEPS
 
         straight_model_path = Path("models/bc_from_rulefriend_v1.pth")
         straight_stats_path = Path("models/bc_from_rulefriend_v1.npz")
@@ -114,7 +106,6 @@ class BCDriver(BaseDriver):
     def on_restart(self) -> None:
         self.current_gear = 1
         self._step_count = 0
-        self._steps_since_shift = self.GEAR_HOLD_STEPS
 
     def _infer(self, model, X_mean, X_std, sensor_vec: np.ndarray) -> dict:
         """Run inference on a single model."""
@@ -176,15 +167,11 @@ class BCDriver(BaseDriver):
         accel = max(0.0,  min(1.0, accel * self.ACCEL_GAIN))
         brake = max(0.0,  min(1.0, brake * self.BRAKE_GAIN))
 
-        # RPM-based gear management with anti-hunting hold
-        self._steps_since_shift += 1
-        if self._steps_since_shift >= self.GEAR_HOLD_STEPS:
-            if state.rpm > self.RPM_UPSHIFT and self.current_gear < 6:
-                self.current_gear += 1
-                self._steps_since_shift = 0
-            elif state.rpm < self.RPM_DOWNSHIFT and self.current_gear > 1:
-                self.current_gear -= 1
-                self._steps_since_shift = 0
+        # RPM-based gear management
+        if state.rpm > 12000 and self.current_gear < 6:
+            self.current_gear += 1
+        elif state.rpm < 6000 and self.current_gear > 1:
+            self.current_gear -= 1
 
         return Action(
             steer=float(steer),
