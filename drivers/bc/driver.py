@@ -68,11 +68,11 @@ class BCDriver(BaseDriver):
     """
 
     STEER_GAIN = 1.8   # Applied to the blended steer output
-    ACCEL_GAIN = 1.55  # Aggressive throttle — car stable at 1.40, room to push
-    BRAKE_GAIN = 0.70  # Late braking — 30% reduction, car was 0% off-track
+    ACCEL_GAIN = 1.40  # More aggressive throttle on exits and straights
+    BRAKE_GAIN = 0.80  # Reduce brake output → later braking point → higher entry speed
 
-    STRAIGHT_THRESHOLD = 150.0  # m — above this: pure straight model
-    CORNER_THRESHOLD   = 50.0   # m — below this: pure corner model
+    STRAIGHT_THRESHOLD = 150.0  # m — above this: pure straight model (extended for fast sections)
+    CORNER_THRESHOLD   = 50.0   # m — below this: pure corner model (tighter threshold)
 
     def __init__(self):
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
