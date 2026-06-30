@@ -1,21 +1,21 @@
 """
-Train Behavioral Cloning model from friend's driving data.
+Train Behavioral Cloning model from the earlier driving-net attempt's data.
 
 Usage:
-    # First: collect 5 laps from friend's model
-    conda run -n ai_env python bc_driver/bc_source_driver/train_friend_model.py --csv data/rule_based_20260628_203648.csv
-    conda run -n ai_env python bc_driver/bc_source_driver/run_friend_model.py
+    # First: collect 5 laps from the attempt model
+    conda run -n ai_env python bc_driver/bc_source_driver/train_attempt_model.py --csv data/rule_based_20260628_203648.csv
+    conda run -n ai_env python bc_driver/bc_source_driver/run_attempt_model.py
 
     # Second: augment data for more aggressive driving
     conda run -n ai_env python scripts/augment_speed.py \\
-        --input data/friend_model_20260629_*.csv \\
-        --output data/friend_model_augmented_20260629_*.csv
+        --input data/attempt_model_20260629_*.csv \\
+        --output data/attempt_model_augmented_20260629_*.csv
 
     # Third: train BC model on both datasets
-    conda run -n ai_env python scripts/train_bc_from_friend.py \\
-        --original data/friend_model_20260629_*.csv \\
-        --augmented data/friend_model_augmented_20260629_*.csv \\
-        --output-name bc_from_friend_v1
+    conda run -n ai_env python scripts/train_bc_from_attempt1.py \\
+        --original data/attempt_model_20260629_*.csv \\
+        --augmented data/attempt_model_augmented_20260629_*.csv \\
+        --output-name bc_from_attempt1_v2
 """
 
 import sys
@@ -109,11 +109,11 @@ def build_bc_dataset(csv_path: str):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--original", type=str, required=True,
-                        help="Original CSV pattern (e.g., data/friend_model_*.csv)")
+                        help="Original CSV pattern (e.g., data/attempt_model_*.csv)")
     parser.add_argument("--augmented", type=str, required=True,
-                        help="Augmented CSV pattern (e.g., data/friend_model_augmented_*.csv)")
-    parser.add_argument("--output-name", type=str, default="bc_from_friend_v1",
-                        help="Output model name (saved as models/<name>.pth, models/<name>.npz)")
+                        help="Augmented CSV pattern (e.g., data/attempt_model_augmented_*.csv)")
+    parser.add_argument("--output-name", type=str, default="bc_from_attempt1_v2",
+                        help="Output model name (saved as bc_driver/models/<name>.pth, bc_driver/models/<name>.npz)")
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--lr", type=float, default=1e-3)
@@ -224,7 +224,7 @@ def main():
             print(f"Epoch {epoch:3d}/{args.epochs} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}{marker}")
 
     # Save model
-    output_dir = Path(__file__).resolve().parent.parent / "models"
+    output_dir = Path(__file__).resolve().parent.parent / "bc_driver" / "models"
     output_dir.mkdir(exist_ok=True)
 
     model_path = output_dir / f"{args.output_name}.pth"

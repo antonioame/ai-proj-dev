@@ -62,7 +62,8 @@ conda run -n ai_env python scripts/setup_livery.py --rollback
 - Punto di ingresso: `python scripts/run_agent.py --laps 1` (nessun `--driver`, è l'unico driver collegato agli script)
 - Tutte le risorse vivono in `bc_driver/` (livello radice): `driver.py`, `models/` (i due modelli del blend),
   `bc_source_driver/` (driver sorgente usato per generare i dati di training, riesegui per nuovi campioni)
-- Blend di due modelli: `bc_driver/models/bc_from_rulefriend_v1.*` (rettilineo) + `bc_driver/models/bc_from_olddriver_v1.*` (curva)
+- Blend di due modelli: `bc_driver/models/bc_from_attempt1_v1.*` (rettilineo, da un tentativo precedente di
+  driving-net) + `bc_driver/models/bc_from_olddriver_v1.*` (curva)
 
 ### Fase 1: Basato su regole — ISOLATO (di riferimento, non più in primo piano)
 - **Tempo giro: ~148 s**, nessuno schianto — ma più lento del driver bc
@@ -74,7 +75,7 @@ conda run -n ai_env python scripts/setup_livery.py --rollback
 - **Fase 2 Behavioral Cloning (versione iniziale)** — si schiantato immediatamente; sterzo continuo, nessuna normalizzazione
 - **Fase 3 Reinforcement Learning** — mismatch dello spazio di osservazione; eliminato
 - **Fase C Driver linea ottimale** (`drivers/optimal/`) — non funzionante in pista, rimosso insieme a `scripts/build_track_map.py`, `torcs_env/track_map.py`, `torcs_env/track_data/`, e i relativi doc in `docs/`
-- **Progetti degli amici** (`old_project_material/project_made_by_my_friend/`, `_V2/`, `old_project_material/Friends_Projects/`) — testati uno per uno, tutti non funzionanti (modelli mancanti, import rotti, dataset mancanti). Rimossi interamente. L'unica parte "amico-derivata" ancora in uso è `bc_driver/bc_source_driver/` (vedi sopra), conservata perché serve a rigenerare i dati di training del driver `bc`.
+- **Tentativi di driving agent esterni** (`old_project_material/project_made_by_my_friend/`, `_V2/`, `old_project_material/Friends_Projects/`) — vecchie implementazioni di terzi testate una per una, tutte non funzionanti (modelli mancanti, import rotti, dataset mancanti). Rimosse interamente. L'unico tentativo precedente ancora in uso è il driving-net in `bc_driver/bc_source_driver/attempt_model/` (vedi sopra), conservato perché serve a rigenerare i dati di training del driver `bc`.
 - **Vecchio driver personale** (`old_project_material/torcs_jm_par.py`) — testato: tempo 123.0 s, ma marce che vanno a limitatore in 1ª/2ª; tenuto solo come riferimento, non integrato negli script.
 
 ---
@@ -123,8 +124,8 @@ drivers/
   base_driver.py    Interfaccia astratta condivisa (BaseDriver)
 bc_driver/           Driver IN PRIMO PIANO — candidato alla consegna (125.8 s)
   driver.py          BCDriver, blend di due modelli
-  models/             bc_from_rulefriend_v1.*, bc_from_olddriver_v1.*
-  bc_source_driver/   Driver sorgente per rigenerare i dati di bc_from_rulefriend_v1
+  models/             bc_from_attempt1_v1.*, bc_from_olddriver_v1.*
+  bc_source_driver/   Driver sorgente (tentativo precedente) per rigenerare i dati di bc_from_attempt1_v1
 rule_based_archived/  Driver ISOLATO, di solo riferimento (~148 s, non in registry/run_agent)
   driver.py
   run_rule_based.py   Script minimale per eseguirlo standalone
@@ -147,7 +148,7 @@ Registra ogni esecuzione di benchmark in `laptime_ledger.csv`:
 timestamp,config_id,git_sha,best_lap_s,median_lap_s,top_speed_kmh,off_track_pct,damage,valid,notes
 ```
 
-Migliore attuale: **125.790 s** (bc, hybrid rulefriend/olddriver, commit bcfe1f9)
+Migliore attuale: **125.790 s** (bc, hybrid attempt1/olddriver, commit bcfe1f9)
 
 ---
 

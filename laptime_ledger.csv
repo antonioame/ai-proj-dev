@@ -1,4 +1,4 @@
 timestamp,config_id,git_sha,best_lap_s,median_lap_s,top_speed_kmh,off_track_pct,damage,valid,notes
 2026-06-27T16:18:23,baseline_rule_based,5863559,151.688,151.688,166.83,0.0,0,true,baseline before any optimization
 2026-06-27T16:38:29,phase_b_abs_higher_brakes,5863559,148.448,148.448,172.11,0.0,0,true,ABS + BRAKE_MAX raised to 0.82/0.88/0.93 per speed regime
-2026-07-01T00:36:22,bc_hybrid_rulefriend_olddriver,bcfe1f9,125.790,,199.0,0,0,true,Candidate driver for delivery — BC hybrid blending bc_from_rulefriend_v1 (straight) + bc_from_olddriver_v1 (corner); off_track_pct/damage not recorded this run
+2026-07-01T00:36:22,bc_hybrid_attempt1_olddriver,bcfe1f9,125.790,,199.0,0,0,true,Candidate driver for delivery — BC hybrid blending bc_from_attempt1_v1 (straight) + bc_from_olddriver_v1 (corner); off_track_pct/damage not recorded this run

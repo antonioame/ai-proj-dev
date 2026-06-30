@@ -118,7 +118,7 @@ def main():
     print(f"[OK] Augmented CSV saved: {args.output_augmented}  ({len(df_aug)} rows)")
 
     print(f"\n[NEXT] Train BC with:")
-    print(f"  conda run -n ai_env python scripts/train_bc_from_friend.py \\")
+    print(f"  conda run -n ai_env python scripts/train_bc_from_attempt1.py \\")
     print(f"    --original {args.output_clean} \\")
     print(f"    --augmented {args.output_augmented} \\")
     print(f"    --output-name bc_from_olddriver_v1")

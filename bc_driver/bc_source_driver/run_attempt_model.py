@@ -1,12 +1,13 @@
 """
-Source driver used to generate the telemetry that trained bc_driver/models/bc_from_rulefriend_v1.
+Source driver used to generate the telemetry that trained bc_driver/models/bc_from_attempt1_v1.
+This is an earlier driving-net attempt, kept only to regenerate training samples.
 Run this again if you need fresh samples to retrain that BC model.
 
 Usage:
-    conda run -n ai_env python bc_driver/bc_source_driver/run_friend_model.py [--host localhost] [--port 3001]
+    conda run -n ai_env python bc_driver/bc_source_driver/run_attempt_model.py [--host localhost] [--port 3001]
 
 The model must be pre-trained:
-    conda run -n ai_env python bc_driver/bc_source_driver/train_friend_model.py --csv data/<telemetry>.csv
+    conda run -n ai_env python bc_driver/bc_source_driver/train_attempt_model.py --csv data/<telemetry>.csv
 """
 
 import sys
@@ -20,13 +21,13 @@ import joblib
 import torch
 import torch.nn as nn
 
-sys.path.insert(0, str(Path(__file__).resolve().parent / "friend_model"))
+sys.path.insert(0, str(Path(__file__).resolve().parent / "attempt_model"))
 
 import snakeoil3_jm2 as snakeoil3
 
 
 class DrivingNet(nn.Module):
-    """Friend's DrivingNet model."""
+    """Earlier driving-net attempt (precursor to the BC straight-line model)."""
     def __init__(self, dim_ingresso: int, numero_marce: int = 8):
         super().__init__()
         self.backbone = nn.Sequential(
@@ -73,13 +74,13 @@ def build_input_vector(sensori_stato, colonne_selezionate):
 
 
 def main(host: str = "localhost", port: int = 3001):
-    model_dir = Path(__file__).resolve().parent / "friend_model"
+    model_dir = Path(__file__).resolve().parent / "attempt_model"
     model_path = model_dir / "driving_model.pt"
     scaler_path = model_dir / "driving_scaler.pkl"
 
     if not model_path.exists():
         print(f"[ERROR] Model not found: {model_path}")
-        print("Run: conda run -n ai_env python bc_driver/bc_source_driver/train_friend_model.py --csv data/<telemetry>.csv")
+        print("Run: conda run -n ai_env python bc_driver/bc_source_driver/train_attempt_model.py --csv data/<telemetry>.csv")
         sys.exit(1)
 
     if not scaler_path.exists():
@@ -108,10 +109,10 @@ def main(host: str = "localhost", port: int = 3001):
 
     # Output CSV
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_file = Path(__file__).resolve().parents[2] / "data" / f"friend_model_{timestamp}.csv"
+    output_file = Path(__file__).resolve().parents[2] / "data" / f"attempt_model_{timestamp}.csv"
     output_file.parent.mkdir(exist_ok=True)
 
-    # CSV columns: mirror friend's project format
+    # CSV columns: mirror the original attempt's data format
     csv_columns = [
         "timestamp", "distFromStart", "distRaced", "curLapTime", "angle", "speed",
         "trackPos", "track_0", "track_1", "track_2", "track_3", "track_4", "track_5",

@@ -1,7 +1,7 @@
 """
-Train friend's DrivingNet model using existing telemetry CSV.
+Train the earlier driving-net attempt using existing telemetry CSV.
 Usage:
-    conda run -n ai_env python bc_driver/bc_source_driver/train_friend_model.py --csv data/rule_based_20260628_203648.csv
+    conda run -n ai_env python bc_driver/bc_source_driver/train_attempt_model.py --csv data/rule_based_20260628_203648.csv
 """
 
 import sys
@@ -66,7 +66,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", type=str, required=True, help="Path to telemetry CSV")
     parser.add_argument("--output-dir", type=str,
-                        default=str(Path(__file__).resolve().parent / "friend_model"),
+                        default=str(Path(__file__).resolve().parent / "attempt_model"),
                         help="Output directory for model")
     args = parser.parse_args()
 

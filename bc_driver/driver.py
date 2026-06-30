@@ -84,8 +84,8 @@ class BCDriver(BaseDriver):
         self._step_count = 0
 
         models_dir = Path(__file__).resolve().parent / "models"
-        straight_model_path = models_dir / "bc_from_rulefriend_v1.pth"
-        straight_stats_path = models_dir / "bc_from_rulefriend_v1.npz"
+        straight_model_path = models_dir / "bc_from_attempt1_v1.pth"
+        straight_stats_path = models_dir / "bc_from_attempt1_v1.npz"
         corner_model_path   = models_dir / "bc_from_olddriver_v1.pth"
         corner_stats_path   = models_dir / "bc_from_olddriver_v1.npz"
 
@@ -99,7 +99,7 @@ class BCDriver(BaseDriver):
         self.corner_model, self.corner_mean, self.corner_std = _load_bc_model(
             corner_model_path, corner_stats_path, self._device
         )
-        print(f"[BCDriver] Hybrid model loaded: straight=bc_from_rulefriend_v1, corner=bc_from_olddriver_v1")
+        print(f"[BCDriver] Hybrid model loaded: straight=bc_from_attempt1_v1, corner=bc_from_olddriver_v1")
 
     def reset(self) -> None:
         pass

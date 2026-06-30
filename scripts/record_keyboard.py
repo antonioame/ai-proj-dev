@@ -122,7 +122,7 @@ class KeyboardController:
             brake = self.brake_scale
 
         # Manual gear control (Q=down, E=up) with cooldown
-        # Cooldown = 15 steps = ~0.3 seconds at 50Hz (matches Friend 3's approach)
+        # Cooldown = 15 steps = ~0.3 seconds at 50Hz (empirically tuned debounce window)
         if (step - self.last_gear_change_step) >= self.gear_cooldown_steps:
             if 'q' in keys and self.current_gear > 1:
                 self.current_gear -= 1
