@@ -35,24 +35,23 @@ installazione/rollback, decoder di debug, file di stato.
 
 Il progetto include una livrea auto personalizzata (`livery/livrea.png`) applicata in modo sicuro e reversibile.
 
-**Installa livrea (car1-stock1):**
+Un solo script gestisce entrambe le auto via `--car` (default `car1-stock1`; converte da PNG.
+Con `--car car1-ow1` copia invece un `.rgb` già pre-convertito, nessuna conversione necessaria).
+
+**Installa livrea:**
 ```bash
-conda run -n ai_env python livery/setup_livery.py --install
+conda run -n ai_env python livery/setup_livery.py --install                  # car1-stock1
+conda run -n ai_env python livery/setup_livery.py --car car1-ow1 --install   # car1-ow1
 ```
 
 **Controlla stato:**
 ```bash
-conda run -n ai_env python livery/setup_livery.py --status
+conda run -n ai_env python livery/setup_livery.py --status [--car car1-ow1]
 ```
 
 **Ripristina originale (completamente reversibile):**
 ```bash
-conda run -n ai_env python livery/setup_livery.py --rollback
-```
-
-**Variante car1-ow1** (usa un `.rgb` pre-convertito invece di convertire da PNG):
-```bash
-conda run -n ai_env python livery/setup_livery_ow1.py --install   # / --status / --rollback
+conda run -n ai_env python livery/setup_livery.py --rollback [--car car1-ow1]
 ```
 
 **Debug/anteprima** (decodifica `.rgb` → PNG per ispezione visiva):

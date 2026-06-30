@@ -1,11 +1,10 @@
-"""Setup and rollback car livery.
-
-This script manages car livery installation for TORCS in a reversible manner.
+"""Setup and rollback car livery for TORCS, in a reversible manner.
 
 Usage:
-    python livery/setup_livery.py --install    (install livery with backup)
-    python livery/setup_livery.py --rollback   (restore original)
-    python livery/setup_livery.py --status     (show current state)
+    python livery/setup_livery.py --install              (car1-stock1, default)
+    python livery/setup_livery.py --car car1-ow1 --install
+    python livery/setup_livery.py --status
+    python livery/setup_livery.py --rollback
 """
 
 from __future__ import annotations
@@ -24,14 +23,15 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-# Paths
 LIVERY_DIR = Path(__file__).resolve().parent
 TORCS_ROOT = Path(r"U:\AI-Partition\torcs\torcs")
-LIVERY_SOURCE = LIVERY_DIR / "livrea.png"
-LIVERY_CAR = "car1-stock1"
-LIVERY_TEXTURE = f"{LIVERY_CAR}.rgb"
-TORCS_TEXTURE_PATH = TORCS_ROOT / "cars" / LIVERY_CAR / LIVERY_TEXTURE
-LIVERY_STATE_FILE = LIVERY_DIR / ".livery_state.json"
+
+# Per-car config: source asset + whether it needs PNG->RGB conversion
+# (car1-ow1's .rgb is already in TORCS Radiance format, just copied as-is).
+CARS = {
+    "car1-stock1": {"source": LIVERY_DIR / "livrea.png", "convert": True},
+    "car1-ow1": {"source": LIVERY_DIR / "car1-ow1.rgb", "convert": False},
+}
 
 
 def _check_dependencies() -> None:
@@ -110,84 +110,100 @@ def _png_to_rgb(png_path: Path, rgb_path: Path, target_size: tuple[int, int] = (
     logger.info(f"Successfully converted to RGB: {rgb_path} ({width}x{height})")
 
 
-def install_livery() -> None:
-    """Install livery with automatic backup."""
-    _check_dependencies()
+def _paths(car: str) -> tuple[Path, bool, Path, Path]:
+    config = CARS[car]
+    texture_path = TORCS_ROOT / "cars" / car / f"{car}.rgb"
+    state_file = LIVERY_DIR / f".livery_state_{car}.json"
+    return config["source"], config["convert"], texture_path, state_file
 
-    if not LIVERY_SOURCE.exists():
-        logger.error(f"Livery source not found: {LIVERY_SOURCE}")
-        raise FileNotFoundError(f"Missing livery: {LIVERY_SOURCE}")
+
+def install_livery(car: str) -> None:
+    """Install livery with automatic backup."""
+    source, convert, texture_path, state_file = _paths(car)
+
+    if convert:
+        _check_dependencies()
+
+    if not source.exists():
+        logger.error(f"Livery source not found: {source}")
+        raise FileNotFoundError(f"Missing livery: {source}")
 
     if not TORCS_ROOT.exists():
         logger.error(f"TORCS root not found: {TORCS_ROOT}")
         raise FileNotFoundError(f"TORCS not found at {TORCS_ROOT}")
 
-    if not TORCS_TEXTURE_PATH.parent.exists():
-        logger.error(f"TORCS car directory not found: {TORCS_TEXTURE_PATH.parent}")
-        raise FileNotFoundError(f"Car directory missing: {TORCS_TEXTURE_PATH.parent}")
+    if not texture_path.parent.exists():
+        logger.error(f"TORCS car directory not found: {texture_path.parent}")
+        raise FileNotFoundError(f"Car directory missing: {texture_path.parent}")
 
     # Backup original if it exists and not already backed up
-    if TORCS_TEXTURE_PATH.exists():
-        backup_path = TORCS_TEXTURE_PATH.with_suffix(".rgb.backup")
+    if texture_path.exists():
+        backup_path = texture_path.with_suffix(".rgb.backup")
         if not backup_path.exists():
-            logger.info(f"Backing up original: {TORCS_TEXTURE_PATH} → {backup_path}")
-            shutil.copy2(TORCS_TEXTURE_PATH, backup_path)
+            logger.info(f"Backing up original: {texture_path} → {backup_path}")
+            shutil.copy2(texture_path, backup_path)
         else:
             logger.info(f"Backup already exists: {backup_path}")
 
-    # Convert and install new livery
-    logger.info(f"Installing livery: {LIVERY_SOURCE} → {TORCS_TEXTURE_PATH}")
-    _png_to_rgb(LIVERY_SOURCE, TORCS_TEXTURE_PATH)
+    # Install new livery (convert from PNG, or copy a pre-converted RGB)
+    logger.info(f"Installing livery: {source} → {texture_path}")
+    if convert:
+        _png_to_rgb(source, texture_path)
+    else:
+        shutil.copy2(source, texture_path)
 
     # Record state
     state = {
         "installed": True,
-        "backup_exists": TORCS_TEXTURE_PATH.with_suffix(".rgb.backup").exists(),
-        "torcs_path": str(TORCS_TEXTURE_PATH),
+        "backup_exists": texture_path.with_suffix(".rgb.backup").exists(),
+        "torcs_path": str(texture_path),
+        "source": str(source),
     }
-    with open(LIVERY_STATE_FILE, "w") as f:
+    with open(state_file, "w") as f:
         json.dump(state, f, indent=2)
     logger.info("Livery installed successfully.")
 
 
-def rollback_livery() -> None:
+def rollback_livery(car: str) -> None:
     """Restore original livery from backup."""
-    backup_path = TORCS_TEXTURE_PATH.with_suffix(".rgb.backup")
+    _, _, texture_path, state_file = _paths(car)
+    backup_path = texture_path.with_suffix(".rgb.backup")
 
     if not backup_path.exists():
         logger.error(f"No backup found: {backup_path}")
         raise FileNotFoundError("Cannot rollback: no backup exists")
 
-    logger.info(f"Restoring from backup: {backup_path} → {TORCS_TEXTURE_PATH}")
-    shutil.copy2(backup_path, TORCS_TEXTURE_PATH)
+    logger.info(f"Restoring from backup: {backup_path} → {texture_path}")
+    shutil.copy2(backup_path, texture_path)
 
     # Update state
     state = {
         "installed": False,
         "backup_exists": True,
-        "torcs_path": str(TORCS_TEXTURE_PATH),
+        "torcs_path": str(texture_path),
     }
-    with open(LIVERY_STATE_FILE, "w") as f:
+    with open(state_file, "w") as f:
         json.dump(state, f, indent=2)
     logger.info("Livery rolled back to original.")
 
 
-def show_status() -> None:
+def show_status(car: str) -> None:
     """Show current livery state."""
-    backup_path = TORCS_TEXTURE_PATH.with_suffix(".rgb.backup")
+    source, _, texture_path, state_file = _paths(car)
+    backup_path = texture_path.with_suffix(".rgb.backup")
 
-    print(f"\n--- Livery Status ---")
+    print(f"\n--- Livery Status ({car}) ---")
     print(f"Livery dir:       {LIVERY_DIR}")
     print(f"TORCS root:       {TORCS_ROOT}")
-    print(f"Livery source:    {LIVERY_SOURCE} {'✓' if LIVERY_SOURCE.exists() else '✗'}")
-    print(f"Texture target:   {TORCS_TEXTURE_PATH}")
-    print(f"  Exists:         {'✓' if TORCS_TEXTURE_PATH.exists() else '✗'}")
+    print(f"Livery source:    {source} {'✓' if source.exists() else '✗'}")
+    print(f"Texture target:   {texture_path}")
+    print(f"  Exists:         {'✓' if texture_path.exists() else '✗'}")
     print(f"Backup:           {backup_path}")
     print(f"  Exists:         {'✓' if backup_path.exists() else '✗'}")
     print()
 
-    if LIVERY_STATE_FILE.exists():
-        with open(LIVERY_STATE_FILE) as f:
+    if state_file.exists():
+        with open(state_file) as f:
             state = json.load(f)
             print(f"Last action:      {'installed' if state['installed'] else 'rolled back'}")
     else:
@@ -197,21 +213,11 @@ def show_status() -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Manage car livery for TORCS")
-    parser.add_argument(
-        "--install",
-        action="store_true",
-        help="Install livery with backup",
-    )
-    parser.add_argument(
-        "--rollback",
-        action="store_true",
-        help="Restore original livery",
-    )
-    parser.add_argument(
-        "--status",
-        action="store_true",
-        help="Show current state",
-    )
+    parser.add_argument("--car", choices=list(CARS), default="car1-stock1",
+                        help="Target car (default: car1-stock1)")
+    parser.add_argument("--install", action="store_true", help="Install livery with backup")
+    parser.add_argument("--rollback", action="store_true", help="Restore original livery")
+    parser.add_argument("--status", action="store_true", help="Show current state")
     args = parser.parse_args()
 
     if not any([args.install, args.rollback, args.status]):
@@ -219,11 +225,11 @@ def main() -> None:
         return
 
     if args.install:
-        install_livery()
+        install_livery(args.car)
     elif args.rollback:
-        rollback_livery()
+        rollback_livery(args.car)
     elif args.status:
-        show_status()
+        show_status(args.car)
 
 
 if __name__ == "__main__":
