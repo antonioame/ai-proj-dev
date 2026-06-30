@@ -74,6 +74,14 @@ class BCDriver(BaseDriver):
     STRAIGHT_THRESHOLD = 120.0  # m — above this: pure straight model
     CORNER_THRESHOLD   = 60.0   # m — below this: pure corner model
 
+    # Traction control (slip-based) — the car is rear-wheel-drive and spins up
+    # on corner exits. Telemetry showed 9.5% of the lap at rear-slip >1.15 under
+    # near-full throttle. Constants reused from the proven rule_based TCS.
+    WHEEL_RADIUS       = 0.33   # m — approximate TORCS tyre radius
+    TCS_SLIP_THRESHOLD = 1.25   # rear_spin / expected_spin above this → cut throttle
+    TCS_SLIP_GAIN      = 3.0    # how hard to cut per unit of excess slip
+    TCS_MIN_ACCEL      = 0.25   # never cut throttle below this
+
     # Startup phase: feed full throttle with zero steer for this many steps.
     # Keeps the car straight while the models receive OOD inputs (speed≈0, gear=0).
     STARTUP_STEPS = 80
@@ -130,6 +138,19 @@ class BCDriver(BaseDriver):
             return 2
         return 3
 
+    def _apply_tcs(self, accel: float, state: SensorState) -> float:
+        """Cut throttle when the rear wheels spin faster than the ground speed."""
+        if accel < 0.05 or state.speed < 5.0 or len(state.wheelSpinVel) < 4:
+            return accel
+        expected = (state.speed * (1000.0 / 3600.0)) / self.WHEEL_RADIUS
+        if expected < 1.0:
+            return accel
+        rear_avg = (state.wheelSpinVel[2] + state.wheelSpinVel[3]) / 2.0
+        slip = rear_avg / expected - self.TCS_SLIP_THRESHOLD
+        if slip > 0.0:
+            accel = min(accel, max(self.TCS_MIN_ACCEL, 1.0 - slip * self.TCS_SLIP_GAIN))
+        return accel
+
     def step(self, state: SensorState) -> Action:
         self._step_count += 1
 
@@ -166,6 +187,9 @@ class BCDriver(BaseDriver):
         steer = max(-1.0, min(1.0, steer * self.STEER_GAIN))
         accel = max(0.0,  min(1.0, accel * self.ACCEL_GAIN))
         brake = max(0.0,  min(1.0, brake * self.BRAKE_GAIN))
+
+        # Traction control: recover grip lost to rear-wheel spin on exits
+        accel = self._apply_tcs(accel, state)
 
         # RPM-based gear management
         if state.rpm > 12000 and self.current_gear < 6:
