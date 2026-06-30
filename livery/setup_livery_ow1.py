@@ -3,9 +3,9 @@
 This script uses the car1-ow1 (1).rgb file from the project as the target texture.
 
 Usage:
-    python scripts/setup_livery_ow1.py --install    (install livery with backup)
-    python scripts/setup_livery_ow1.py --rollback   (restore original)
-    python scripts/setup_livery_ow1.py --status     (show current state)
+    python livery/setup_livery_ow1.py --install    (install livery with backup)
+    python livery/setup_livery_ow1.py --rollback   (restore original)
+    python livery/setup_livery_ow1.py --status     (show current state)
 """
 
 from __future__ import annotations
@@ -20,13 +20,13 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 # Paths
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+LIVERY_DIR = Path(__file__).resolve().parent
 TORCS_ROOT = Path(r"U:\AI-Partition\torcs\torcs")
-SOURCE_RGB = PROJECT_ROOT / "car1-ow1.rgb"  # Pre-converted RGB from project
+SOURCE_RGB = LIVERY_DIR / "car1-ow1.rgb"  # Pre-converted RGB from project
 LIVERY_CAR = "car1-ow1"
 LIVERY_TEXTURE = f"{LIVERY_CAR}.rgb"
 TORCS_TEXTURE_PATH = TORCS_ROOT / "cars" / LIVERY_CAR / LIVERY_TEXTURE
-LIVERY_STATE_FILE = PROJECT_ROOT / ".livery_state_ow1.json"
+LIVERY_STATE_FILE = LIVERY_DIR / ".livery_state_ow1.json"
 
 
 def install_livery() -> None:
@@ -95,7 +95,7 @@ def show_status() -> None:
     backup_path = TORCS_TEXTURE_PATH.with_suffix(".rgb.backup")
 
     print(f"\n--- Livery Status (car1-ow1) ---")
-    print(f"Project root:     {PROJECT_ROOT}")
+    print(f"Livery dir:       {LIVERY_DIR}")
     print(f"TORCS root:       {TORCS_ROOT}")
     print(f"Source RGB:       {SOURCE_RGB} {'✓' if SOURCE_RGB.exists() else '✗'}")
     print(f"Texture target:   {TORCS_TEXTURE_PATH}")

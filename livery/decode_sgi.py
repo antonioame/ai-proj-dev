@@ -42,7 +42,7 @@ def read_sgi(path):
     return img
 
 # Decodifica la nuova livrea e salva anteprima
-root = pathlib.Path(r"U:\AI-Partition\progetto_v2\ai_private_proj")
+root = pathlib.Path(__file__).resolve().parent
 new = read_sgi(root / "car1-ow1.rgb")
 new.save(root / "livery_preview.png")
 print("Preview salvato: livery_preview.png")

@@ -30,25 +30,39 @@ TORCS_PORT   (default: 3001)
 
 ## Configurazione livrea auto
 
-Il progetto include una livrea auto personalizzata (`livrea.png`) applicata in modo sicuro e reversibile.
+Tutte le risorse della livrea vivono in `livery/` (livello radice): immagini, script di
+installazione/rollback, decoder di debug, file di stato.
 
-**Installa livrea:**
+Il progetto include una livrea auto personalizzata (`livery/livrea.png`) applicata in modo sicuro e reversibile.
+
+**Installa livrea (car1-stock1):**
 ```bash
-conda run -n ai_env python scripts/setup_livery.py --install
+conda run -n ai_env python livery/setup_livery.py --install
 ```
 
 **Controlla stato:**
 ```bash
-conda run -n ai_env python scripts/setup_livery.py --status
+conda run -n ai_env python livery/setup_livery.py --status
 ```
 
 **Ripristina originale (completamente reversibile):**
 ```bash
-conda run -n ai_env python scripts/setup_livery.py --rollback
+conda run -n ai_env python livery/setup_livery.py --rollback
+```
+
+**Variante car1-ow1** (usa un `.rgb` pre-convertito invece di convertire da PNG):
+```bash
+conda run -n ai_env python livery/setup_livery_ow1.py --install   # / --status / --rollback
+```
+
+**Debug/anteprima** (decodifica `.rgb` → PNG per ispezione visiva):
+```bash
+conda run -n ai_env python livery/decode_sgi.py
+conda run -n ai_env python livery/decode_rgb.py
 ```
 
 **Come funziona:**
-- Converte `livrea.png` (PNG) → formato RGB Radiance (nativo TORCS)
+- Converte `livery/livrea.png` (PNG) → formato RGB Radiance (nativo TORCS)
 - Applica alla texture dell'auto `car1-stock1`
 - Backup automatico dell'originale `car1-stock1.rgb` in `.rgb.backup`
 - Può essere ripristinato all'originale senza alcuna perdita
@@ -129,6 +143,7 @@ bc_driver/           Driver IN PRIMO PIANO — candidato alla consegna (125.8 s)
 rule_based_archived/  Driver ISOLATO, di solo riferimento (~148 s, non in registry/run_agent)
   driver.py
   run_rule_based.py   Script minimale per eseguirlo standalone
+livery/               Tutte le risorse della livrea auto (immagini, setup/rollback, decoder debug)
 scripts/
   run_agent.py      Esegue il driver bc, opzionalmente salva telemetria + JSON risultati
   record_agent.py   Registra un giro su data/recorded_bc_<ts>.csv

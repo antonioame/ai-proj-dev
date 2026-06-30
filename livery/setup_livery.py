@@ -3,9 +3,9 @@
 This script manages car livery installation for TORCS in a reversible manner.
 
 Usage:
-    python scripts/setup_livery.py --install    (install livery with backup)
-    python scripts/setup_livery.py --rollback   (restore original)
-    python scripts/setup_livery.py --status     (show current state)
+    python livery/setup_livery.py --install    (install livery with backup)
+    python livery/setup_livery.py --rollback   (restore original)
+    python livery/setup_livery.py --status     (show current state)
 """
 
 from __future__ import annotations
@@ -25,13 +25,13 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 # Paths
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+LIVERY_DIR = Path(__file__).resolve().parent
 TORCS_ROOT = Path(r"U:\AI-Partition\torcs\torcs")
-LIVERY_SOURCE = PROJECT_ROOT / "livrea.png"
+LIVERY_SOURCE = LIVERY_DIR / "livrea.png"
 LIVERY_CAR = "car1-stock1"
 LIVERY_TEXTURE = f"{LIVERY_CAR}.rgb"
 TORCS_TEXTURE_PATH = TORCS_ROOT / "cars" / LIVERY_CAR / LIVERY_TEXTURE
-LIVERY_STATE_FILE = PROJECT_ROOT / ".livery_state.json"
+LIVERY_STATE_FILE = LIVERY_DIR / ".livery_state.json"
 
 
 def _check_dependencies() -> None:
@@ -177,7 +177,7 @@ def show_status() -> None:
     backup_path = TORCS_TEXTURE_PATH.with_suffix(".rgb.backup")
 
     print(f"\n--- Livery Status ---")
-    print(f"Project root:     {PROJECT_ROOT}")
+    print(f"Livery dir:       {LIVERY_DIR}")
     print(f"TORCS root:       {TORCS_ROOT}")
     print(f"Livery source:    {LIVERY_SOURCE} {'✓' if LIVERY_SOURCE.exists() else '✗'}")
     print(f"Texture target:   {TORCS_TEXTURE_PATH}")
