@@ -130,7 +130,7 @@ def record(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Record agent telemetry for a lap")
     parser.add_argument("--driver", default="rule_based",
-                        help="Driver: rule_based | optimal")
+                        help="Driver: rule_based | bc")
     parser.add_argument("--laps", type=int, default=1)
     parser.add_argument("--host", default=None)
     parser.add_argument("--port", type=int, default=None)

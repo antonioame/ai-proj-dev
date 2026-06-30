@@ -63,27 +63,10 @@ conda run -n ai_env python scripts/setup_livery.py --rollback
 - Sintonizzato con ABS, TCS, ricerca dell'apice, controllo PI della spinta
 - Vedi `drivers/rule_based/driver.py` per tutte le costanti
 
-### Fase C: Driver linea ottimale — IN PROGRESS (si schianta, necessita test)
-- **Target: < 140 s** — follower della traiettoria con frenata tardiva
-- Punto di ingresso: `python scripts/run_agent.py --driver optimal`
-- Richiede `torcs_env/track_data/track_map.json` (già costruito dalla telemetria rule_based)
-- **Sintonia conosciuta a partire da questa ristrutturazione:**
-  - STARTUP_STEPS = 200 (fase di partenza da fermo conservativa, 4 secondi)
-  - STEER_ANGLE_GAIN = 1.2 (era 1.6 — ridotto per prevenire tremolii)
-  - STEER_LINE_GAIN = 0.25 (era 0.40 — tracciamento della linea meno aggressivo)
-  - STEER_SMOOTH_SPEED = 75 (applica livellamento EMA fino a 75 km/h)
-  - SCAN_AHEAD_M = 200 (era 300 — sguardo in avanti più focalizzato)
-  - BRAKE_MARGIN_M = 40 (buffer di sicurezza extra sulla distanza di frenata)
-  - TARGET_LINE_SCALE = 0.50 (miscela 50% verso la linea di gara, 50% centro)
-  - TCS aggiunto (previene il pattinamento all'accelerazione)
-- **Ricostruisci mappa** se registri nuova telemetria:
-  ```bash
-  python scripts/build_track_map.py --telemetry data/<file>.csv
-  ```
-
 ### Rimossi (rotti, non ricreare senza un piano)
-- **Fase 2 Behavioral Cloning** — si schiantato immediatamente; sterzo continuo, nessuna normalizzazione
+- **Fase 2 Behavioral Cloning (versione iniziale)** — si schiantato immediatamente; sterzo continuo, nessuna normalizzazione
 - **Fase 3 Reinforcement Learning** — mismatch dello spazio di osservazione; eliminato
+- **Fase C Driver linea ottimale** (`drivers/optimal/`) — non funzionante in pista, rimosso insieme a `scripts/build_track_map.py`, `torcs_env/track_map.py`, `torcs_env/track_data/`, e i relativi doc in `docs/`
 
 ---
 
@@ -95,7 +78,6 @@ torcs -r torcs_env/race_config/corkscrew_solo.xml
 
 # 2. Esegui un driver (Mac o stessa macchina)
 conda run -n ai_env python scripts/run_agent.py --driver rule_based
-conda run -n ai_env python scripts/run_agent.py --driver optimal
 
 # 3. Registra telemetria
 conda run -n ai_env python scripts/record_agent.py --driver rule_based
@@ -125,17 +107,15 @@ conda run -n ai_env python scripts/evaluate.py --driver rule_based --laps 1
 
 ```
 torcs_env/          Protocollo SCR (sensori, azioni, client UDP, XML gara)
-  track_data/       track_map.json — precostruito dalla telemetria rule_based
 drivers/
   base_driver.py    Interfaccia astratta
   registry.py       load_driver(name) — caricatore unico usato da tutti gli script
   rule_based/       Baseline Fase 1 (~148 s, stabile)
-  optimal/          Follower traiettoria Fase C (in progress)
+  bc/                Behavioral cloning ibrido
 scripts/
   run_agent.py      Esegui un qualsiasi driver, opzionalmente salva telemetria + JSON risultati
   record_agent.py   Registra un giro su data/recorded_<driver>_<ts>.csv
   evaluate.py       Valuta e salva risultati strutturati JSON
-  build_track_map.py  Costruisci track_map.json da CSV telemetria
 tests/              Unit test
 data/               CSV telemetria (git-ignored)
 results/            File JSON valutazione (git-ignored)
@@ -155,12 +135,6 @@ Migliore attuale: **148.4 s** (rule_based, ABS + pressione freno più alta, comm
 
 ---
 
-## Prossimi passi (ordinati per priorità)
+## Prossimi passi
 
-1. **Test driver ottimale** — completa un giro senza schiantarsi?
-   ```bash
-   conda run -n ai_env python scripts/run_agent.py --driver optimal --laps 1
-   ```
-2. **Se ancora si schianta** — riduci ulteriormente `STEER_ANGLE_GAIN` (prova 1.0) o aumenta `BRAKE_MARGIN_M` (prova 60)
-3. **Se stabile ma lento** — aumenta `CORNER_SPEED_SCALE` in `drivers/optimal/trajectory.py` (prova 1.1)
-4. **Ricostruisci mappa tracciato** con più giri di telemetria per migliori stime della velocità in curva
+Driver `optimal` rimosso perché non funzionante in pista. Prossimo passo: valutare manualmente `rule_based` e `bc` per decidere quale tenere come baseline finale.

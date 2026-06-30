@@ -2,7 +2,6 @@
 
 Usage:
     python scripts/run_agent.py --driver rule_based [--laps 1] [--host HOST] [--port PORT] [--telemetry]
-    python scripts/run_agent.py --driver optimal   --laps 1
 """
 
 from __future__ import annotations
@@ -148,7 +147,7 @@ def run(
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run a TORCS driver agent")
     parser.add_argument("--driver", default="rule_based",
-                        help="Driver: rule_based | optimal")
+                        help="Driver: rule_based | bc")
     parser.add_argument("--laps", type=int, default=1)
     parser.add_argument("--host", default=None)
     parser.add_argument("--port", type=int, default=None)

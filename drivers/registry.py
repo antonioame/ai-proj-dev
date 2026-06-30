@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from drivers.base_driver import BaseDriver
 
-_AVAILABLE = ("rule_based", "optimal", "bc")
+_AVAILABLE = ("rule_based", "bc")
 
 
 def load_driver(name: str) -> BaseDriver:
@@ -14,7 +14,6 @@ def load_driver(name: str) -> BaseDriver:
     ----------
     name:
         ``"rule_based"`` – physics-based baseline (stable, ~148 s lap).
-        ``"optimal"``    – trajectory-follower with late braking (in progress).
         ``"bc"``         – behavioral cloning from rule-based demonstrations.
 
     Raises
@@ -25,9 +24,6 @@ def load_driver(name: str) -> BaseDriver:
     if name == "rule_based":
         from drivers.rule_based.driver import RuleBasedDriver
         return RuleBasedDriver()
-    if name == "optimal":
-        from drivers.optimal.driver import OptimalLineDriver
-        return OptimalLineDriver()
     if name == "bc":
         from drivers.bc.driver import BCDriver
         return BCDriver()
