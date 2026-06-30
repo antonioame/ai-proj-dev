@@ -63,10 +63,19 @@ conda run -n ai_env python scripts/setup_livery.py --rollback
 - Sintonizzato con ABS, TCS, ricerca dell'apice, controllo PI della spinta
 - Vedi `drivers/rule_based/driver.py` per tutte le costanti
 
+### Driver BC ibrido — CANDIDATO ALLA CONSEGNA ✓
+- **Tempo giro: 125.790 s**, top speed 199.0 km/h (test del 2026-07-01, commit bcfe1f9) — migliore di rule_based
+- Punto di ingresso: `python scripts/run_agent.py --driver bc`
+- Blend di due modelli: `models/bc_from_rulefriend_v1.*` (rettilineo) + `models/bc_from_olddriver_v1.*` (curva)
+- `bc_from_rulefriend_v1` è stato allenato su telemetria generata da `bc_source_driver/run_friend_model.py`
+  (driver sorgente conservato in una cartella separata in root — riesegui quello script per nuovi campioni)
+- Vedi `drivers/bc/driver.py` per i dettagli del blend
+
 ### Rimossi (rotti, non ricreare senza un piano)
 - **Fase 2 Behavioral Cloning (versione iniziale)** — si schiantato immediatamente; sterzo continuo, nessuna normalizzazione
 - **Fase 3 Reinforcement Learning** — mismatch dello spazio di osservazione; eliminato
 - **Fase C Driver linea ottimale** (`drivers/optimal/`) — non funzionante in pista, rimosso insieme a `scripts/build_track_map.py`, `torcs_env/track_map.py`, `torcs_env/track_data/`, e i relativi doc in `docs/`
+- **Progetti degli amici** (`old_project_material/project_made_by_my_friend/`, `_V2/`, `old_project_material/Friends_Projects/`) — testati uno per uno, tutti non funzionanti (modelli mancanti, import rotti, dataset mancanti). Rimossi interamente. L'unica parte "amico-derivata" ancora in uso è `bc_source_driver/` (vedi sopra), conservata perché serve a rigenerare i dati di training del driver `bc`.
 
 ---
 
@@ -111,7 +120,9 @@ drivers/
   base_driver.py    Interfaccia astratta
   registry.py       load_driver(name) — caricatore unico usato da tutti gli script
   rule_based/       Baseline Fase 1 (~148 s, stabile)
-  bc/                Behavioral cloning ibrido
+  bc/                Behavioral cloning ibrido (125.8 s, candidato consegna)
+bc_source_driver/    Driver sorgente usato per generare i dati di bc_from_rulefriend_v1
+                      (rieseguire run_friend_model.py per nuovi campioni)
 scripts/
   run_agent.py      Esegui un qualsiasi driver, opzionalmente salva telemetria + JSON risultati
   record_agent.py   Registra un giro su data/recorded_<driver>_<ts>.csv
@@ -131,10 +142,10 @@ Registra ogni esecuzione di benchmark in `laptime_ledger.csv`:
 timestamp,config_id,git_sha,best_lap_s,median_lap_s,top_speed_kmh,off_track_pct,damage,valid,notes
 ```
 
-Migliore attuale: **148.4 s** (rule_based, ABS + pressione freno più alta, commit ca54fea)
+Migliore attuale: **125.790 s** (bc, hybrid rulefriend/olddriver, commit bcfe1f9)
 
 ---
 
 ## Prossimi passi
 
-Driver `optimal` rimosso perché non funzionante in pista. Prossimo passo: valutare manualmente `rule_based` e `bc` per decidere quale tenere come baseline finale.
+Driver `optimal` e tutti i progetti degli amici non funzionanti sono stati rimossi. `bc` è il candidato alla consegna (125.8 s, batte rule_based). Prossimo passo: confermare la stabilità di `bc` su più giri prima della consegna finale.

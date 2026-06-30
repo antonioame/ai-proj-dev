@@ -3,8 +3,8 @@ Train Behavioral Cloning model from friend's driving data.
 
 Usage:
     # First: collect 5 laps from friend's model
-    conda run -n ai_env python scripts/train_friend_model.py --csv data/rule_based_20260628_203648.csv
-    conda run -n ai_env python scripts/run_friend_model.py
+    conda run -n ai_env python bc_source_driver/train_friend_model.py --csv data/rule_based_20260628_203648.csv
+    conda run -n ai_env python bc_source_driver/run_friend_model.py
 
     # Second: augment data for more aggressive driving
     conda run -n ai_env python scripts/augment_speed.py \\
