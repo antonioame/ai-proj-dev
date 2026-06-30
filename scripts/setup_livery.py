@@ -41,30 +41,73 @@ def _check_dependencies() -> None:
         raise ImportError("PIL/Pillow required for PNG→RGB conversion")
 
 
-def _png_to_rgb(png_path: Path, rgb_path: Path) -> None:
-    """Convert PNG image to TORCS Radiance RGB format.
+def _rle_encode_line(line: bytes) -> bytes:
+    """Encode a scanline using Radiance RLE compression.
 
-    Note: This writes RGB as a simple 8-bit RGB dump (no RLE compression).
-    TORCS can load uncompressed RGB files, though compressed versions are also valid.
+    Radiance RLE: if count >= 3, emit (count | 0x80), then value.
+    Otherwise emit raw bytes one at a time.
+    """
+    if len(line) == 0:
+        return b""
+
+    result = []
+    i = 0
+    while i < len(line):
+        # Count consecutive identical bytes
+        count = 1
+        while i + count < len(line) and line[i] == line[i + count] and count < 127:
+            count += 1
+
+        if count >= 3:
+            # Encode as RLE: emit (count | 0x80), then the byte value
+            result.append(count | 0x80)
+            result.append(line[i])
+            i += count
+        else:
+            # Emit raw bytes
+            for j in range(count):
+                result.append(line[i + j])
+            i += count
+
+    return bytes(result)
+
+
+def _png_to_rgb(png_path: Path, rgb_path: Path, target_size: tuple[int, int] = (256, 256)) -> None:
+    """Convert PNG image to TORCS Radiance RGB format with RLE compression.
+
+    Resizes the image to target_size (default 256x256) to match typical TORCS textures.
+    Writes Radiance RGB format with RLE compression per scanline.
     """
     logger.info(f"Converting {png_path} to RGB format: {rgb_path}")
     img = Image.open(png_path).convert("RGB")
 
-    # Write as uncompressed Radiance RGB (simple dump of RGB bytes)
+    # Resize to match original texture dimensions
+    if img.size != target_size:
+        logger.info(f"Resizing image from {img.size} to {target_size}")
+        img = img.resize(target_size, Image.Resampling.LANCZOS)
+
     width, height = img.size
+
     with open(rgb_path, "wb") as f:
-        # Radiance RGB header (magic, xres, yres)
-        f.write(b"\x01\xda")  # Radiance RGB magic
-        f.write(bytes([0x01, 0x01]))  # One byte per component, XYES order
-        f.write(width.to_bytes(2, "big"))  # X resolution (width)
-        f.write(height.to_bytes(2, "big"))  # Y resolution (height)
+        # Radiance RGB header
+        f.write(b"\x01\xda")  # Magic: Radiance RGB format
+        f.write(b"\x01")  # Format: 1 = old format (3 bytes per pixel)
+        f.write(b"\x03")  # Components: 3 = RGB
+        f.write(width.to_bytes(2, "big"))  # X resolution
+        f.write(height.to_bytes(2, "big"))  # Y resolution
 
-        # Write RGB data (row by row, top to bottom)
+        # Write scanlines with RLE compression
         for y in range(height):
-            row = img.crop((0, y, width, y + 1))
-            f.write(row.tobytes())
+            row_data = b""
+            for x in range(width):
+                r, g, b = img.getpixel((x, y))
+                row_data += bytes([r, g, b])
 
-    logger.info(f"Successfully converted to RGB: {rgb_path}")
+            # Compress the scanline using RLE
+            compressed = _rle_encode_line(row_data)
+            f.write(compressed)
+
+    logger.info(f"Successfully converted to RGB: {rgb_path} ({width}x{height})")
 
 
 def install_livery() -> None:
