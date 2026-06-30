@@ -67,18 +67,12 @@ class BCDriver(BaseDriver):
       - between the two               → smooth linear blend
     """
 
-    STEER_GAIN = 1.0   # Trust the model output directly (trained on [-1,1] targets)
+    STEER_GAIN = 1.8   # Applied to the blended steer output
     ACCEL_GAIN = 1.40  # Applied to the blended accel output
     BRAKE_GAIN = 0.80  # Applied to the blended brake output
 
     STRAIGHT_THRESHOLD = 120.0  # m — above this: pure straight model
     CORNER_THRESHOLD   = 60.0   # m — below this: pure corner model
-
-    RPM_UPSHIFT   = 9000   # Aligned with rule_based — peak power is below redline
-    RPM_DOWNSHIFT = 6000
-
-    STEER_EMA_ALPHA = 0.6  # Weight on new steer; 1-alpha on previous (lower = smoother)
-    STEER_EMA_SPEED = 80.0 # km/h — apply EMA only below this speed
 
     # Startup phase: feed full throttle with zero steer for this many steps.
     # Keeps the car straight while the models receive OOD inputs (speed≈0, gear=0).
@@ -88,7 +82,6 @@ class BCDriver(BaseDriver):
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.current_gear = 1
         self._step_count = 0
-        self._prev_steer = 0.0
 
         straight_model_path = Path("models/bc_from_rulefriend_v1.pth")
         straight_stats_path = Path("models/bc_from_rulefriend_v1.npz")
@@ -113,7 +106,6 @@ class BCDriver(BaseDriver):
     def on_restart(self) -> None:
         self.current_gear = 1
         self._step_count = 0
-        self._prev_steer = 0.0
 
     def _infer(self, model, X_mean, X_std, sensor_vec: np.ndarray) -> dict:
         """Run inference on a single model."""
@@ -171,21 +163,14 @@ class BCDriver(BaseDriver):
         brake = w_straight * straight_out["brake"] + w_corner * corner_out["brake"]
 
         # Apply gains
-        steer = steer * self.STEER_GAIN
-
-        # EMA smoothing at low/medium speed to dampen oscillations
-        if state.speed < self.STEER_EMA_SPEED:
-            steer = self.STEER_EMA_ALPHA * steer + (1.0 - self.STEER_EMA_ALPHA) * self._prev_steer
-        self._prev_steer = steer
-
-        steer = max(-1.0, min(1.0, steer))
+        steer = max(-1.0, min(1.0, steer * self.STEER_GAIN))
         accel = max(0.0,  min(1.0, accel * self.ACCEL_GAIN))
         brake = max(0.0,  min(1.0, brake * self.BRAKE_GAIN))
 
         # RPM-based gear management
-        if state.rpm > self.RPM_UPSHIFT and self.current_gear < 6:
+        if state.rpm > 12000 and self.current_gear < 6:
             self.current_gear += 1
-        elif state.rpm < self.RPM_DOWNSHIFT and self.current_gear > 1:
+        elif state.rpm < 6000 and self.current_gear > 1:
             self.current_gear -= 1
 
         return Action(
