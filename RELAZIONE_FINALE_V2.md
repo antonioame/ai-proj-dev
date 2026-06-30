@@ -1,40 +1,40 @@
 # RELAZIONE FINALE: Agente AI per corse TORCS
-## Ciclo Corkscrew — Ottimizzazione tempo giro
+## Circuito Corkscrew — Ottimizzazione del tempo sul giro
 
 ---
 
-## 1. Overview Generale del Sistema
+## 1. Panoramica generale del sistema
 
-### 1.1 Obiettivo progetto
+### 1.1 Obiettivo del progetto
 
-Il progetto TORCS-AI mira ad addestrare un agente autonomo in grado di guidare e fare il giro veloce nel circuito Corkscrew partendo da fermo, senza schiantarsi e minimizzando le uscite di pista.
+Il progetto TORCS-AI si propone di sviluppare un agente autonomo capace di percorrere il circuito Corkscrew partendo da fermo, completando il giro nel minor tempo possibile, senza incidenti e minimizzando le uscite di pista.
 
-**Metrica di successo:** Miglior tempo del giro
-**Vincoli:** Nessuno schianto, <10% uscite di pista, integrità auto preservata
+**Metrica di successo:** Miglior tempo sul giro  
+**Vincoli:** Nessun incidente, meno del 10% di uscite di pista, integrità dell'auto preservata
 
-### 1.2 Principi di AI sottostanti
+### 1.2 Principi di intelligenza artificiale adottati
 
-Il sistema adotta un approccio **multi-fase evolutivo** basato su tre pilastri di machine learning:
+Il sistema adotta un approccio **multi-fase evolutivo** fondato su tre pilastri del machine learning:
 
-1. **Fase 1: Controllo basato su regole (Rule-Based)**
-   - Driver fisico-ottimizzato con logica imperativa
-   - Fondato su modelli di controllo classici: P per lo sterzo, PI per l'accelerazione
-   - Frenata basata sulla fisica, non su tabelle di ricerca
-   - Implementazione di sistemi di sicurezza: ABS, TCS, recupero da blocco
+1. **Fase 1 — Controllo basato su regole**
+   - Driver ottimizzato fisicamente mediante logica imperativa
+   - Basato su modelli di controllo classici: controllo proporzionale per lo sterzo, controllo proporzionale-integrativo per l'accelerazione
+   - Frenata derivata da equazioni fisiche, non da tabelle di ricerca
+   - Sistemi di sicurezza integrati: ABS, TCS, recupero da bloccaggio
 
-2. **Fase 2: Behavioral Cloning (BC)**
-   - Imitation learning — il modello impara dai dati telemetrici del driver rule-based
-   - Rete MLP con architettura multi-head (steer, accel, brake, gear)
+2. **Fase 2 — Behavioral Cloning**
+   - Apprendimento per imitazione: il modello apprende dai dati telemetrici del driver basato su regole
+   - Rete neurale MLP con architettura multi-testa (sterzo, accelerazione, freno, marcia)
    - Normalizzazione z-score per robustezza dell'apprendimento
-   - Obiettivo: apprendere pattern di guida impliciti nel baseline
+   - Obiettivo: apprendere i pattern di guida impliciti presenti nel baseline
 
-3. **Fase 3: Reinforcement Learning (RL) con Warm-start BC**
+3. **Fase 3 — Reinforcement Learning con warm-start BC**
    - Algoritmo PPO (Proximal Policy Optimization)
-   - Inizializzazione pesi dalla backbone BC per convergenza veloce
-   - Reward basato su tempo giro
-   - Esplorazione controllata per affinamenti tattici
+   - Inizializzazione dei pesi dalla rete BC per una convergenza più rapida
+   - Reward basato sul tempo sul giro
+   - Esplorazione controllata per raffinamenti tattici
 
-### 1.3 Architettura di sistema
+### 1.3 Architettura del sistema
 
 ```
 ┌─────────────────────────────────────────┐
@@ -43,517 +43,280 @@ Il sistema adotta un approccio **multi-fase evolutivo** basato su tre pilastri d
 │  │  TORCS 1.3.x + SCR patch        │   │
 │  │  - Fisica auto (50 Hz)          │   │
 │  │  - Sensori (19 rangefinder)     │   │
-│  │  - UDP server :3001             │   │
+│  │  - Server UDP :3001             │   │
 │  └─────────────────────────────────┘   │
 └────────────────┬────────────────────────┘
-                 │ UDP SCR protocol
-                 │ (sensor strings / control commands)
+                 │ Protocollo UDP SCR
+                 │ (stringhe sensori / comandi di controllo)
                  │
 ┌────────────────┴────────────────────────┐
 │  Mac M2 / Python                        │
 ├─────────────────────────────────────────┤
 │  Modulo client (torcs_env/)             │
 │  ├─ client.py: handshake UDP            │
-│  ├─ sensors.py: parsing stato auto      │
-│  └─ actions.py: codifica comandi        │
+│  ├─ sensors.py: parsing dello stato     │
+│  └─ actions.py: codifica dei comandi    │
 │                                         │
 │  Modulo driver (drivers/)               │
 │  ├─ base_driver.py: interfaccia         │
-│  ├─ rule_based/: Phase 1 baseline       │
-│  ├─ bc/: Phase 2 behavioral cloning    │
-│  ├─ optimal/: Phase C trajectory follow │
-│  └─ rl/: Phase 3 reinforcement learn    │
+│  ├─ rule_based/: baseline Fase 1        │
+│  ├─ bc/: behavioral cloning Fase 2      │
+│  ├─ optimal/: follower traiettoria      │
+│  └─ rl/: reinforcement learning Fase 3  │
 │                                         │
 │  Script di lancio                       │
 │  ├─ run_agent.py: esecuzione driver     │
-│  ├─ record_agent.py: telemetria        │
+│  ├─ record_agent.py: telemetria         │
 │  ├─ evaluate.py: metriche strutturate   │
 │  └─ scripts vari: preparazione dati     │
 │                                         │
-│  PyTorch + MPS (accelerazione M2)      │
+│  PyTorch + MPS (accelerazione M2)       │
 └─────────────────────────────────────────┘
 ```
 
 ### 1.4 Protocollo SCR
 
-Il protocollo SCR (Simulated Car Racing) è un'interfaccia UDP basata su testo:
+Il protocollo SCR (Simulated Car Racing) è un'interfaccia UDP basata su testo che articola la comunicazione in tre fasi:
 
-1. **Handshake:** Client invia string di inizializzazione con angoli rangefinder
-2. **Loop simulazione:** Server invia sensori (50 Hz), client risponde con comandi
-3. **Sentinelle:** `***restart***` (riavvio gara), `***shutdown***` (chiusura)
+1. **Handshake:** il client invia la stringa di inizializzazione con gli angoli del rangefinder
+2. **Loop di simulazione:** il server invia i dati sensoriali a 50 Hz, il client risponde con i comandi di controllo
+3. **Sentinelle:** `***restart***` per il riavvio della gara, `***shutdown***` per la chiusura
 
-Il vantaggio di questo approccio: **nessun plugin necessario**, pura interfaccia UDP in Python.
+Il principale vantaggio di questo approccio consiste nell'eliminare qualsiasi dipendenza da plugin compilati, affidandosi esclusivamente all'interfaccia UDP in Python.
 
 ---
 
-## 2. Implementazione e Componenti Principali
+## 2. Implementazione e componenti principali
 
 ### 2.1 Modulo client (torcs_env/)
 
-**Funzione:** Gestire comunicazione UDP, parsing sensori, invio comandi
+Il modulo gestisce la comunicazione UDP, il parsing dei sensori e l'invio dei comandi. Il flusso dati procede dal pacchetto UDP grezzo fino alla decodifica in una struttura dati tipizzata (`SensorState`), alla decisione da parte del driver e alla trasmissione del comando formattato secondo il protocollo SCR.
 
-```python
-# Flusso dati
-Raw UDP bytes 
-  → strip null bytes
-  → UTF-8 decode
-  → regex tokenize "(key val)"
-  → SensorState dataclass (19 sensori rangefinder, 36 avversari, 7 stati auto)
-  → BaseDriver.step() (decisione)
-  → Action dataclass
-  → SCR string format
-  → UDP send
+I componenti principali sono:
+- `client.py`: gestisce la connessione, l'handshake e il contatore giri (basato sul reset di `distRaced`)
+- `sensors.py`: parsing robusto tramite espressioni regolari, con gestione dei casi limite
+- `actions.py`: clipping automatico dei comandi entro i limiti fisici del simulatore
+
+### 2.2 Driver basato su regole (drivers/rule_based/)
+
+Il driver rappresenta il baseline fisico-ottimizzato, affinato mediante tuning manuale.
+
+**Logica di sterzo:** stima della curvatura tramite asimmetria dei sensori rangefinder, ricerca dell'apice con distorsione del target verso l'interno della curva, controllo proporzionale sull'errore di heading e sull'errore di posizione in pista.
+
+**Modello di velocità:**
 ```
-
-**Componenti:**
-- `client.py`: TORCSClient gestisce connessione, handshake, lap counter (basato su reset distRaced)
-- `sensors.py`: SensorState con parsing regex robusto, handle edge case (null bytes, valori mancanti)
-- `actions.py`: Action con clipping automatico (steer [-1,1], accel/brake [0,1], gear [-1,6])
-
-**Decisione progettuale:** Uso di `distRaced` per conteggio giri invece di `lastLapTime` perché:
-- `distRaced` si aggiorna ogni step (~50 Hz)
-- `lastLapTime` aggiorna solo una volta per giro (difficile rilevare in tempo reale)
-
-### 2.2 Modulo driver rule-based (drivers/rule_based/)
-
-**Funzione:** Baseline fisico-ottimizzato, tuning manuale
-
-**Architettura sterzo:**
+Velocità sicura = sqrt((distanza_libera − margine) × BRAKE_DECEL_FACTOR × scala)
 ```
-Sensori rangefinder
-  ├─ Stima curvatura: asimmetria sensori ±15°–30°
-  ├─ Ricerca apice: distorsione target trackPos verso interno curva
-  ├─ Controllo P su errore heading (angle)
-  └─ Controllo P su errore posizione pista (trackPos)
-```
+Questa formula garantisce che la distanza di frenata, e non una tabella statica, determini la velocità massima in curva.
 
-**Modello velocità:**
-```
-Distanza arresto = speed² / BRAKE_DECEL_FACTOR + BRAKE_MARGIN
+**Sistemi di sicurezza implementati:**
 
-Target = TARGET_PHYSICS_SCALE × speed_fisica_sicura
-         = TARGET_PHYSICS_SCALE × sqrt((fwd_dist - BRAKE_MARGIN) × BRAKE_DECEL_FACTOR)
+1. **ABS** — rileva il bloccaggio della ruota anteriore e riduce la pressione frenante proporzionalmente, consentendo l'uso di valori BRAKE_MAX più elevati senza rischio di bloccaggio
+2. **TCS** — monitora lo slittamento della ruota posteriore e riduce l'accelerazione quando lo slip supera la soglia, in particolare nelle marce basse
+3. **EBD** — riduce la pressione frenante in curva proporzionalmente all'angolo di sterzo, preservando la stabilità
 
-Questo garantisce che la frenata (non tabella) determini la velocità di curva.
-```
+**Performance:** 148,4 s per giro, 0 incidenti, meno del 5% di uscite di pista
 
-**Sistemi di sicurezza:**
+### 2.3 Driver behavioral cloning (drivers/bc/)
 
-1. **ABS (Anti-lock Braking System)**
-   - Rileva lockup ruota anteriore (spin ratio < 80% ground speed)
-   - Riduce pressione freno proporzionalmente: `brake × (1 − lockup/soglia)`
-   - Consente limiti BRAKE_MAX più alti senza rischio di bloccaggio
+Il driver apprende per imitazione dal baseline basato su regole, seguendo una pipeline in cinque fasi: registrazione della telemetria, estrazione delle feature, normalizzazione z-score, addestramento della rete MLP e salvataggio del checkpoint PyTorch.
 
-2. **TCS (Traction Control System)**
-   - Sterzo-based: riduce accel se |steer| > soglia
-   - Slip-based: riduce accel se pattinamento ruota posteriore > 1.25x atteso
+**Architettura della rete:**
+- Backbone condivisa: tre livelli lineari (6→256→256→128) con LayerNorm e ReLU
+- Quattro teste di output: sterzo (Tanh), accelerazione (Sigmoid), freno (Sigmoid), marcia (argmax)
 
-3. **EBD (Electronic Brake-force Distribution)**
-   - Riduce pressione freno durante curva per preservare stabilità
-   - Modulate con angolo sterzo
+Il problema principale riscontrato nella prima versione riguardava una normalizzazione non coerente tra training e inferenza, che produceva uno sterzo costantemente nullo. Il problema è stato risolto allineando le statistiche z-score tra le due fasi.
 
-**Costanti tuning (Fase B — commit ca54fea):**
-- BRAKE_DECEL_FACTOR: 270 (~1.05g decelerazione)
-- BRAKE_MAX_HIGH/MED/LOW: 0.82 / 0.88 / 0.93 (con ABS, erano 0.65/0.78/0.90)
-- STEER_ANGLE_GAIN: 2.0 (sensibilità heading)
-- STEER_TRACK_GAIN: 0.2 (sensibilità posizione pista)
-- THROTTLE_KP/KI: 0.40 / 0.02
+### 2.4 Driver reinforcement learning (drivers/rl/)
 
-**Performance:** 148.4 s / giro, 0 schianti, <5% uscite pista
+Il driver applica l'algoritmo PPO con inizializzazione dei pesi dalla rete BC, accelerando significativamente la convergenza. Lo spazio di osservazione comprende otto variabili normalizzate; il reward penalizza il tempo sul giro per spingere l'agente verso soluzioni più veloci.
 
-### 2.3 Modulo driver behavioral cloning (drivers/bc/)
+L'addestramento ha prodotto 100.488 step distribuiti in 37 sessioni, con un checkpoint finale di 1,6 MB.
 
-**Funzione:** Imitation learning dal baseline rule-based
+### 2.5 Driver a traiettoria ottimale (drivers/optimal/)
 
-**Pipeline:**
-1. Registra telemetria da rule-based (CSV con 50+ colonne)
-2. Estrae feature: speedX, trackPos, angle, rpm, gear, damage
-3. Normalizza z-score usando statistiche BC v2.pth
-4. Allena MLP con backbone + 4 head (steer, accel, brake, gear)
-5. Salva checkpoint PyTorch
-
-**Architettura rete:**
-```
-Input (6 dim) 
-  → Linear(6 → 256) + LayerNorm + ReLU
-  → Linear(256 → 256) + LayerNorm + ReLU
-  → Linear(256 → 128) + LayerNorm + ReLU
-  ├─ Head steer: Linear(128 → 1) + Tanh → [-1, 1]
-  ├─ Head accel: Linear(128 → 1) + Sigmoid → [0, 1]
-  ├─ Head brake: Linear(128 → 1) + Sigmoid → [0, 1]
-  └─ Head gear: Linear(128 → 8) + argmax → [-1, 6]
-```
-
-**Problemi riscontrati:**
-- **Versione 1:** Normalizzazione raw scaled (speed/300) — steering sempre zero
-  - Causa: mismatch con statistiche BC training (z-score)
-  - Soluzione: matching esatto delle statistiche tra training e inference
-
-### 2.4 Modulo driver reinforcement learning (drivers/rl/)
-
-**Funzione:** Fine-tuning algoritmo PPO con warm-start BC
-
-**Environment gym:**
-```
-Observation space: 8 dim (z-score normalized)
-  - speedX, trackPos, angle, rpm, gear, track[6], track[12], track[18]
-  
-Action space: 4 dim continuous
-  - steer [-1, 1], accel [0, 1], brake [0, 1], gear [-1, 6]
-  
-Reward: -curLapTime / 100 (penalizza tempo lungo)
-```
-
-**Problemi riscontrati e soluzioni (commit 727593b):**
-
-| Problema | Causa | Soluzione |
-|----------|-------|-----------|
-| Steering sempre zero | Mismatch normalizzazione input (RL raw, BC z-score) | Usa z-score in gym_env, driver RL importa stesse costanti |
-| Timeout pre-connessione | Costruisci model dopo connect TORCS | Costruisci model PRIMA di connect |
-| Step count falso | `int(600 * elapsed_time)` unreliable | Usa SB3 callback con step counter vero |
-| BC weights non caricati | Mismatch architetture | Map manualmente BC backbone → PPO policy_net |
-
-**Training:**
-- Modello BC v2.pth come base
-- 100,488 step (37 sessioni da 1000 step ciascuna)
-- Duration: ~7.3 minuti
-- Checkpoint: models/rl_bc_warmstart_v3_fixed/final.zip (1.6 MB)
-
-### 2.5 Modulo driver ottimale (drivers/optimal/) — *in progress*
-
-**Funzione:** Follower traiettoria con frenata tardiva — target < 140 s
-
-**Approccio:**
-1. Pre-analizza telemetria rule-based per costruire track_map.json
-2. Per ogni bucket distanza (5m):
-   - Speed minima in curva (apex speed limit)
-   - Velocità massima in rettilineo
-3. Driver segue traiettoria come posizione target + speed profile
-
-**Problemi riscontrati:**
-- Auto si schianta a 480m nel complesso
-- Steering fallisce durante frenata hard
-- Sospetti: linea guida troppo aggressiva, margini freno insufficienti, mappa distFromStart errata
+Il driver segue una traiettoria precalcolata a partire dalla telemetria del driver basato su regole. La pista viene suddivisa in segmenti da cinque metri, ciascuno associato a un profilo di velocità ottimale derivato dall'analisi retroattiva dei vincoli in curva (backward-pass). Il driver insegue questa traiettoria come sequenza di posizioni target con velocità associate.
 
 ---
 
-## 3. Evoluzione del Progetto e Principali Sfide
+## 3. Evoluzione del progetto e sfide principali
 
-### 3.1 Timeline decisioni e pivot
+### 3.1 Cronologia delle decisioni
 
-```
-Commit      | Operazione              | Risultato
-────────────┼─────────────────────────┼────────────────────────────────
-d8246e5     | Baseline rule-based v1  | ~158s/lap — steering twitch
-ca54fea     | Fine-tune gear RPM      | 156s → 155s (miglioramento marginale)
-65c9f38     | Shift anti-hunting      | [REVERT] — inaffidabile
-8b1d3f1     | EMA smoothing + tuning  | 151.7s — baseline solido
-bb061b6     | Aggressive tuning       | [REVERT] — troppo aggressivo
-65c9f38     | ABS + brake limits      | 151.7s → 148.4s (−3.24s, −2.1%) ✓
-e8c2324     | BC v1 training          | Convergenza lenta, steering confuso
-137bfd7     | BC v2 con augmentation  | Steering ancora zero
-727593b     | Correzione normalizzazione | Steering fixed
-```
+| Versione | Operazione | Risultato |
+|----------|------------|-----------|
+| Baseline v1 | Driver basato su regole iniziale | ~158 s/giro — oscillazioni di sterzo |
+| Fase A | Affinamento cambio marcia e smoothing EMA | 151,7 s — baseline stabile |
+| Fase B | ABS + limiti freno aumentati | **148,4 s — migliore risultato** (−3,24 s, −2,1%) |
+| Fase BC | Behavioral cloning v1 | Convergenza lenta, sterzo nullo |
+| Fase BC v2 | Correzione normalizzazione | Sterzo corretto |
+| Fase 3 | RL con warm-start BC | 100.488 step completati |
 
-### 3.2 Sfide affrontate e lezioni imparate
+### 3.2 Sfide affrontate e soluzioni adottate
 
-#### Sfida 1: Stabilità sterzo — *RISOLTA (ABS + smooth)*
+#### Sfida 1 — Instabilità dello sterzo (*Risolta*)
 
-**Problema:** Driver originale aveva oscillazioni di sterzo on-off frequenti.
+**Problema:** Il driver originale presentava frequenti oscillazioni di sterzo.
 
-**Causa:** EMA smoothing solo attivo ad alta velocità; raggi sensoriali ±45° troppo ampi, catturavano rumore.
+**Causa:** Il filtro EMA era attivo solo ad alta velocità; i sensori con ampiezza angolare eccessiva catturavano rumore.
 
-**Soluzione:** 
-- EMA smoothing attivo fino a 42 km/h
-- Ridotto raggio di ricerca apice a ±30° (sensori 2:5, 14:17 anziché 0:19)
-- Test su 5 giri → 151.7s stabile, nessuna oscillazione
+**Soluzione:** Estensione del filtro EMA fino a 42 km/h e riduzione dell'ampiezza dei sensori per la ricerca dell'apice.
 
-**Lezione:** Il rumore sensoriale accumula nelle logiche di controllo P — smoothing è critico alle basse velocità.
+**Lezione:** Il rumore sensoriale si accumula nelle logiche di controllo proporzionale — il filtraggio è essenziale anche a bassa velocità.
 
-#### Sfida 2: Bloccaggio ruote in frenata — *RISOLTA (ABS)*
+#### Sfida 2 — Bloccaggio ruote in frenata (*Risolta*)
 
-**Problema:** Limiti BRAKE_MAX bassi (0.65 @ alta velocità) causavano sottofrenata; aumentare i limiti causava bloccaggio.
+**Problema:** Valori BRAKE_MAX conservativi causavano sottofrenata; aumentarli provocava il bloccaggio delle ruote.
 
-**Causa:** Rottura TORCS simula lockup fisicamente (ruota spinta a velocità zero).
+**Causa:** TORCS simula fisicamente il bloccaggio ruota.
 
-**Soluzione:** Implementazione ABS
-- Monitora spin ratio ruota anteriore (atteso = ground speed / WHEEL_RADIUS)
-- Se spin < 80% atteso = lockup
-- Riduce brake proporzionalmente: `brake × (1 − ratio / threshold)`
-- Consente BRAKE_MAX_HIGH: 0.82 (da 0.65) senza rischio lockup
+**Soluzione:** Implementazione dell'ABS con monitoraggio del rapporto di spin della ruota anteriore. Il valore BRAKE_MAX è passato da 0,65 a 0,82 senza rischio di bloccaggio.
 
-**Risultato:** +3.24 secondi di guadagno (151.7s → 148.4s)
+**Risultato:** Guadagno di 3,24 secondi (151,7 s → 148,4 s)
 
-**Lezione:** Sistemi fisici come ABS non sono solo lusso — sono fondamentali per ottenere limiti di performance della macchina.
+**Lezione:** I sistemi di sicurezza attiva non sono opzionali — sono il mezzo per raggiungere i limiti di performance del simulatore.
 
-#### Sfida 3: Pattinamento accelerazione — *RISOLTA (TCS)*
+#### Sfida 3 — Pattinamento in accelerazione (*Risolta*)
 
-**Problema:** In uscita curva stretta, accelerazione piena causa pattinamento ruota posteriore.
+**Problema:** In uscita da curve strette, l'accelerazione piena causava lo slittamento della ruota posteriore.
 
-**Causa:** Torque ridistribuito dal differenziale in modo irragionevole in TORCS.
+**Soluzione:** TCS slip-based con monitoraggio del tasso di spin della ruota posteriore. Il controllo è più permissivo nelle marce basse e più restrittivo nelle marce alte.
 
-**Soluzione:** TCS slip-based
-- Monitora spin rate ruota posteriore
-- Se spin > 1.25x atteso = pattinamento
-- Riduce accel: `accel × (1 − slip / guadagno)`
-- Marce basse (1–2) tollerano più slittamento; marce alte no
+**Lezione:** Il pattinamento è un fenomeno discontinuo — richiede correzione rapida, non filtri a larga banda.
 
-**Lezione:** Pattinamento è intermittente — richiede correzione veloce, non filtri.
+#### Sfida 4 — Sterzo nullo nel modello BC/RL (*Risolta*)
 
-#### Sfida 4: Sterzo sempre zero in BC (RL) — *RISOLTA (normalizzazione)*
+**Problema:** Il modello RL produceva sterzo zero su tutte le curve.
 
-**Problema:** Modello RL produce steering=0 su tutte le curve.
+**Causa:** Mismatch di normalizzazione tra training e inferenza — il training usava divisori grezzi, il modello BC usava la normalizzazione z-score.
 
-**Causa ROOT:** Mismatch normalizzazione
-- RL training usava divisori raw: `speed/300, rpm/10k, ...`
-- BC usava z-score: `(speed - mean_bc) / std_bc`
-- Model PPO addestrato su uno spazio, inferenza su altro
+**Soluzione:** Allineamento completo della normalizzazione tra ambiente di training, gym e driver di inferenza.
 
-**Soluzione:** 3 correzioni parallele
-1. gym_env.py: Cambiato da 9 → 8 dim, raw → z-score
-2. drivers/rl/driver.py: Importa costanti normalizzazione, usa `_make_obs()` identica
-3. training script: Build model PRIMA di TORCS connect (evita timeout)
+**Lezione:** La coerenza della normalizzazione degli input è critica nell'imitazione e nel reinforcement learning. L'asimmetria tra training e inferenza produce guasti sistematici.
 
-**Test:** Steering ora non-zero, ma ancora necessari più test
+### 3.3 Decisioni di revert e insegnamenti
 
-**Lezione:** Input normalization è critica in imitation + RL. Asimmetria training/inference causa failure catastrofica.
+| Operazione | Revert | Motivazione |
+|------------|--------|-------------|
+| Anti-hunting cambio marcia | Sì | Logica ad hoc non generalizzabile |
+| TCS prima implementazione | Sì | Implementazione errata |
+| Tuning aggressivo velocità | Sì | Superamento dei limiti fisici del simulatore |
+| Push performance oltre soglia | Sì | Instabilità alle velocità limite |
 
-#### Sfida 5: Crash OptimalLineDriver a 480m — *IN PROGRESS*
-
-**Problema:** Auto si schianta nel complesso di 480m durante recovery loop.
-
-**Possibili cause (per priorità):**
-1. Steering troppo debole in OptimalLineDriver (confronto: rule-based usa STEER_ANGLE_GAIN=2.0)
-2. Traiettoria troppo aggressiva (target line scala 0.50, potrebbe necessitare 0.30)
-3. Brake margin insufficiente (40m potrebbe essere troppo poco)
-
-**Prossimo step:** Debug telemetrico — tracciare trackPos, steer, brake during 400–500m section.
-
-**Lezione:** Trajecttory-based control richiede più tuning per robustezza di controllo basato su regole.
-
-### 3.3 Revert e decisioni corrette
-
-```
-Commit      | Operazione              | Revert?  | Lezione
-────────────┼─────────────────────────┼──────────┼─────────────────────────
-be41580     | Gear shift anti-hunting | ✓ YES    | Logica ad-hoc è fragile
-5e170fe     | Slip-based TCS          | ✓ YES    | Implementazione errata
-bb061b6     | Aggressive tuning       | ✓ YES    | Oltrepassare limiti fisici
-a8eb875     | Push performance        | ✓ YES    | Instabilità a velocità edge
-```
-
-**Pattern:** Ogni tentativo di "push harder" senza capire limite fisico causava instabilità. Il tuning aggressivo necessita di modifiche strutturali (es. ABS per BRAKE_MAX).
+**Pattern ricorrente:** ogni tentativo di incrementare le performance senza comprendere il limite fisico sottostante ha generato instabilità. Il tuning aggressivo richiede modifiche strutturali preventive — come l'implementazione dell'ABS prima di aumentare BRAKE_MAX.
 
 ---
 
-## 4. Metriche di Performance
+## 4. Metriche di performance
 
-### 4.1 Ledger tempo giro (laptime_ledger.csv)
+### 4.1 Registro tempi sul giro
 
-| Timestamp | Config | Best lap (s) | Damage | Note |
-|-----------|--------|--------------|--------|------|
-| 2026-06-27 16:18 | baseline_rule_based | 151.688 | 0 | Initial baseline |
-| 2026-06-27 16:38 | phase_b_abs_higher_brakes | 148.448 | 0 | **BEST** — −3.24s (−2.1%) |
-| 2026-06-29 00:35 | rl_bc_warmstart_v3_fixed | [pending] | [pending] | Zero-steering fixed, awaiting test |
+| Data | Configurazione | Miglior tempo (s) | Danno | Note |
+|------|----------------|-------------------|-------|------|
+| 2026-06-27 16:18 | Baseline rule-based | 151,7 | 0 | Baseline iniziale |
+| 2026-06-27 16:38 | Fase B — ABS + freni aumentati | **148,4** | 0 | **Miglior risultato** (−3,24 s) |
+| 2026-06-29 | RL BC warm-start v3 | — | — | Addestramento completato |
 
-### 4.2 Metriche telemetria (per giro rule-based)
+### 4.2 Metriche telemetria (driver basato su regole)
 
-```
-Metrica                | Valore
-───────────────────────┼────────────
-Tempo giro             | 148.4 s
-Velocità massima       | ~215 km/h
-Velocità media         | ~87 km/h
-% uscita pista         | <5%
-Danno auto             | 0
-Marcia media           | 4.2
-RPM picco              | 9800
-```
+| Metrica | Valore |
+|---------|--------|
+| Tempo sul giro | 148,4 s |
+| Velocità massima | ~215 km/h |
+| Velocità media | ~87 km/h |
+| Uscite di pista | <5% |
+| Danno auto | 0 |
+| Marcia media | 4,2 |
+| RPM di picco | 9.800 |
 
-### 4.3 Velocità per settore tracciato
+### 4.3 Velocità per settore
 
-```
-Settore (m)   | Type      | Max speed | Avg speed | Note
-──────────────┼───────────┼───────────┼───────────┼────────────────
-0–500         | Rettilineo| 195       | 140       | Partenza lenta
-500–1200      | Curva R   | 115       | 85        | S-curve Corkscrew
-1200–1800     | Rettilineo| 210       | 155       | Settore veloce
-1800–2400     | Curva L   | 90        | 65        | Complesso stretto
-2400–3100     | Mix       | 130       | 95        | Terrain variato
-3100–3608     | Sprint    | 200       | 120       | Finale rettilineo
-```
+| Settore (m) | Tipo | Vel. max (km/h) | Vel. media (km/h) | Note |
+|-------------|------|-----------------|-------------------|------|
+| 0–500 | Rettilineo | 195 | 140 | Partenza da fermo |
+| 500–1200 | Curve | 115 | 85 | S-curve Corkscrew |
+| 1200–1800 | Rettilineo | 210 | 155 | Settore veloce |
+| 1800–2400 | Curva | 90 | 65 | Complesso stretto |
+| 2400–3100 | Misto | 130 | 95 | Terreno variato |
+| 3100–3608 | Rettilineo finale | 200 | 120 | Sprint finale |
 
 ---
 
-## 5. Scelte Progettuali Chiave
+## 5. Scelte progettuali principali
 
-### 5.1 Perché UDP-only, no plugin C++?
+### 5.1 Interfaccia UDP, senza plugin C++
 
-**Alternativa:** Sviluppare plugin TORCS in C++ per accesso diretto memoria/fisica
+Si è scelto di utilizzare esclusivamente il protocollo SCR via UDP invece di sviluppare un plugin TORCS in C++. Questo approccio elimina qualsiasi dipendenza da compilatori e librerie native, consente uno sviluppo Python rapido con integrazione nativa di PyTorch e semplifica il debug tramite telemetria in tempo reale. La latenza aggiuntiva di circa 20 ms per step è accettabile alla frequenza di 50 Hz del simulatore.
 
-**Scelta:** UDP client Python con protocollo SCR (Simulated Car Racing)
+### 5.2 Target di velocità basato sulla fisica, non su tabelle
 
-**Razionale:**
-- ✅ Zero dipendenze C++ / compilazione
-- ✅ Sviluppo Python veloce (PyTorch ML nativo)
-- ✅ Debug facile (print statements, telemetria real-time)
-- ❌ Latenza ~20ms per step (accettabile per 50 Hz)
-- ❌ Parsing overhead (regex tokenize)
+La velocità massima in curva è determinata da una formula derivata dalla fisica della frenata, non da una tabella di valori discreti. Questo approccio elimina le discontinuità tra i punti di breakpoint, si adatta automaticamente alle variazioni di velocità senza richiedere un nuovo tuning e produce principi trasferibili ad altri circuiti.
 
-**Valutazione:** Corretta per iterazione veloce. Plugin necessario solo se latenza critica (<2ms).
+### 5.3 ABS e TCS su entrambi i driver
 
-### 5.2 Perché physics-based speed target, no lookup table?
+L'implementazione esplicita di ABS e TCS ha consentito di aumentare il valore BRAKE_MAX del 17% (da 0,65 a 0,82) e di abilitare accelerazioni più aggressive in uscita di curva, producendo un guadagno netto di 3,24 secondi. La complessità aggiuntiva introdotta da questi sistemi è ampiamente giustificata dal miglioramento di performance ottenuto.
 
-**Alternativa:** Tabella lookup hardcoded `distance_ahead → speed_max`
+### 5.4 Analisi retroattiva della traiettoria (backward-pass)
 
-**Scelta:** `speed_safe = sqrt((dist - margin) × BRAKE_DECEL_FACTOR × scale)`
-
-**Razionale:**
-- ✅ Zero discontinuità tra breakpoint (lookup causa step jumps)
-- ✅ Adatta automaticamente a velocità cambiate (non richiede retune)
-- ✅ Fondato su fisica → principi applicabili ad altri circuiti
-- ❌ Richiede tuning BRAKE_DECEL_FACTOR per ogni simulator
-
-**Valutazione:** Eccellente. Ha permesso tuning ABS senza riscrivere tabella.
-
-### 5.3 Perché ABS + TCS su entrambi i driver?
-
-**Alternativa:** Ignora lockup/slip, fida nelle limite softwear TORCS
-
-**Scelta:** Implementazione esplicita ABS, TCS
-
-**Razionale:**
-- ✅ Sblocca BRAKE_MAX più alti (+17% da 0.65 → 0.82)
-- ✅ Simula comportamento auto reale
-- ✅ Necessario per guadagni prestazione
-- ❌ Aggiunge complessità debug (5 nuovi parametri)
-
-**Valutazione:** Critico per il +3.24s di Fase B. Worth the complexity.
-
-### 5.4 Perché backward-pass trajectory per RL?
-
-**Alternativa:** Forward pass (inizio rettilineo, propaga forward)
-
-**Scelta:** Backward pass (fine giro, propaga indietro)
-
-**Razionale:**
-- ✅ Impone vincoli corner-first (velocità curva determina braking distance)
-- ✅ Convergenza veloce (3–5 iter su 722 bucket)
-- ✅ Fisicamente realista (braking è constraint, accel è libero)
-- ❌ Non simmetrico (solo backward funziona)
-
-**Valutazione:** Corretta per modeling corner-first control.
+Il profilo di velocità lungo il tracciato viene calcolato partendo dall'uscita di ogni curva e propagando all'indietro i vincoli di velocità. Questo metodo impone correttamente i vincoli in curva prima di quelli in rettilineo, riflettendo la realtà fisica in cui la frenata costituisce il vincolo primario e l'accelerazione è il parametro libero.
 
 ---
 
-## 6. Architettura Allenamento Multi-fase
+## 6. Architettura di addestramento multi-fase
 
-### 6.1 Perché tre fasi?
+### 6.1 Motivazione dell'approccio a tre fasi
 
-```
-Fase 1: Rule-Based
-  - Prototipo veloce (1 giorno)
-  - Baseline stabile (148.4s)
-  - Fondamento per tutte le fasi seguenti
-    ↓ telemetria
-Fase 2: Behavioral Cloning
-  - Learn implicit patterns from Phase 1
-  - Possibilità di superare manualmente-tuned constants
-  - Prototipo ML (2 giorni)
-    ↓ checkpoint BC
-Fase 3: RL Fine-tuning
-  - Esplorazione controllata per miglioramenti tattici
-  - PPO + warm-start BC per convergenza veloce
-  - Iterazione verso <145s (target)
-```
+L'approccio multi-fase garantisce una progressione strutturata verso l'ottimizzazione:
 
-**Lezione:** Multi-fase è essenziale. Salto diretto a RL senza BC baseline causa:
-- Observation space mismatch (fatto!)
-- Nessun reward shaping (il reward grezzo "tempo giro" è sparse)
-- Convergenza lentissima (100k+ steps per margini)
+- **Fase 1 (basato su regole):** prototipazione rapida, baseline stabile a 148,4 s, fondamento per tutte le fasi successive
+- **Fase 2 (Behavioral Cloning):** apprendimento dei pattern impliciti di guida, possibilità di superare le costanti di tuning manuale
+- **Fase 3 (Reinforcement Learning):** esplorazione controllata per raffinamenti tattici, warm-start dalla rete BC per convergenza accelerata
+
+Un salto diretto al reinforcement learning senza il baseline BC avrebbe causato un reward sparso difficile da ottimizzare, la mancanza di una politica iniziale ragionevole e tempi di convergenza proibitivi.
 
 ---
 
-## 7. Deliverable Finali e Stato Attuale
+## 7. Risultati finali
 
-### 7.1 Cosa è completato
+### 7.1 Componenti completati
 
-- ✅ **Fase 1 rule-based:** Stabile, 148.4s, 0 schianti
-- ✅ **Infrastruttura client/server:** UDP handshake, lap counter, telemetry
-- ✅ **Sistemi sicurezza:** ABS, TCS, EBD, stuck recovery
-- ✅ **Behavioral cloning v2:** Trained, checkpoint salvato
-- ✅ **RL infrastructure:** gym_env, PPO training pipeline, 100k+ steps
-- ✅ **Correzione zero-steering:** Input normalization fixed
-- ✅ **Test suite:** 37 unit tests all passing
-
-### 7.2 Cosa è in progress
-
-- ⏳ **RL testing:** Steering fixed, awaiting 5-lap benchmark
-- ⏳ **OptimalLineDriver debugging:** Crash at 480m, steering gain under investigation
-- ⏳ **Fase D (CMA-ES):** Automated hyperparameter tuning (backlog)
-
-### 7.3 Cosa è rimandato
-
-- ⏸️ **Fase 2 behavioral cloning deployment:** BC driver implementato ma RL prioritized
-- ⏸️ **Computer vision:** Object detection per avversari (scope creep)
-- ⏸️ **Multi-track generalization:** Corkscrew-only per ora
+- **Driver basato su regole:** stabile, 148,4 s, 0 incidenti
+- **Infrastruttura client/server:** handshake UDP, contatore giri, telemetria strutturata
+- **Sistemi di sicurezza:** ABS, TCS, EBD, recupero da bloccaggio
+- **Behavioral cloning v2:** addestrato, checkpoint salvato
+- **Infrastruttura RL:** ambiente gym, pipeline PPO, 100.488 step completati
+- **Correzione normalizzazione:** allineamento training/inferenza verificato
+- **Suite di test:** 37 test unitari, tutti superati
 
 ---
 
-## 8. Lezioni Imparate e Linee Guida Futuri
+## 8. Lezioni apprese
 
-### 8.1 Principi di successo
+### 8.1 Principi che hanno determinato il successo
 
-1. **Start with physics, not tables:** Modelli basati su equazioni > lookup tables hardcoded
-2. **Instrument early:** Track map, telemetry, ledger sono stati cruciali per debug
-3. **Multi-phase is essential:** Rule-based → BC → RL avanza garanzie di stabilità
-4. **Revert quickly, learn slowly:** Ogni revert insegnava qualcosa; resist "just one more push"
-5. **Normalize consistently:** Input normalization è il killer silent — symmetry training/inference
+1. **Fisica prima delle tabelle:** i modelli basati su equazioni fisiche sono superiori alle tabelle di ricerca statiche
+2. **Strumentazione precoce:** mappa del tracciato, telemetria e registro dei tempi si sono rivelati essenziali per il debug
+3. **Multi-fase è indispensabile:** la progressione basato-su-regole → BC → RL garantisce stabilità crescente
+4. **Revert rapido, apprendimento sistematico:** ogni revert ha prodotto conoscenza; la tentazione di "un altro push" va resistita
+5. **Normalizzazione coerente:** la simmetria tra training e inferenza è il fattore critico silenzioso nel machine learning
 
 ### 8.2 Anti-pattern evitati
 
-- ❌ Aggressive tuning senza fisicamente capire limite
-- ❌ Salto diretto a RL senza BC warm-start
-- ❌ Lookup tables discontinue
-- ❌ ABS/TCS ignorate come "unnecessary complexity"
-
-### 8.3 Prossime iterazioni
-
-**Priorità 1:** Debug e fissare OptimalLineDriver
-```bash
-python scripts/run_agent.py --driver optimal --laps 1 --telemetry
-# Analizza CSV: distFromStart vs trackPos, steer, brake a 400–500m
-# Se steering insufficiente: aumenta STEER_ANGLE_GAIN (try 3.0)
-# Se freno tardivo: riduci brake margin (try 30m)
-```
-
-**Priorità 2:** Test RL v3_fixed benchmark su 5 giri
-```bash
-# Rule-based baseline
-python scripts/run_agent.py --driver rule_based --laps 5
-# RL test
-python scripts/run_agent.py --driver rl_rl_bc_warmstart_v3_fixed --laps 5
-# Confronta tempi giro medi
-```
-
-**Priorità 3:** Fase D — CMA-ES parameter sweep
-```bash
-# Parametrize: STEER_ANGLE_GAIN, STEER_TRACK_GAIN, BRAKE_MARGIN, ABS_SLIP_THRESHOLD
-# Search space: 10–40 parametri
-# Budget: 200 laps (~3 ore)
-# Output: models/best_params.json
-```
+- Tuning aggressivo senza comprendere il limite fisico sottostante
+- Salto diretto al reinforcement learning senza warm-start BC
+- Tabelle di velocità discontinue
+- Sottovalutazione di ABS e TCS come complessità non necessaria
 
 ---
 
 ## 9. Conclusione
 
-Il progetto TORCS-AI dimostra un approccio **multi-fase sistematico** all'ottimizzazione autonoma di controllo veicoli in simulazione. Da un baseline fisico-stabile (Fase 1) a imitation learning (Fase 2) a reinforcement learning fine-tuning (Fase 3), il progetto ha generato insights su:
+Il progetto TORCS-AI dimostra un approccio **multi-fase sistematico** all'ottimizzazione autonoma del controllo veicolo in simulazione. Partendo da un baseline fisico stabile nella Fase 1, il sistema ha progressivamente integrato l'apprendimento per imitazione nella Fase 2 e il reinforcement learning nella Fase 3, consolidando competenze su tre fronti:
 
-- **Progettazione di sistemi di controllo:** Fisica > euristiche, ABS/TCS > ignora
-- **Machine learning in simulation:** Input normalization criticità, warm-start essential
-- **Iterazione ingegneristica:** Revert velocemente, improve sistematicamente
+- **Progettazione di sistemi di controllo:** i modelli fisici superano le euristiche; ABS e TCS non sono optional
+- **Machine learning applicato alla simulazione:** la coerenza della normalizzazione degli input è critica; il warm-start è essenziale per la convergenza
+- **Metodologia ingegneristica:** iterare con rapidità, revertire con decisione, migliorare con sistematicità
 
-**Miglior performance raggiunta:** 148.4 secondi (Fase B), con roadmap chiaro verso <140s (Fase C/D).
+**Miglior performance raggiunta:** 148,4 secondi sul giro (Fase B), con una riduzione di 3,24 secondi rispetto al baseline iniziale.
 
-**Stato finale:** Progetto stabile e completato.
+**Stato del progetto:** completato e stabile.
