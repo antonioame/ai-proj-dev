@@ -1,6 +1,6 @@
-"""Rule-based baseline driver for TORCS / Corkscrew.
+"""Driver baseline basato su regole per TORCS / Corkscrew.
 
-Tuning constants are defined at module level so they are easy to adjust.
+Le costanti di sintonia sono definite a livello di modulo per essere facili da regolare.
 """
 
 from __future__ import annotations
@@ -13,78 +13,78 @@ from torcs_env.actions import Action
 from torcs_env.sensors import SensorState
 
 # ---------------------------------------------------------------------------
-# Steering constants
+# Costanti sterzo
 # ---------------------------------------------------------------------------
 STEER_ANGLE_GAIN: float = 2.0
 STEER_TRACK_GAIN: float = 0.2
-STEER_LOCK: float = 0.785398  # 45° in radians
+STEER_LOCK: float = 0.785398  # 45° in radianti
 
 # ---------------------------------------------------------------------------
-# Physics-based speed target
+# Target di velocità basato su fisica
 # ---------------------------------------------------------------------------
-# Target is set to TARGET_PHYSICS_SCALE × physics equilibrium so braking always
-# determines the corner speed rather than an arbitrary lookup table.
+# L'obiettivo è impostato a TARGET_PHYSICS_SCALE × equilibrio di fisica, quindi la frenata
+# determina sempre la velocità di curva piuttosto che una tabella di ricerca arbitraria.
 #
 #   physics_safe(d) = sqrt(max(0, (d - BRAKE_MARGIN) * BRAKE_DECEL_FACTOR))
 #
-# BRAKE_DECEL_FACTOR calibrated for this simulator: gives ~1 g deceleration.
-BRAKE_DECEL_FACTOR: float = 270.0   # ~1.05 g; reflects higher brake pressure with ABS (was 255)
-BRAKE_MARGIN: float = 5.0           # metres of safety headroom in stopping formula
-TARGET_PHYSICS_SCALE: float = 1.20  # target = physics_safe × this → physics binds
-MAX_SPEED: float = 200.0            # absolute cap (km/h)
+# BRAKE_DECEL_FACTOR calibrato per questo simulatore: dà ~1 g di decelerazione.
+BRAKE_DECEL_FACTOR: float = 270.0   # ~1.05 g; riflette pressione freno più alta con ABS (era 255)
+BRAKE_MARGIN: float = 5.0           # metri di margine di sicurezza nella formula di arresto
+TARGET_PHYSICS_SCALE: float = 1.20  # target = physics_safe × questo → fisica vincola
+MAX_SPEED: float = 200.0            # limite assoluto (km/h)
 
-# Edge speed limiters — only intervene when drifting near the absolute limit
+# Limitatori di velocità ai margini — intervengono solo quando si sbanda vicino al limite assoluto
 EDGE_SPEED_SOFT: tuple[float, float] = (0.75, 140.0)
 EDGE_SPEED_HARD: tuple[float, float] = (0.88, 100.0)
 
 # ---------------------------------------------------------------------------
-# Braking model
+# Modello frenata
 # ---------------------------------------------------------------------------
-# Maximum brake pressure by speed regime (ABS allows higher values safely)
-BRAKE_MAX_HIGH: float = 0.82   # > 140 km/h   (was 0.65 — ABS prevents lockup)
-BRAKE_MAX_MED:  float = 0.88   # 90–140 km/h  (was 0.78)
-BRAKE_MAX_LOW:  float = 0.93   # < 90 km/h    (was 0.90)
+# Pressione freno massima per regime di velocità (ABS consente valori più alti in sicurezza)
+BRAKE_MAX_HIGH: float = 0.82   # > 140 km/h   (era 0.65 — ABS previene lockup)
+BRAKE_MAX_MED:  float = 0.88   # 90–140 km/h  (era 0.78)
+BRAKE_MAX_LOW:  float = 0.93   # < 90 km/h    (era 0.90)
 
-# Electronic Brake-force Distribution: back off while cornering
+# Distribuzione della forza di frenata elettronica: ridotta durante curva
 EBD_STEER_THRESH: float = 0.08
 EBD_GAIN: float = 0.75
 EBD_FLOOR: float = 0.40
 
 # ---------------------------------------------------------------------------
-# Anti-lock Braking System (ABS)
+# Sistema frenata antibloccaggio (ABS)
 # ---------------------------------------------------------------------------
-ABS_SLIP_THRESHOLD: float = 0.80   # front wheel < 80% of ground speed = lockup
-# Reduction: brake × (1 − lockup / threshold); prevents lockup, allows higher BRAKE_MAX
+ABS_SLIP_THRESHOLD: float = 0.80   # ruota anteriore < 80% della velocità di terreno = lockup
+# Riduzione: freno × (1 − lockup / soglia); previene lockup, consente BRAKE_MAX più alto
 
 # ---------------------------------------------------------------------------
-# Full-throttle override
+# Override accelerazione a fondo
 # ---------------------------------------------------------------------------
-# Apply 100 % throttle when the forward sector sees at least this much clear road.
+# Applica 100% accelerazione quando il settore anteriore vede almeno tanta strada libera.
 FULL_THROTTLE_LOOKAHEAD: float = 65.0
 
 # ---------------------------------------------------------------------------
-# Throttle PI (corner-exit and approach)
+# Accelerazione PI (uscita e approccio curva)
 # ---------------------------------------------------------------------------
 THROTTLE_KP: float = 0.40
 THROTTLE_KI: float = 0.02
 THROTTLE_MAX_INTEGRAL: float = 1.0
 
 # ---------------------------------------------------------------------------
-# Traction control (TCS)
+# Controllo trazione (TCS)
 # ---------------------------------------------------------------------------
 TCS_STEER_THRESH: float = 0.18
-TCS_GAIN_LOW_GEAR: float = 1.45  # gears 1–2
-TCS_GAIN_MID_GEAR: float = 1.20  # gear 3
-TCS_GAIN_HIGH_GEAR: float = 0.70 # gears 4+
+TCS_GAIN_LOW_GEAR: float = 1.45  # marce 1–2
+TCS_GAIN_MID_GEAR: float = 1.20  # marcia 3
+TCS_GAIN_HIGH_GEAR: float = 0.70 # marce 4+
 TCS_MIN_ACCEL: float = 0.25
 
-# Wheel-slip TCS
-WHEEL_RADIUS: float = 0.33        # m — approximate TORCS tyre radius
-TCS_SLIP_THRESHOLD: float = 1.25  # rear spin / expected > this triggers cut
+# TCS pattinamento ruota
+WHEEL_RADIUS: float = 0.33        # m — raggio pneumatico TORCS approssimativo
+TCS_SLIP_THRESHOLD: float = 1.25  # spin posteriore / atteso > questo attiva riduzione
 TCS_SLIP_GAIN: float = 3.0
 
 # ---------------------------------------------------------------------------
-# Gear-shift RPM thresholds
+# Soglie RPM cambio marcia
 # ---------------------------------------------------------------------------
 RPM_UPSHIFT: float = 9000.0
 RPM_DOWNSHIFT_BY_GEAR: dict[int, float] = {
@@ -103,16 +103,16 @@ GEAR_SPEED_CAPS: list[tuple[float, int]] = [
 ]
 
 # ---------------------------------------------------------------------------
-# Apex-seeking: bias track-position target toward the inside of corners
+# Ricerca apice: distorci target posizione tracciato verso interno curva
 # ---------------------------------------------------------------------------
-# Curvature is estimated from the asymmetry of the ±15°–30° sensor pairs:
-#   curvature = (left_avg − right_avg) / (left_avg + right_avg)
-# Positive curvature → track curves right → target negative trackPos (inside).
-CURVE_TRACKPOS_GAIN: float = 0.30   # scale from curvature to trackPos offset
-CURVE_TRACKPOS_MAX:  float = 0.28   # clip to keep car well clear of walls
+# La curvatura è stimata dall'asimmetria delle coppie di sensori ±15°–30°:
+#   curvatura = (left_avg − right_avg) / (left_avg + right_avg)
+# Curvatura positiva → tracciato curva a destra → target trackPos negativo (interno).
+CURVE_TRACKPOS_GAIN: float = 0.30   # scala da curvatura a offset trackPos
+CURVE_TRACKPOS_MAX:  float = 0.28   # clip per mantenere auto lontana da muri
 
 # ---------------------------------------------------------------------------
-# Startup / smoothing / recovery
+# Startup / levigatura / recupero
 # ---------------------------------------------------------------------------
 STARTUP_STEPS: int = 80
 STEER_SMOOTH_SPEED: float = 42.0

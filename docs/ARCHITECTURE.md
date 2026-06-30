@@ -1,6 +1,6 @@
-# Architecture Reference
+# Riferimento architettura
 
-## System Overview
+## Overview sistema
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -47,9 +47,9 @@
 
 ---
 
-## SCR Protocol
+## Protocollo SCR
 
-The Simulated Car Racing (SCR) UDP protocol is a text-based request/response loop.
+Il protocollo UDP SCR (Simulated Car Racing) è un ciclo request/response basato su testo.
 
 ### Handshake
 
@@ -58,36 +58,36 @@ Client → Server:  SCR(init -45 -38 -30 -22 -15 -10 -6 -3 -1 0 1 3 6 10 15 22 3
 Server → Client:  ***identified***
 ```
 
-The 19 floats in the init message define the rangefinder beam angles (degrees), measured from the car's forward axis. Negative = left, positive = right.
+I 19 float nel messaggio init definiscono gli angoli del rangefinder (gradi), misurati dall'asse forward dell'auto. Negativo = sinistra, positivo = destra.
 
-### Sensor Strings
+### Stringhe sensori
 
-Each simulation step (~20 ms / 50 Hz), the server sends one sensor string:
+Ogni step simulazione (~20 ms / 50 Hz), il server invia una stringa sensori:
 
 ```
 (angle 0.012)(curLapTime 12.345)(damage 0)(distFromStart 320.5)
 (distRaced 320.5)(fuel 94.0)(gear 3)(lastLapTime 0)
-(opponents 200 200 200 ... 200)   ← 36 values
+(opponents 200 200 200 ... 200)   ← 36 valori
 (racePos 1)(rpm 6500)(speedX 120.3)(speedY 0.1)(speedZ 0.0)
-(track 12.3 14.1 18.0 ...)        ← 19 values
+(track 12.3 14.1 18.0 ...)        ← 19 valori
 (trackPos 0.02)(wheelSpinVel 25.1 25.2 25.0 25.1)(z 0.34)
 ```
 
-### Control Strings
+### Stringhe di controllo
 
-The client must respond within the step window with:
+Il client deve rispondere entro la finestra di step con:
 
 ```
 (accel 1.0)(brake 0.0)(clutch 0.0)(gear 3)(meta 0)(steer -0.0200)
 ```
 
-### Sentinels
+### Sentinelle
 
-| String | Direction | Meaning |
-|--------|-----------|---------|
-| `***identified***` | Server→Client | Handshake accepted |
-| `***restart***` | Client→Server | Request episode restart |
-| `***shutdown***` | Client→Server | Terminate simulation |
+| String | Direzione | Significato |
+|--------|-----------|-------------|
+| `***identified***` | Server→Client | Handshake accettato |
+| `***restart***` | Client→Server | Richiedi riavvio episodio |
+| `***shutdown***` | Client→Server | Termina simulazione |
 
 ---
 
