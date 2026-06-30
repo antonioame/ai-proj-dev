@@ -28,30 +28,38 @@ TORCS_PORT   (default: 3001)
 
 ---
 
-## Configurazione livrea auto
+## Configurazione livrea auto (solo car1-ow1)
 
 Tutte le risorse della livrea vivono in `livery/` (livello radice): immagini, script di
-installazione/rollback, decoder di debug, file di stato.
+installazione/reset, decoder di debug, file di stato. Lo script gestisce **solo car1-ow1**
+(unica auto usata in gioco) nel vero formato SGI RGB non compresso 512×512 RGBA (verificato
+byte-per-byte contro il file `car1-ow1.rgb` di gioco — non è il formato "Radiance" usato in
+una versione precedente per car1-stock1, ormai rimossa).
 
-Il progetto include una livrea auto personalizzata (`livery/livrea.png`) applicata in modo sicuro e reversibile.
-
-Un solo script gestisce entrambe le auto via `--car` (default `car1-stock1`; converte da PNG.
-Con `--car car1-ow1` copia invece un `.rgb` già pre-convertito, nessuna conversione necessaria).
-
-**Installa livrea:**
+**Installa una nuova livrea da PNG** (converte e salva come `livery/car1-ow1.rgb`, poi installa in TORCS):
 ```bash
-conda run -n ai_env python livery/setup_livery.py --install                  # car1-stock1
-conda run -n ai_env python livery/setup_livery.py --car car1-ow1 --install   # car1-ow1
+conda run -n ai_env python livery/setup_livery.py livery/eagles_livery.png
+```
+
+**Reinstalla la livrea già pronta in `livery/car1-ow1.rgb`** (nessuna conversione, nessun argomento):
+```bash
+conda run -n ai_env python livery/setup_livery.py
+```
+
+**Ripristina la livrea originale IBM** (rigenera `livery/original_IBM_livery/car1-ow1.rgb`
+da `livery/original_IBM_livery/original_IBM_livery.png` e la installa):
+```bash
+conda run -n ai_env python livery/setup_livery.py --reset
 ```
 
 **Controlla stato:**
 ```bash
-conda run -n ai_env python livery/setup_livery.py --status [--car car1-ow1]
+conda run -n ai_env python livery/setup_livery.py --status
 ```
 
-**Ripristina originale (completamente reversibile):**
+**Ripristina l'ultimo backup lato TORCS** (qualunque cosa fosse installata prima dell'ultima `install`):
 ```bash
-conda run -n ai_env python livery/setup_livery.py --rollback [--car car1-ow1]
+conda run -n ai_env python livery/setup_livery.py --rollback
 ```
 
 **Debug/anteprima** (decodifica `.rgb` → PNG per ispezione visiva):
@@ -61,10 +69,10 @@ conda run -n ai_env python livery/decode_rgb.py
 ```
 
 **Come funziona:**
-- Converte `livery/livrea.png` (PNG) → formato RGB Radiance (nativo TORCS)
-- Applica alla texture dell'auto `car1-stock1`
-- Backup automatico dell'originale `car1-stock1.rgb` in `.rgb.backup`
-- Può essere ripristinato all'originale senza alcuna perdita
+- Da PNG: converte in formato SGI RGB 512×512 RGBA non compresso (4 piani R,G,B,A) e salva il risultato in `livery/car1-ow1.rgb`
+- Applica alla texture dell'auto `car1-ow1`
+- Backup automatico dell'originale `car1-ow1.rgb` (lato TORCS) in `.rgb.backup`
+- Reset IBM e rollback da backup sono entrambi completamente reversibili e indipendenti
 
 ---
 
