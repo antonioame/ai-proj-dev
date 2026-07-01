@@ -1,7 +1,7 @@
 """Run the BC driver (_DRIVER/) against a TORCS server.
 
 Usage:
-    python scripts/run_agent.py [--laps 1] [--host HOST] [--port PORT] [--telemetry]
+    python run_agent.py [--laps 10] [--host HOST] [--port PORT] [--telemetry]
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from _DRIVER.driver import BCDriver
 from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
@@ -24,7 +24,7 @@ from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent
 STATUS_EVERY = 50  # log one status line per simulated second (~50 steps/s)
 DRIVER_NAME = "bc"
 

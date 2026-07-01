@@ -11,9 +11,10 @@ two neural network models.
 
 | Path | Description |
 |---|---|
+| `run_agent.py` | Main entry point: runs the driving agent against a TORCS server |
 | `_DRIVER/` | Driving agent: `driver.py` (hybrid BC driver), `models/` (trained weights), `bc_source_driver/` (source driver used to generate training data) |
 | `torcs_env/` | SCR protocol implementation: UDP client, sensor parsing, action encoding, race configuration |
-| `scripts/` | Entry points to run, record, and evaluate the agent |
+| `scripts/` | Additional entry points: recording and evaluation |
 | `livery/` | Car livery assets and installation scripts |
 | `data/` | Recorded telemetry (CSV) used to train the driving models |
 
@@ -50,8 +51,10 @@ pip install torch numpy pandas
 2. From the project root, run the driving agent:
 
    ```bash
-   python scripts/run_agent.py --laps 1
+   python run_agent.py --laps 10
    ```
+
+   The `--laps` flag defaults to 10 if omitted.
 
 If the TORCS server runs on a different machine, set its address before
 running the agent:
