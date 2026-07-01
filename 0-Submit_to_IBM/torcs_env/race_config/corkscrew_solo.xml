@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- TORCS Quick Race configuration: Corkscrew circuit, 1 lap, single SCR driver.
+     Launch with: torcs -r path/to/corkscrew_solo.xml
+     The SCR server plugin listens on UDP port 3001 for the Python client. -->
+<!DOCTYPE params SYSTEM "params.dtd">
+<params name="Quick Race">
+  <section name="Header">
+    <attstr name="name"            val="Quick Race"/>
+    <attstr name="description"     val="Corkscrew solo lap — AI training"/>
+    <attnum name="priority"        val="10"/>
+    <attstr name="author"          val="torcs-ai"/>
+  </section>
+
+  <section name="Tracks">
+    <section name="1">
+      <attstr name="name"     val="corkscrew"/>
+      <attstr name="category" val="road"/>
+    </section>
+  </section>
+
+  <section name="Races">
+    <section name="1">
+      <attstr name="name"     val="Quick Race"/>
+      <attstr name="type"     val="race"/>
+      <attnum name="laps"     val="999"/>
+      <attstr name="start"    val="standing"/>
+      <attnum name="fuel"     val="0"/>   <!-- 0 = no fuel consumption -->
+      <attnum name="damage"   val="0"/>   <!-- 0 = no damage model     -->
+    </section>
+  </section>
+
+  <section name="Drivers">
+    <section name="1">
+      <attnum name="idx"      val="0"/>
+      <attstr name="module"   val="scr_server"/>
+      <attstr name="name"     val="SCR Server 0"/>
+    </section>
+  </section>
+
+  <section name="Configuration">
+    <section name="1">
+      <!-- QuickRace runs headless when invoked via -r flag -->
+      <attstr name="type" val="race"/>
+    </section>
+  </section>
+</params>
