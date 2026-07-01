@@ -1,13 +1,13 @@
 """
-Source driver used to generate the telemetry that trained bc_driver/models/bc_from_attempt1_v1.
+Source driver used to generate the telemetry that trained _DRIVER/models/bc_from_attempt1_v1.
 This is an earlier driving-net attempt, kept only to regenerate training samples.
 Run this again if you need fresh samples to retrain that BC model.
 
 Usage:
-    conda run -n ai_env python bc_driver/bc_source_driver/run_attempt_model.py [--host localhost] [--port 3001]
+    conda run -n ai_env python _DRIVER/bc_source_driver/run_attempt_model.py [--host localhost] [--port 3001]
 
 The model must be pre-trained:
-    conda run -n ai_env python bc_driver/bc_source_driver/train_attempt_model.py --csv data/<telemetry>.csv
+    conda run -n ai_env python _DRIVER/bc_source_driver/train_attempt_model.py --csv data/<telemetry>.csv
 """
 
 import sys
@@ -80,7 +80,7 @@ def main(host: str = "localhost", port: int = 3001):
 
     if not model_path.exists():
         print(f"[ERROR] Model not found: {model_path}")
-        print("Run: conda run -n ai_env python bc_driver/bc_source_driver/train_attempt_model.py --csv data/<telemetry>.csv")
+        print("Run: conda run -n ai_env python _DRIVER/bc_source_driver/train_attempt_model.py --csv data/<telemetry>.csv")
         sys.exit(1)
 
     if not scaler_path.exists():

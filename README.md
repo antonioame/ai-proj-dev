@@ -62,7 +62,7 @@ conda run -n ai_env python scripts/evaluate.py --laps 1
 agli script principali):
 
 ```bash
-conda run -n ai_env python rule_based_archived/run_rule_based.py --laps 1
+conda run -n ai_env python old_versions_drivers/project_V2/run_rule_based.py --laps 1
 ```
 
 ---
@@ -83,11 +83,11 @@ conda run -n ai_env python livery/setup_livery.py --reset          # ripristina 
 ## Struttura del progetto
 
 ```
-bc_driver/            Driver in primo piano — candidato alla consegna
+_DRIVER/            Driver in primo piano — candidato alla consegna
   driver.py             BCDriver, blend di due modelli
   models/               Modelli allenati (.pth/.npz)
   bc_source_driver/      Driver sorgente per rigenerare i dati di training
-rule_based_archived/  Driver isolato, di solo riferimento (~148 s)
+old_versions_drivers/project_V2/  Driver isolato, di solo riferimento (~148 s)
 livery/               Risorse della livrea auto (car1-ow1)
 torcs_env/            Protocollo SCR (client UDP, sensori, azioni, config gara)
 scripts/              Entry point CLI (run_agent, evaluate, record_agent, ...)

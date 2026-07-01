@@ -1,8 +1,8 @@
 """Minimal standalone runner for the archived rule_based driver.
 
-Not wired into the main bc_driver pipeline (scripts/run_agent.py etc).
+Not wired into the main _DRIVER pipeline (scripts/run_agent.py etc).
 Usage:
-    python rule_based_archived/run_rule_based.py [--laps 1] [--host HOST] [--port PORT]
+    python old_versions_drivers/project_V2/run_rule_based.py [--laps 1] [--host HOST] [--port PORT]
 """
 
 from __future__ import annotations
@@ -11,9 +11,9 @@ import argparse
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from rule_based_archived.driver import RuleBasedDriver
+from old_versions_drivers.project_V2.driver import RuleBasedDriver
 from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 
 

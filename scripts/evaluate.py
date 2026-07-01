@@ -1,4 +1,4 @@
-"""Evaluate the BC driver (bc_driver/) and save a structured results JSON.
+"""Evaluate the BC driver (_DRIVER/) and save a structured results JSON.
 
 Usage:
     python scripts/evaluate.py [--laps 1] [--output results/eval.json]
@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from bc_driver.driver import BCDriver
+from _DRIVER.driver import BCDriver
 from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

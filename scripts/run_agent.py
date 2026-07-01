@@ -1,4 +1,4 @@
-"""Run the BC driver (bc_driver/) against a TORCS server.
+"""Run the BC driver (_DRIVER/) against a TORCS server.
 
 Usage:
     python scripts/run_agent.py [--laps 1] [--host HOST] [--port PORT] [--telemetry]
@@ -18,7 +18,7 @@ from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from bc_driver.driver import BCDriver
+from _DRIVER.driver import BCDriver
 from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

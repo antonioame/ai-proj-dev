@@ -1,4 +1,4 @@
-"""Record a lap with the BC driver (bc_driver/) and save telemetry to CSV.
+"""Record a lap with the BC driver (_DRIVER/) and save telemetry to CSV.
 
 Usage:
     python scripts/record_agent.py [--laps 1] [--host HOST] [--port PORT]
@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from bc_driver.driver import BCDriver
+from _DRIVER.driver import BCDriver
 from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

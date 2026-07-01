@@ -3,8 +3,8 @@ Train Behavioral Cloning model from the earlier driving-net attempt's data.
 
 Usage:
     # First: collect 5 laps from the attempt model
-    conda run -n ai_env python bc_driver/bc_source_driver/train_attempt_model.py --csv data/rule_based_20260628_203648.csv
-    conda run -n ai_env python bc_driver/bc_source_driver/run_attempt_model.py
+    conda run -n ai_env python _DRIVER/bc_source_driver/train_attempt_model.py --csv data/rule_based_20260628_203648.csv
+    conda run -n ai_env python _DRIVER/bc_source_driver/run_attempt_model.py
 
     # Second: augment data for more aggressive driving
     conda run -n ai_env python scripts/augment_speed.py \\
@@ -113,7 +113,7 @@ def main():
     parser.add_argument("--augmented", type=str, required=True,
                         help="Augmented CSV pattern (e.g., data/attempt_model_augmented_*.csv)")
     parser.add_argument("--output-name", type=str, default="bc_from_attempt1_v2",
-                        help="Output model name (saved as bc_driver/models/<name>.pth, bc_driver/models/<name>.npz)")
+                        help="Output model name (saved as _DRIVER/models/<name>.pth, _DRIVER/models/<name>.npz)")
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--lr", type=float, default=1e-3)
@@ -224,7 +224,7 @@ def main():
             print(f"Epoch {epoch:3d}/{args.epochs} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}{marker}")
 
     # Save model
-    output_dir = Path(__file__).resolve().parent.parent / "bc_driver" / "models"
+    output_dir = Path(__file__).resolve().parent.parent / "_DRIVER" / "models"
     output_dir.mkdir(exist_ok=True)
 
     model_path = output_dir / f"{args.output_name}.pth"
@@ -239,7 +239,7 @@ def main():
 
     # Show instructions
     print(f"\n[NEXT] To use this model:")
-    print(f"  1. Update bc_driver/driver.py to load: bc_driver/models/{args.output_name}.pth")
+    print(f"  1. Update _DRIVER/driver.py to load: _DRIVER/models/{args.output_name}.pth")
     print(f"  2. Run: conda run -n ai_env python scripts/run_agent.py --laps 1")
 
 

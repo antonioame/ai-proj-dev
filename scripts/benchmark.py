@@ -17,7 +17,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 LEDGER_PATH = PROJECT_ROOT / "laptime_ledger.csv"
 LEDGER_FIELDS = [
-    "timestamp", "config_id", "git_sha",
+    "config_id", "git_sha",
     "best_lap_s", "median_lap_s", "top_speed_kmh",
     "off_track_pct", "damage", "valid", "notes",
 ]
@@ -96,7 +96,6 @@ def main() -> None:
     valid = best is not None and off_track_pct < 5.0 and damage_total == 0
 
     row = {
-        "timestamp": datetime.now().isoformat(timespec="seconds"),
         "config_id": config_id,
         "git_sha": _git_sha(),
         "best_lap_s": f"{best:.3f}" if best else "",
