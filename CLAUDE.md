@@ -97,7 +97,7 @@ conda run -n ai_env python livery/decode_rgb.py
 - **Fase 3 Reinforcement Learning** — mismatch dello spazio di osservazione; eliminato
 - **Fase C Driver linea ottimale** (`drivers/optimal/`) — non funzionante in pista, rimosso insieme a `scripts/build_track_map.py`, `torcs_env/track_map.py`, `torcs_env/track_data/`, e i relativi doc in `docs/`
 - **Tentativi di driving agent esterni** (`old_project_material/project_made_by_my_friend/`, `_V2/`, `old_project_material/Friends_Projects/`) — vecchie implementazioni di terzi testate una per una, tutte non funzionanti (modelli mancanti, import rotti, dataset mancanti). Rimosse interamente. L'unico tentativo precedente ancora in uso è il driving-net in `_DRIVER/bc_source_driver/attempt_model/` (vedi sopra), conservato perché serve a rigenerare i dati di training del driver `bc`.
-- **Vecchio driver personale** (`old_project_material/torcs_jm_par.py`) — testato: tempo 123.0 s, ma marce che vanno a limitatore in 1ª/2ª; tenuto solo come riferimento, non integrato negli script.
+- **Vecchio driver personale** (`old_versions_drivers/project_V1/torcs_jm_par_tested.py`) — testato: tempo 123.0 s, ma marce che vanno a limitatore in 1ª/2ª; tenuto solo come riferimento, non integrato negli script. Variante più aggressiva e mai testata affiancata in `torcs_jm_par.py` nella stessa cartella.
 
 ---
 
@@ -145,9 +145,11 @@ _DRIVER/           Driver IN PRIMO PIANO — candidato alla consegna (125.8 s)
   driver.py          BCDriver, blend di due modelli
   models/             bc_from_attempt1_v1.*, bc_from_olddriver_v1.*
   bc_source_driver/   Driver sorgente (tentativo precedente) per rigenerare i dati di bc_from_attempt1_v1
-old_versions_drivers/project_V2/  Driver ISOLATO, di solo riferimento (~148 s, non in registry/run_agent)
-  driver.py
-  run_rule_based.py   Script minimale per eseguirlo standalone
+old_versions_drivers/
+  project_V1/         Vecchio progetto personale (torcs_jm_par*.py), solo riferimento
+  project_V2/         Driver ISOLATO, di solo riferimento (~148 s, non in registry/run_agent)
+    driver.py
+    run_rule_based.py   Script minimale per eseguirlo standalone
 livery/               Tutte le risorse della livrea auto (immagini, setup/rollback, decoder debug)
 scripts/
   run_agent.py      Esegue il driver bc, opzionalmente salva telemetria + JSON risultati
