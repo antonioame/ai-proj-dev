@@ -110,22 +110,24 @@ There is no driver registry anymore — `scripts/run_agent.py`, `evaluate.py` an
 active use). To experiment with an alternative:
 
 1. Write a standalone driver module following the `rule_based_archived/` pattern:
-   a `driver.py` with a class extending `BaseDriver`, plus your own minimal
-   run script (see `rule_based_archived/run_rule_based.py`) — don't wire it into
-   the shared scripts.
+   a plain `driver.py` class (no shared base class — see "Driver contract" in
+   `API_REFERENCE.md`), plus your own minimal run script (see
+   `rule_based_archived/run_rule_based.py`) — don't wire it into the shared scripts.
 
 ```python
-from drivers.base_driver import BaseDriver
 from torcs_env.sensors import SensorState
 from torcs_env.actions import Action
 
-class MyDriver(BaseDriver):
+class MyDriver:
     def step(self, state: SensorState) -> Action:
         # your logic here
         return Action(steer=0.0, accel=0.5, brake=0.0, gear=1)
 
     def reset(self) -> None:
-        pass  # reset any internal state before a new episode
+        pass  # only needed if your run script calls it
+
+    def on_restart(self) -> None:
+        pass  # only needed if your run script calls it
 ```
 
 2. Only if it's meant to replace `bc_driver` as the driver to deliver, swap the
@@ -175,7 +177,6 @@ Or edit the constants directly in the file for persistent changes.
 | Directory | Contents | Git-tracked |
 |-----------|----------|-------------|
 | `torcs_env/` | SCR protocol layer | Yes |
-| `drivers/` | Shared `BaseDriver` interface only | Yes |
 | `bc_driver/` | Driver IN PRIMO PIANO — candidato alla consegna, + i suoi modelli | Yes |
 | `rule_based_archived/` | Baseline isolata, di solo riferimento (~148 s) | Yes |
 | `livery/` | Risorse della livrea auto (car1-ow1) | Yes |

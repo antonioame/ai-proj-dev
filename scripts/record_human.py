@@ -27,7 +27,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from drivers.base_driver import BaseDriver
 from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 from torcs_env.actions import Action
 
@@ -47,9 +46,12 @@ FIELDNAMES = [
 ]
 
 
-class NeutralDriver(BaseDriver):
+class NeutralDriver:
     def step(self, _):
         return Action(accel=0.3, gear=1)
+
+    def on_restart(self) -> None:
+        pass
 
 
 def record(host: str | None = None, port: int | None = None) -> Path:

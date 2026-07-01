@@ -8,7 +8,6 @@ from __future__ import annotations
 import math
 import time
 
-from drivers.base_driver import BaseDriver
 from torcs_env.actions import Action
 from torcs_env.sensors import SensorState
 
@@ -125,15 +124,11 @@ REVERSE_DURATION: float = 2.0
 STUCK_STARTUP_IMMUNITY: float = 6.0
 
 
-class RuleBasedDriver(BaseDriver):
+class RuleBasedDriver:
     """Physics-optimised steering + braking + RPM gearbox."""
 
     def __init__(self) -> None:
         self.reset()
-
-    # ------------------------------------------------------------------
-    # BaseDriver interface
-    # ------------------------------------------------------------------
 
     def reset(self) -> None:
         self._speed_integral: float = 0.0

@@ -141,8 +141,6 @@ conda run -n ai_env python rule_based_archived/run_rule_based.py --laps 1
 
 ```
 torcs_env/          Protocollo SCR (sensori, azioni, client UDP, XML gara)
-drivers/
-  base_driver.py    Interfaccia astratta condivisa (BaseDriver)
 bc_driver/           Driver IN PRIMO PIANO — candidato alla consegna (125.8 s)
   driver.py          BCDriver, blend di due modelli
   models/             bc_from_attempt1_v1.*, bc_from_olddriver_v1.*

@@ -9,7 +9,6 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-from drivers.base_driver import BaseDriver
 from torcs_env.actions import Action
 from torcs_env.sensors import SensorState
 
@@ -55,7 +54,7 @@ def _load_bc_model(model_path: Path, stats_path: Path, device: torch.device):
     return model, X_mean, X_std
 
 
-class BCDriver(BaseDriver):
+class BCDriver:
     """Hybrid BC driver: blends two models based on straight vs corner context.
 
     - straight_model: trained on rule_based data — better on straights

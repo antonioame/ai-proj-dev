@@ -180,21 +180,20 @@ meta   → unchanged
 
 ---
 
-## `drivers.base_driver` — BaseDriver
+## Driver contract (no shared base class)
+
+There is no `BaseDriver` abstract class — each driver is a plain class that the
+calling script (`run_agent.py`, `evaluate.py`, `record_agent.py`, `record_human.py`,
+`run_rule_based.py`) uses via duck typing. A driver only needs to implement the
+methods its caller actually invokes:
 
 ```python
-from abc import ABC, abstractmethod
-
-class BaseDriver(ABC):
-    @abstractmethod
-    def step(self, state: SensorState) -> Action: ...
-
-    def on_restart(self) -> None: ...    # called on RESTART sentinel
-    def on_shutdown(self) -> None: ...   # called on SHUTDOWN sentinel
-    def reset(self) -> None: ...         # called before a new episode
+def step(self, state: SensorState) -> Action: ...   # required by every caller
+def on_restart(self) -> None: ...                    # only if the caller calls it
+def reset(self) -> None: ...                         # only if the caller calls it
 ```
 
-All non-abstract methods are no-ops by default. Override as needed.
+`on_shutdown()` is not called by any current script.
 
 ---
 
@@ -204,7 +203,7 @@ Isolated driver, ~148 s baseline, not wired into `scripts/run_agent.py` — run 
 standalone with `rule_based_archived/run_rule_based.py` (see `CLAUDE.md`).
 
 ```python
-class RuleBasedDriver(BaseDriver):
+class RuleBasedDriver:
     def step(self, state: SensorState) -> Action: ...
     def reset(self) -> None: ...         # resets PI integral and timers
 ```
@@ -265,7 +264,7 @@ drv = d.RuleBasedDriver()
 **Driver principale, candidato alla consegna** (125.790 s, batte rule_based).
 
 ```python
-class BCDriver(BaseDriver):
+class BCDriver:
     def __init__(self): ...   # no args — loads both models synchronously at init
     def step(self, state: SensorState) -> Action: ...
     def on_restart(self) -> None: ...

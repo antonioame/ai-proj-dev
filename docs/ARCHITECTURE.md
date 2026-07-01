@@ -28,14 +28,10 @@
 │      - 36 opponent sensors         - gear, clutch, meta         │
 │      - vehicle dynamics            - to_string() → SCR fmt     │
 │      ▼                                 ▲                        │
-│  drivers/base_driver.py                │                        │
-│      BaseDriver (ABC)                  │                        │
-│      .step(state) → action            │                        │
-│           ▲                            │                        │
 │     ┌─────┴──────┐                     │                        │
 │     │            │                     │                        │
-│  RuleBasedDriver  BCDriver ─── MLPPolicy.predict()             │
-│  (Phase 1)       (Phase 2)     (loads .pth checkpoint)         │
+│  RuleBasedDriver  BCDriver ─── two BCPolicy MLPs (blend)       │
+│  (archiviato)     (in primo piano, .step(state) → Action)      │
 │                                                                 │
 │  scripts/                                                       │
 │    run_agent.py    ← run a driver for N laps                   │
@@ -118,9 +114,9 @@ No circular imports. Each layer only depends downward.
 2. SensorState.from_string(raw_str)
        │ regex tokenise "(key val...)" → typed dataclass fields
        ▼
-3. BaseDriver.step(state) → Action
+3. driver.step(state) → Action  (RuleBasedDriver and BCDriver both expose this — no shared base class)
        │ RuleBasedDriver: P-control steering + PI throttle + physics braking
-       │ BCDriver: normalise features → MLPPolicy.predict() → Action
+       │ BCDriver: normalise features → blend of two BCPolicy MLPs → Action
        ▼
 4. Action.clamp() → clamped Action
        ▼
