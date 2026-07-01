@@ -95,16 +95,14 @@ Il client deve rispondere entro la finestra di step con:
 
 ```
 scripts/run_agent.py
-  └─ drivers/rule_based/driver.py  (RuleBasedDriver)
-  └─ drivers/bc/driver.py          (BCDriver)
-       └─ training/behavioral_cloning/model.py  (MLPPolicy)
+  └─ bc_driver/driver.py           (BCDriver)
   └─ torcs_env/client.py           (TORCSClient)
        └─ torcs_env/sensors.py     (SensorState)
        └─ torcs_env/actions.py     (Action)
 
-training/behavioral_cloning/train.py
-  └─ training/behavioral_cloning/dataset.py  (TelemetryDataset)
-  └─ training/behavioral_cloning/model.py    (MLPPolicy)
+rule_based_archived/run_rule_based.py   (standalone, not wired into run_agent.py)
+  └─ rule_based_archived/driver.py      (RuleBasedDriver)
+  └─ torcs_env/client.py                (TORCSClient)
 ```
 
 No circular imports. Each layer only depends downward.

@@ -1,6 +1,6 @@
-# Data Directory — Human Telemetry
+# Data Directory — Telemetry
 
-This directory stores recorded telemetry CSV files used for Phase 2 Behavioral Cloning.
+This directory stores recorded telemetry CSV files used to train/retrain the BC driver (`bc_driver/`).
 
 ## CSV Schema
 
@@ -24,21 +24,20 @@ This directory stores recorded telemetry CSV files used for Phase 2 Behavioral C
 
 ## How to Record a Lap
 
-### Option A: Record rule-based driver (immediate, no human required)
-
 ```bash
-# Mac / Linux (with TORCS running on Windows at TORCS_HOST)
-TORCS_HOST=192.168.1.X python scripts/record_human.py --driver rule_based
+TORCS_HOST=192.168.1.X python scripts/record_human.py
 ```
 
-### Option B: Record while the rule-based driver also sends actions
-Since SCR does not support a true observer mode, `record_human.py` runs the
-selected driver and records its sensor+action data simultaneously.
+Since SCR does not support a true observer mode, `record_human.py` drives with a
+fixed neutral action (shadow mode) while recording every sensor+action frame.
+
+To record telemetry from the BC driver itself instead, use `scripts/record_agent.py`
+(see `CLAUDE.md`).
 
 ## File Naming
 
-Files are auto-named `human_YYYYMMDD_HHMMSS.csv`.  
-Keep at least **5 complete laps** before starting Phase 2 training.
+Files are auto-named `human_YYYYMMDD_HHMMSS.csv`.
+Keep at least **5 complete laps** before using a recording set for training.
 
 ## What Happens to Large Files
 

@@ -198,7 +198,10 @@ All non-abstract methods are no-ops by default. Override as needed.
 
 ---
 
-## `drivers.rule_based.driver` — RuleBasedDriver
+## `rule_based_archived.driver` — RuleBasedDriver
+
+Isolated driver, ~148 s baseline, not wired into `scripts/run_agent.py` — run it
+standalone with `rule_based_archived/run_rule_based.py` (see `CLAUDE.md`).
 
 ```python
 class RuleBasedDriver(BaseDriver):
@@ -209,7 +212,7 @@ class RuleBasedDriver(BaseDriver):
 All behaviour is controlled by module-level constants. Import and override them before instantiating the driver:
 
 ```python
-from drivers.rule_based import driver as d
+from rule_based_archived import driver as d
 d.STEER_ANGLE_GAIN = 2.5
 d.MAX_SPEED = 180.0
 drv = d.RuleBasedDriver()
@@ -257,104 +260,32 @@ drv = d.RuleBasedDriver()
 
 ---
 
-## `drivers.bc.driver` — BCDriver
+## `bc_driver.driver` — BCDriver
+
+**Driver principale, candidato alla consegna** (125.790 s, batte rule_based).
 
 ```python
 class BCDriver(BaseDriver):
-    def __init__(self, model_path: str = "models/bc_v1.pth"): ...
+    def __init__(self): ...   # no args — loads both models synchronously at init
     def step(self, state: SensorState) -> Action: ...
+    def on_restart(self) -> None: ...
+    def reset(self) -> None: ...
 ```
 
-Loads the checkpoint in a background daemon thread to avoid blocking the SCR handshake. Returns a safe fallback action (`accel=0.3, steer=0, brake=0, gear=1`) while loading.
+Blend ibrido di due modelli `BCPolicy` (MLP, 26 input, hidden `[128, 64]`), caricati
+da `bc_driver/models/` (path relativo a `bc_driver/driver.py`, non alla cwd):
+- `bc_from_attempt1_v1.pth`/`.npz` — modello "rettilineo", allenato su dati generati
+  dal driving-net in `bc_driver/bc_source_driver/attempt_model/`
+- `bc_from_olddriver_v1.pth`/`.npz` — modello "curva"
 
-`model_path` is relative to the **project root** (where `scripts/` lives).
+Il blend è pesato da `state.track[9]` (distanza frontale): sopra `STRAIGHT_THRESHOLD`
+(120 m) modello rettilineo puro, sotto `CORNER_THRESHOLD` (60 m) modello curva puro,
+lineare in mezzo. Guadagni finali: `STEER_GAIN=1.8`, `ACCEL_GAIN=1.40`, `BRAKE_GAIN=0.80`.
+Nei primi `STARTUP_STEPS` (80) passi, accelerazione piena e sterzo nullo per evitare
+input fuori distribuzione a velocità ≈0.
 
----
-
-## `training.behavioral_cloning.dataset` — TelemetryDataset
-
-```python
-from torch.utils.data import Dataset
-
-class TelemetryDataset(Dataset):
-    SENSOR_COLS = ["speedX", "trackPos", "angle", "rpm", "gear", "damage"]
-    ACTION_COLS = ["steer", "accel", "brake", "gear_out"]
-
-    def __init__(
-        self,
-        csv_paths: list[str | Path],
-        sensor_cols: list[str] = SENSOR_COLS,
-        action_cols: list[str] = ACTION_COLS,
-        normalise: bool = True,
-    ): ...
-
-    @property
-    def input_dim(self) -> int: ...    # len(sensor_cols)
-    @property
-    def output_dim(self) -> int: ...   # len(action_cols)
-
-    def normalisation(self) -> tuple[np.ndarray, np.ndarray]:
-        """Return (mean, std) arrays used for input normalisation."""
-```
-
-`__getitem__` returns `(sensor_tensor, action_tensor)` as `torch.float32`.
-
----
-
-## `training.behavioral_cloning.model` — MLPPolicy
-
-```python
-import torch.nn as nn
-
-class MLPPolicy(nn.Module):
-    def __init__(
-        self,
-        input_dim: int,
-        hidden_dims: list[int] = [256, 256, 128],
-        gear_classes: int = 8,      # classes for gear: -1, 0, 1, 2, 3, 4, 5, 6
-    ): ...
-
-    def forward(self, x: Tensor) -> dict[str, Tensor]:
-        """Training mode — returns raw logits."""
-        # keys: "steer", "accel", "brake", "gear_logits"
-
-    def predict(self, x: Tensor) -> dict[str, Tensor]:
-        """Inference mode — no grad, gear as argmax."""
-        # keys: "steer", "accel", "brake", "gear"
-        # gear value: argmax(logits) - 1  →  range [-1, 6]
-```
-
----
-
-## `training.behavioral_cloning.train` — train()
-
-```python
-def train(
-    data_paths: list[str],
-    output_path: str = "models/bc_v1.pth",
-    epochs: int = 50,
-    batch_size: int = 256,
-    lr: float = 1e-3,
-    val_fraction: float = 0.1,
-    hidden_dims: list[int] | None = None,   # default [256, 256, 128]
-) -> dict:
-    """
-    Train MLPPolicy on telemetry CSVs.
-    Returns history dict {"history": [{"epoch", "train_loss", "val_loss"}, ...]}.
-    Saves checkpoint to output_path.
-    """
-```
-
-### CLI
-
-```bash
-python -m training.behavioral_cloning.train \
-    --data "data/human_*.csv" \
-    --output models/bc_v1.pth \
-    --epochs 50 \
-    --batch-size 256 \
-    --lr 1e-3
-```
+Se uno dei quattro file modello manca, `__init__` solleva `FileNotFoundError` — non
+c'è fallback silenzioso.
 
 ---
 
@@ -362,14 +293,13 @@ python -m training.behavioral_cloning.train \
 
 ```python
 def run(
-    driver_name: str,          # "rule_based" | "bc_model"
     laps: int = 1,
     host: str | None = None,   # overrides TORCS_HOST env var
     port: int | None = None,   # overrides TORCS_PORT env var
     save_telemetry: bool = False,
 ) -> dict:
     """
-    Run driver for `laps` laps. Returns metrics dict.
+    Run the BC driver for `laps` laps. Returns metrics dict.
     Saves JSON to results/ and optional CSV to data/.
     """
 ```
@@ -378,7 +308,6 @@ def run(
 
 ```bash
 python scripts/run_agent.py \
-    --driver rule_based \
     --laps 1 \
     --host 192.168.1.100 \
     --port 3001 \
@@ -391,14 +320,13 @@ python scripts/run_agent.py \
 
 ```python
 def evaluate(
-    driver_name: str,
     laps: int = 1,
     host: str | None = None,
     port: int | None = None,
-    output_path: str | None = None,   # default: results/eval_{driver}_{ts}.json
+    output_path: str | None = None,   # default: results/eval_bc_{ts}.json
 ) -> dict:
     """
-    Evaluate driver and save structured metrics JSON.
+    Evaluate the BC driver and save structured metrics JSON.
     Returns the metrics dict.
     """
 ```
@@ -410,7 +338,7 @@ Output keys: `driver`, `evaluated_at`, `laps_requested`, `laps_completed`,
 ### CLI
 
 ```bash
-python scripts/evaluate.py --driver rule_based --laps 1
+python scripts/evaluate.py --laps 1
 ```
 
 ---
@@ -419,12 +347,11 @@ python scripts/evaluate.py --driver rule_based --laps 1
 
 ```python
 def record(
-    driver_name: str = "rule_based",  # "rule_based" | "neutral"
     host: str | None = None,
     port: int | None = None,
 ) -> Path:
     """
-    Record one complete lap to data/human_{timestamp}.csv.
+    Shadow-record one complete lap (fixed neutral action) to data/human_{timestamp}.csv.
     Returns path to the saved CSV.
     """
 ```
@@ -434,5 +361,5 @@ Lap completion is detected by `state.lastLapTime > 0`.
 ### CLI
 
 ```bash
-python scripts/record_human.py --driver rule_based
+python scripts/record_human.py
 ```
