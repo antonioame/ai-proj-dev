@@ -2,11 +2,8 @@
 
 Agente AI che completa un giro del circuito Corkscrew in TORCS il più velocemente
 possibile da una partenza da fermo, senza schiantarsi. Il driver principale
-(candidato alla consegna) è un modello di **behavioral cloning**: **125.790 s**,
+(candidato alla consegna finale) è un modello di **behavioral cloning**: **125.790 s**,
 199.0 km/h di punta.
-
-Tutto gira su **un'unica macchina Windows** con TORCS installato — nessuna
-configurazione di rete o multi-computer necessaria.
 
 ---
 
@@ -29,7 +26,7 @@ pip install torch --index-url https://download.pytorch.org/whl/cu121   # con GPU
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 ```
 
-Alcuni script accessori richiedono anche `Pillow`, `joblib`, `h5py` — installali se un
+Alcuni script accessori richiedono anche `Pillow`, `joblib`, `h5py` — installare se un
 import fallisce (`pip install pillow joblib h5py`).
 
 ---
