@@ -28,49 +28,49 @@ import snakeoil3_jm2 as snakeoil3
 
 class DrivingNet(nn.Module):
     """Earlier driving-net attempt (precursor to the BC straight-line model)."""
-    def __init__(self, dim_ingresso: int, numero_marce: int = 8):
+    def __init__(self, input_dim: int, num_gears: int = 8):
         super().__init__()
         self.backbone = nn.Sequential(
-            nn.Linear(dim_ingresso, 128), nn.ReLU(), nn.Dropout(0.1),
+            nn.Linear(input_dim, 128), nn.ReLU(), nn.Dropout(0.1),
             nn.Linear(128, 128), nn.ReLU(), nn.Dropout(0.1),
             nn.Linear(128, 64), nn.ReLU(),
         )
         self.head_steer = nn.Linear(64, 1)
         self.head_accel_brake = nn.Linear(64, 2)
-        self.head_gear = nn.Linear(64, numero_marce)
+        self.head_gear = nn.Linear(64, num_gears)
 
-    def forward(self, dati_ingresso):
-        strato_nascosto = self.backbone(dati_ingresso)
+    def forward(self, input_data):
+        hidden_layer = self.backbone(input_data)
         return (
-            torch.tanh(self.head_steer(strato_nascosto)),
-            torch.sigmoid(self.head_accel_brake(strato_nascosto)),
-            self.head_gear(strato_nascosto),
+            torch.tanh(self.head_steer(hidden_layer)),
+            torch.sigmoid(self.head_accel_brake(hidden_layer)),
+            self.head_gear(hidden_layer),
         )
 
 
-def build_input_vector(sensori_stato, colonne_selezionate):
+def build_input_vector(sensor_state, selected_columns):
     """Build normalized input vector from sensors (TORCS format)."""
-    distanze_tracciato = sensori_stato.get("track", [200.0] * 19)
-    rotazione_ruote = sensori_stato.get("wheelSpinVel", [0.0] * 4)
+    track_distances = sensor_state.get("track", [200.0] * 19)
+    wheel_rotation = sensor_state.get("wheelSpinVel", [0.0] * 4)
 
-    if len(distanze_tracciato) != 19:
-        distanze_tracciato = [200.0] * 19
-    if len(rotazione_ruote) != 4:
-        rotazione_ruote = [0.0] * 4
+    if len(track_distances) != 19:
+        track_distances = [200.0] * 19
+    if len(wheel_rotation) != 4:
+        wheel_rotation = [0.0] * 4
 
-    dizionario_caratteristiche = {}
+    feature_dict = {}
     for i in range(19):
-        dizionario_caratteristiche[f"track_{i}"] = float(distanze_tracciato[i])
+        feature_dict[f"track_{i}"] = float(track_distances[i])
     for i in range(4):
-        dizionario_caratteristiche[f"wheel_{i}"] = float(rotazione_ruote[i])
+        feature_dict[f"wheel_{i}"] = float(wheel_rotation[i])
 
     # Map TORCS speedX to 'speed' (as in our CSV training data)
-    dizionario_caratteristiche["speed"] = float(sensori_stato.get("speedX", 0))
-    dizionario_caratteristiche["trackPos"] = float(sensori_stato.get("trackPos", 0))
-    dizionario_caratteristiche["angle"] = float(sensori_stato.get("angle", 0))
-    dizionario_caratteristiche["rpm"] = float(sensori_stato.get("rpm", 0))
+    feature_dict["speed"] = float(sensor_state.get("speedX", 0))
+    feature_dict["trackPos"] = float(sensor_state.get("trackPos", 0))
+    feature_dict["angle"] = float(sensor_state.get("angle", 0))
+    feature_dict["rpm"] = float(sensor_state.get("rpm", 0))
 
-    return np.array([dizionario_caratteristiche[colonna] for colonna in colonne_selezionate], dtype=np.float32)
+    return np.array([feature_dict[col] for col in selected_columns], dtype=np.float32)
 
 
 def main(host: str = "localhost", port: int = 3001):
@@ -89,22 +89,22 @@ def main(host: str = "localhost", port: int = 3001):
 
     # Load scaler
     print("[INFO] Loading model and scaler...")
-    dati_scaler = joblib.load(scaler_path)
-    media_normalizzazione = dati_scaler["mean"]
-    deviazione_standard = dati_scaler["std"]
-    colonne_input = dati_scaler["input_cols"]
-    offset_marce = dati_scaler["gear_offset"]
+    scaler_data = joblib.load(scaler_path)
+    norm_mean = scaler_data["mean"]
+    norm_std = scaler_data["std"]
+    input_cols = scaler_data["input_cols"]
+    gear_offset = scaler_data["gear_offset"]
 
-    dispositivo = torch.device("cpu")
-    modello_guida = DrivingNet(dim_ingresso=len(colonne_input)).to(dispositivo)
-    modello_guida.load_state_dict(torch.load(model_path, map_location=dispositivo))
-    modello_guida.eval()
+    device = torch.device("cpu")
+    driving_model = DrivingNet(input_dim=len(input_cols)).to(device)
+    driving_model.load_state_dict(torch.load(model_path, map_location=device))
+    driving_model.eval()
     print(f"[INFO] Model loaded from {model_path}")
 
     # Connect to TORCS
     print(f"[INFO] Connecting to TORCS ({host}:{port})...")
-    client_torcs = snakeoil3.Client(H=host, p=port, vision=False)
-    client_torcs.get_servers_input()
+    torcs_client = snakeoil3.Client(H=host, p=port, vision=False)
+    torcs_client.get_servers_input()
     print("[INFO] Connected to TORCS. Starting data collection...\n")
 
     # Output CSV
@@ -124,87 +124,87 @@ def main(host: str = "localhost", port: int = 3001):
 
     rows = []
     lap_count = 0
-    tempo_giro_precedente = 0.0
-    contatore_passi = 0
-    marcia_attuale = 1
-    sterzata_precedente = 0.0
+    prev_lap_time = 0.0
+    step_counter = 0
+    current_gear = 1
+    prev_steer = 0.0
 
     print("Running 5 laps. Press Ctrl+C to stop.\n")
 
     try:
         while lap_count < 5:
-            client_torcs.get_servers_input()
-            sensori = client_torcs.S.d
+            torcs_client.get_servers_input()
+            sensors = torcs_client.S.d
 
             # Lap detection
-            tempo_giro_corrente = sensori.get("curLapTime", 0.0)
-            if tempo_giro_corrente < tempo_giro_precedente - 1.0:
+            cur_lap_time = sensors.get("curLapTime", 0.0)
+            if cur_lap_time < prev_lap_time - 1.0:
                 lap_count += 1
-                print(f"[LAP {lap_count}/5] Completed. Time: {tempo_giro_precedente:.1f}s")
+                print(f"[LAP {lap_count}/5] Completed. Time: {prev_lap_time:.1f}s")
                 if lap_count >= 5:
                     break
-            tempo_giro_precedente = tempo_giro_corrente
+            prev_lap_time = cur_lap_time
 
             # Model inference
-            vettore_input = build_input_vector(sensori, colonne_input)
-            input_normalizzato = (vettore_input - media_normalizzazione) / deviazione_standard
-            tensor_input = torch.from_numpy(input_normalizzato).unsqueeze(0).to(dispositivo)
+            input_vector = build_input_vector(sensors, input_cols)
+            normalized_input = (input_vector - norm_mean) / norm_std
+            input_tensor = torch.from_numpy(normalized_input).unsqueeze(0).to(device)
 
             with torch.no_grad():
-                predizione_sterzo, predizione_pedali, logits_marcia = modello_guida(tensor_input)
+                steer_pred, pedals_pred, gear_logits = driving_model(input_tensor)
 
-            angolo_sterzo = float(predizione_sterzo.item()) * 1.8
-            acceleratore = float(predizione_pedali[0, 0].item())
-            freno = float(predizione_pedali[0, 1].item())
-            marcia_predetta = int(logits_marcia.argmax(dim=1).item()) - offset_marce
+            steer_angle = float(steer_pred.item()) * 1.8
+            accel = float(pedals_pred[0, 0].item())
+            brake = float(pedals_pred[0, 1].item())
+            predicted_gear = int(gear_logits.argmax(dim=1).item()) - gear_offset
 
             # Startup phase
-            if contatore_passi < 80:
-                acceleratore = 1.0
-                freno = 0.0
-                angolo_sterzo = angolo_sterzo * 0.5
-                if sensori.get("speedX", 0) < 5:
-                    marcia_attuale = 1
-                elif sensori.get("speedX", 0) < 15:
-                    marcia_attuale = 2
+            if step_counter < 80:
+                accel = 1.0
+                brake = 0.0
+                steer_angle = steer_angle * 0.5
+                if sensors.get("speedX", 0) < 5:
+                    current_gear = 1
+                elif sensors.get("speedX", 0) < 15:
+                    current_gear = 2
                 else:
-                    marcia_attuale = 3
+                    current_gear = 3
             else:
-                marcia_attuale = marcia_predetta
+                current_gear = predicted_gear
 
             # Send action
-            client_torcs.R.d["steer"] = angolo_sterzo
-            client_torcs.R.d["accel"] = acceleratore
-            client_torcs.R.d["brake"] = freno
-            client_torcs.R.d["gear"] = marcia_attuale
-            client_torcs.respond_to_server()
+            torcs_client.R.d["steer"] = steer_angle
+            torcs_client.R.d["accel"] = accel
+            torcs_client.R.d["brake"] = brake
+            torcs_client.R.d["gear"] = current_gear
+            torcs_client.respond_to_server()
 
             # Record data
-            track_list = sensori.get("track", [200.0] * 19)
-            wheel_list = sensori.get("wheelSpinVel", [0.0] * 4)
+            track_list = sensors.get("track", [200.0] * 19)
+            wheel_list = sensors.get("wheelSpinVel", [0.0] * 4)
 
             row = {
                 "timestamp": time.time(),
-                "distFromStart": sensori.get("distFromStart", 0.0),
-                "distRaced": sensori.get("distRaced", 0.0),
-                "curLapTime": sensori.get("curLapTime", 0.0),
-                "angle": sensori.get("angle", 0.0),
-                "speed": sensori.get("speedX", 0.0),
-                "trackPos": sensori.get("trackPos", 0.0),
+                "distFromStart": sensors.get("distFromStart", 0.0),
+                "distRaced": sensors.get("distRaced", 0.0),
+                "curLapTime": sensors.get("curLapTime", 0.0),
+                "angle": sensors.get("angle", 0.0),
+                "speed": sensors.get("speedX", 0.0),
+                "trackPos": sensors.get("trackPos", 0.0),
             }
             for i in range(19):
                 row[f"track_{i}"] = track_list[i] if i < len(track_list) else 200.0
-            row["rpm"] = sensori.get("rpm", 0.0)
-            row["gear"] = sensori.get("gear", 0)
-            row["damage"] = sensori.get("damage", 0.0)
+            row["rpm"] = sensors.get("rpm", 0.0)
+            row["gear"] = sensors.get("gear", 0)
+            row["damage"] = sensors.get("damage", 0.0)
             for i in range(4):
                 row[f"wheel_{i}"] = wheel_list[i] if i < len(wheel_list) else 0.0
-            row["steer"] = angolo_sterzo
-            row["accel"] = acceleratore
-            row["brake"] = freno
+            row["steer"] = steer_angle
+            row["accel"] = accel
+            row["brake"] = brake
 
             rows.append(row)
-            contatore_passi += 1
+            step_counter += 1
 
     except KeyboardInterrupt:
         print("\n[INFO] Interrupted by user.")
@@ -219,7 +219,7 @@ def main(host: str = "localhost", port: int = 3001):
     print(f"[OK] Data saved: {output_file}")
     print(f"[INFO] Collected {lap_count} complete lap(s), {len(rows)} samples")
 
-    client_torcs.shutdown()
+    torcs_client.shutdown()
 
 
 if __name__ == "__main__":
