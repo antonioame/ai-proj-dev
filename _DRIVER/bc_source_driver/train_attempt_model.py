@@ -15,51 +15,51 @@ from pathlib import Path
 import argparse
 
 # Input feature columns (matches actual CSV format from our telemetry)
-COLONNE_TRACCIATO = [f"track_{i}" for i in range(19)]
-COLONNE_RUOTE = [f"wheel_{i}" for i in range(4)]
-COLONNE_INPUT = (
-    COLONNE_TRACCIATO +
+TRACK_COLS = [f"track_{i}" for i in range(19)]
+WHEEL_COLS = [f"wheel_{i}" for i in range(4)]
+INPUT_COLS = (
+    TRACK_COLS +
     ["speed", "trackPos", "angle", "rpm"] +
-    COLONNE_RUOTE
+    WHEEL_COLS
 )
-OFFSET_MARCE = 1
+GEAR_OFFSET = 1
 
 
 class DrivingNet(nn.Module):
     """Multi-Layer Perceptron for driving control."""
-    def __init__(self, dim_ingresso: int, numero_marce: int = 8):
+    def __init__(self, input_dim: int, num_gears: int = 8):
         super().__init__()
         self.backbone = nn.Sequential(
-            nn.Linear(dim_ingresso, 128), nn.ReLU(), nn.Dropout(0.1),
+            nn.Linear(input_dim, 128), nn.ReLU(), nn.Dropout(0.1),
             nn.Linear(128, 128), nn.ReLU(), nn.Dropout(0.1),
             nn.Linear(128, 64), nn.ReLU(),
         )
         self.head_steer = nn.Linear(64, 1)
         self.head_accel_brake = nn.Linear(64, 2)
-        self.head_gear = nn.Linear(64, numero_marce)
+        self.head_gear = nn.Linear(64, num_gears)
 
-    def forward(self, dati_ingresso):
-        strato_nascosto = self.backbone(dati_ingresso)
+    def forward(self, input_data):
+        hidden_layer = self.backbone(input_data)
         return (
-            torch.tanh(self.head_steer(strato_nascosto)),
-            torch.sigmoid(self.head_accel_brake(strato_nascosto)),
-            self.head_gear(strato_nascosto),
+            torch.tanh(self.head_steer(hidden_layer)),
+            torch.sigmoid(self.head_accel_brake(hidden_layer)),
+            self.head_gear(hidden_layer),
         )
 
 
-def load_and_clean(percorso_csv: str) -> pd.DataFrame:
+def load_and_clean(csv_path: str) -> pd.DataFrame:
     """Load and clean telemetry CSV."""
-    dataframe_dati = pd.read_csv(percorso_csv)
-    print(f"[PREPROCESSING] Raw rows: {len(dataframe_dati)}")
+    df = pd.read_csv(csv_path)
+    print(f"[PREPROCESSING] Raw rows: {len(df)}")
 
     # Drop rows with missing values in critical columns
-    dataframe_dati.dropna(subset=COLONNE_INPUT + ['steer', 'accel', 'brake', 'gear'], inplace=True)
+    df.dropna(subset=INPUT_COLS + ['steer', 'accel', 'brake', 'gear'], inplace=True)
 
     # Filter to clean driving (on track)
-    dataframe_dati = dataframe_dati[dataframe_dati['trackPos'].abs() < 0.9]
-    print(f"[PREPROCESSING] Rows after cleaning: {len(dataframe_dati)}")
+    df = df[df['trackPos'].abs() < 0.9]
+    print(f"[PREPROCESSING] Rows after cleaning: {len(df)}")
 
-    return dataframe_dati
+    return df
 
 
 def main():
@@ -71,107 +71,107 @@ def main():
     args = parser.parse_args()
 
     # Load and preprocess
-    dataframe_dati = load_and_clean(args.csv)
-    matrice_caratteristiche = dataframe_dati[COLONNE_INPUT].values.astype(np.float32)
-    target_sterzo = dataframe_dati[['steer']].values.astype(np.float32)
-    target_pedali = dataframe_dati[['accel', 'brake']].values.astype(np.float32)
-    target_marcia = (dataframe_dati['gear'].values + OFFSET_MARCE).astype(np.int64)
+    df = load_and_clean(args.csv)
+    feature_matrix = df[INPUT_COLS].values.astype(np.float32)
+    steer_target = df[['steer']].values.astype(np.float32)
+    pedals_target = df[['accel', 'brake']].values.astype(np.float32)
+    gear_target = (df['gear'].values + GEAR_OFFSET).astype(np.int64)
 
     # Normalize
-    media_caratteristiche = matrice_caratteristiche.mean(axis=0)
-    deviazione_standard_caratteristiche = matrice_caratteristiche.std(axis=0) + 1e-6
-    caratteristiche_normalizzate = (matrice_caratteristiche - media_caratteristiche) / deviazione_standard_caratteristiche
+    feature_mean = feature_matrix.mean(axis=0)
+    feature_std = feature_matrix.std(axis=0) + 1e-6
+    normalized_features = (feature_matrix - feature_mean) / feature_std
 
     # Save scaler
     output_path = Path(args.output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    informazioni_scaler = {
-        "mean": media_caratteristiche,
-        "std": deviazione_standard_caratteristiche,
-        "input_cols": COLONNE_INPUT,
-        "gear_offset": OFFSET_MARCE
+    scaler_info = {
+        "mean": feature_mean,
+        "std": feature_std,
+        "input_cols": INPUT_COLS,
+        "gear_offset": GEAR_OFFSET
     }
     scaler_path = output_path / "driving_scaler.pkl"
-    joblib.dump(informazioni_scaler, scaler_path)
+    joblib.dump(scaler_info, scaler_path)
     print(f"[INFO] Scaler saved: {scaler_path}")
 
     # Create dataset
-    dataset_completo = TensorDataset(
-        torch.from_numpy(caratteristiche_normalizzate),
-        torch.from_numpy(target_sterzo),
-        torch.from_numpy(target_pedali),
-        torch.from_numpy(target_marcia)
+    full_dataset = TensorDataset(
+        torch.from_numpy(normalized_features),
+        torch.from_numpy(steer_target),
+        torch.from_numpy(pedals_target),
+        torch.from_numpy(gear_target)
     )
-    dimensione_addestramento = int(0.8 * len(dataset_completo))
-    dimensione_validazione = len(dataset_completo) - dimensione_addestramento
-    dataset_addestramento, dataset_validazione = torch.utils.data.random_split(
-        dataset_completo, [dimensione_addestramento, dimensione_validazione]
+    train_size = int(0.8 * len(full_dataset))
+    val_size = len(full_dataset) - train_size
+    train_dataset, val_dataset = torch.utils.data.random_split(
+        full_dataset, [train_size, val_size]
     )
 
-    loader_addestramento = DataLoader(dataset_addestramento, batch_size=256, shuffle=True)
-    loader_validazione = DataLoader(dataset_validazione, batch_size=512, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=512, shuffle=False)
 
     # Train
-    dispositivo = torch.device("cpu")
-    modello_guida = DrivingNet(dim_ingresso=len(COLONNE_INPUT)).to(dispositivo)
-    ottimizzatore = torch.optim.Adam(modello_guida.parameters(), lr=1e-3)
-    schedulatore_lr = torch.optim.lr_scheduler.StepLR(ottimizzatore, step_size=20, gamma=0.5)
-    funzione_loss_mse = nn.MSELoss()
-    funzione_loss_ce = nn.CrossEntropyLoss()
+    device = torch.device("cpu")
+    driving_model = DrivingNet(input_dim=len(INPUT_COLS)).to(device)
+    optimizer = torch.optim.Adam(driving_model.parameters(), lr=1e-3)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.5)
+    mse_loss_fn = nn.MSELoss()
+    ce_loss_fn = nn.CrossEntropyLoss()
 
-    miglior_loss_validazione = float("inf")
-    epoche_totali = 60
+    best_val_loss = float("inf")
+    total_epochs = 60
 
     print("[INFO] Training started...")
-    for epoca in range(1, epoche_totali + 1):
-        modello_guida.train()
-        perdita_totale_epoca = 0.0
-        for batch_x, batch_y_sterzo, batch_y_pedali, batch_y_marce in loader_addestramento:
-            batch_x, batch_y_sterzo, batch_y_pedali, batch_y_marce = (
-                batch_x.to(dispositivo), batch_y_sterzo.to(dispositivo),
-                batch_y_pedali.to(dispositivo), batch_y_marce.to(dispositivo)
+    for epoch in range(1, total_epochs + 1):
+        driving_model.train()
+        epoch_total_loss = 0.0
+        for batch_x, batch_y_steer, batch_y_pedals, batch_y_gear in train_loader:
+            batch_x, batch_y_steer, batch_y_pedals, batch_y_gear = (
+                batch_x.to(device), batch_y_steer.to(device),
+                batch_y_pedals.to(device), batch_y_gear.to(device)
             )
-            pred_sterzo, pred_pedali, pred_marce = modello_guida(batch_x)
-            valore_loss = (
-                2.0 * funzione_loss_mse(pred_sterzo, batch_y_sterzo) +
-                1.0 * funzione_loss_mse(pred_pedali, batch_y_pedali) +
-                0.3 * funzione_loss_ce(pred_marce, batch_y_marce)
+            pred_steer, pred_pedals, pred_gear = driving_model(batch_x)
+            loss_value = (
+                2.0 * mse_loss_fn(pred_steer, batch_y_steer) +
+                1.0 * mse_loss_fn(pred_pedals, batch_y_pedals) +
+                0.3 * ce_loss_fn(pred_gear, batch_y_gear)
             )
-            ottimizzatore.zero_grad()
-            valore_loss.backward()
-            ottimizzatore.step()
-            perdita_totale_epoca += valore_loss.item() * batch_x.size(0)
+            optimizer.zero_grad()
+            loss_value.backward()
+            optimizer.step()
+            epoch_total_loss += loss_value.item() * batch_x.size(0)
 
-        loss_addestramento = perdita_totale_epoca / len(dataset_addestramento)
+        train_loss = epoch_total_loss / len(train_dataset)
 
-        modello_guida.eval()
-        perdita_validazione_cumulata = 0.0
+        driving_model.eval()
+        val_total_loss = 0.0
         with torch.no_grad():
-            for batch_x, batch_y_sterzo, batch_y_pedali, batch_y_marce in loader_validazione:
-                batch_x, batch_y_sterzo, batch_y_pedali, batch_y_marce = (
-                    batch_x.to(dispositivo), batch_y_sterzo.to(dispositivo),
-                    batch_y_pedali.to(dispositivo), batch_y_marce.to(dispositivo)
+            for batch_x, batch_y_steer, batch_y_pedals, batch_y_gear in val_loader:
+                batch_x, batch_y_steer, batch_y_pedals, batch_y_gear = (
+                    batch_x.to(device), batch_y_steer.to(device),
+                    batch_y_pedals.to(device), batch_y_gear.to(device)
                 )
-                pred_sterzo, pred_pedali, pred_marce = modello_guida(batch_x)
-                valore_loss = (
-                    2.0 * funzione_loss_mse(pred_sterzo, batch_y_sterzo) +
-                    1.0 * funzione_loss_mse(pred_pedali, batch_y_pedali) +
-                    0.3 * funzione_loss_ce(pred_marce, batch_y_marce)
+                pred_steer, pred_pedals, pred_gear = driving_model(batch_x)
+                loss_value = (
+                    2.0 * mse_loss_fn(pred_steer, batch_y_steer) +
+                    1.0 * mse_loss_fn(pred_pedals, batch_y_pedals) +
+                    0.3 * ce_loss_fn(pred_gear, batch_y_gear)
                 )
-                perdita_validazione_cumulata += valore_loss.item() * batch_x.size(0)
+                val_total_loss += loss_value.item() * batch_x.size(0)
 
-        loss_validazione = perdita_validazione_cumulata / len(dataset_validazione)
-        schedulatore_lr.step()
+        val_loss = val_total_loss / len(val_dataset)
+        lr_scheduler.step()
 
-        segnalatore_salvataggio = ""
-        if loss_validazione < miglior_loss_validazione:
-            miglior_loss_validazione = loss_validazione
+        save_marker = ""
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
             model_path = output_path / "driving_model.pt"
-            torch.save(modello_guida.state_dict(), model_path)
-            segnalatore_salvataggio = " <- [SAVED]"
+            torch.save(driving_model.state_dict(), model_path)
+            save_marker = " <- [SAVED]"
 
-        print(f"Epoch {epoca:3d}/{epoche_totali} | Train Loss={loss_addestramento:.4f} | Val Loss={loss_validazione:.4f}{segnalatore_salvataggio}")
+        print(f"Epoch {epoch:3d}/{total_epochs} | Train Loss={train_loss:.4f} | Val Loss={val_loss:.4f}{save_marker}")
 
     print(f"\n[OK] Training complete. Model saved to {output_path / 'driving_model.pt'}")
 
