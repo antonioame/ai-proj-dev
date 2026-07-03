@@ -70,8 +70,8 @@ class BCDriver:
     ACCEL_GAIN = 1.40  # Applied to the blended accel output
     BRAKE_GAIN = 0.80  # Applied to the blended brake output
 
-    STRAIGHT_THRESHOLD = 120.0  # m — above this: pure straight model
-    CORNER_THRESHOLD   = 60.0   # m — below this: pure corner model
+    STRAIGHT_THRESHOLD = 44.0   # m — above this: pure straight model
+    CORNER_THRESHOLD   = 22.0   # m — below this: pure corner model
 
     # Startup phase: feed full throttle with zero steer for this many steps.
     # Keeps the car straight while the models receive OOD inputs (speed≈0, gear=0).
