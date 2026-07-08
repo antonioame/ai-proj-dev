@@ -67,3 +67,7 @@ htmlcov/
 # Distribution
 *.tar.gz
 *.zip
+# ...except SB3 checkpoints (Phase 3 RL) — tracked on purpose so the full
+# training history (every episode checkpoint + tensorboard log) stays in git.
+!training/rl/checkpoints/**/*.zip
+!drivers/rl/models/*.zip
