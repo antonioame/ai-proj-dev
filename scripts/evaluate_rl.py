@@ -35,9 +35,10 @@ def evaluate(
     port: int | None = None,
     output_path: Path | None = None,
     max_steps: int = 20000,
+    checkpoint: str | None = None,
 ) -> dict:
     driver_name = "rl"
-    driver = RLDriver()
+    driver = RLDriver(checkpoint_path=Path(checkpoint)) if checkpoint else RLDriver()
 
     lap_times: list[float] = []
     speed_samples: list[float] = []
@@ -135,6 +136,8 @@ def main() -> None:
     parser.add_argument("--output", default=None)
     parser.add_argument("--max-steps", type=int, default=20000,
                         help="Abort (record no-lap) if a lap isn't completed within this many steps.")
+    parser.add_argument("--checkpoint", default=None,
+                        help="Path to a SAC .zip checkpoint (default: drivers/rl/models/sac_corkscrew_v1.zip).")
     args = parser.parse_args()
 
     evaluate(
@@ -143,6 +146,7 @@ def main() -> None:
         port=args.port,
         output_path=Path(args.output) if args.output else None,
         max_steps=args.max_steps,
+        checkpoint=args.checkpoint,
     )
 
 

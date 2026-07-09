@@ -1,0 +1,15 @@
+{
+  "run_id": "20260709_194354",
+  "git_sha": "6c04c67",
+  "algorithm": "SAC",
+  "reward_version": "refined_v2",
+  "total_timesteps": 200000,
+  "critic_warmup_steps": 3000,
+  "warm_started_from": "U:\\AI-Partition\\progetto_v2\\ai_private_proj\\_DRIVER\\models\\bc_from_olddriver_v1.pth",
+  "resumed_from": null,
+  "net_arch": [
+    128,
+    64
+  ],
+  "seed": null
+}
