@@ -156,7 +156,14 @@ class TorcsSacEnv(gym.Env):
     def step(self, action):
         steer, accel, brake = (float(a) for a in np.asarray(action, dtype=np.float32))
         self._update_gear(self._last_state.rpm)
-        self._client.send(Action(steer=steer, accel=accel, brake=brake, gear=self._current_gear).clamp())
+        cmd = Action(steer=steer, accel=accel, brake=brake, gear=self._current_gear)
+        return self._send_and_observe(cmd)
+
+    def _send_and_observe(self, cmd: Action):
+        """Send one control command, await the next sensor packet, and turn it
+        into the Gym (obs, reward, terminated, truncated, info) tuple. Shared
+        by the direct-action step() and the residual env's step()."""
+        self._client.send(cmd.clamp())
 
         try:
             state = self._await_fresh_state()
@@ -269,14 +276,7 @@ class TorcsSacEnv(gym.Env):
                 self._client.connect()
                 self._connected = True
                 state = self._await_fresh_state()
-
-                for _ in range(_STARTUP_STEPS):
-                    gear = self._startup_gear(state.speed)
-                    self._current_gear = gear
-                    self._client.send(Action(steer=0.0, accel=1.0, brake=0.0, gear=gear).clamp())
-                    state = self._await_fresh_state()
-
-                return state
+                return self._run_startup(state)
             except (ConnectionError, OSError) as exc:
                 last_exc = exc
                 logger.warning(
@@ -288,6 +288,19 @@ class TorcsSacEnv(gym.Env):
                     pass
                 self._connected = False
         raise ConnectionError(f"Could not start an episode after {retries} attempts.") from last_exc
+
+    def _run_startup(self, state: SensorState) -> SensorState:
+        """Feed full-throttle/zero-steer for _STARTUP_STEPS to get the car off
+        the standing start before the policy takes over (see _STARTUP_STEPS).
+        Overridable: the residual env skips this and lets its BC base driver
+        own the launch instead.
+        """
+        for _ in range(_STARTUP_STEPS):
+            gear = self._startup_gear(state.speed)
+            self._current_gear = gear
+            self._client.send(Action(steer=0.0, accel=1.0, brake=0.0, gear=gear).clamp())
+            state = self._await_fresh_state()
+        return state
 
     def _normalize(self, raw: np.ndarray) -> np.ndarray:
         return ((raw - self._obs_mean) / self._obs_std).astype(np.float32)

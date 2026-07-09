@@ -88,6 +88,12 @@ def main() -> None:
     parser.add_argument("--episodes-per-checkpoint", type=int, default=50)
     parser.add_argument("--bc-checkpoint", default=str(DEFAULT_BC_CHECKPOINT))
     parser.add_argument("--no-warmstart", action="store_true", help="Skip BC warm-start, train SAC from scratch")
+    parser.add_argument(
+        "--residual", action="store_true",
+        help="Residual RL: learn a bounded correction on top of the full BC driver "
+             "(ResidualTorcsSacEnv) instead of replacing it. Best fix for the "
+             "from-scratch policy stalling — starts driving exactly like BC.",
+    )
     parser.add_argument("--resume", default=None, help="Path to an existing SAC .zip checkpoint to resume from")
     parser.add_argument("--save-path", default=str(DEFAULT_SAVE_PATH))
     parser.add_argument("--seed", type=int, default=None)
@@ -97,12 +103,21 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    env = TorcsSacEnv(
-        host=args.host,
-        port=args.port,
-        reward_version=args.reward_version,
-        auto_launch_torcs=not args.no_launch_torcs,
-    )
+    if args.residual:
+        from training.rl.residual_env import ResidualTorcsSacEnv, zero_residual_actor
+        env = ResidualTorcsSacEnv(
+            host=args.host,
+            port=args.port,
+            reward_version=args.reward_version,
+            auto_launch_torcs=not args.no_launch_torcs,
+        )
+    else:
+        env = TorcsSacEnv(
+            host=args.host,
+            port=args.port,
+            reward_version=args.reward_version,
+            auto_launch_torcs=not args.no_launch_torcs,
+        )
 
     if args.resume:
         logger.info("Resuming SAC model from %s", args.resume)
@@ -110,6 +125,9 @@ def main() -> None:
         reset_num_timesteps = False
         warm_started_from = None
     else:
+        # Residual RL keeps exploration gentle (a fixed small entropy coef) so
+        # the correction stays close to the BC base; the direct-action variant
+        # auto-tunes entropy from scratch.
         model = WarmStartSAC(
             "MlpPolicy",
             env,
@@ -119,23 +137,30 @@ def main() -> None:
             batch_size=256,
             gamma=0.99,
             tau=0.005,
-            ent_coef="auto",
+            ent_coef=0.02 if args.residual else "auto",
             critic_warmup_steps=args.critic_warmup_steps,
             seed=args.seed,
             verbose=1,
             tensorboard_log=str(Path(__file__).resolve().parent / "tb_logs"),
         )
         warm_started_from = None
-        if not args.no_warmstart:
+        if args.residual:
+            # No BC weight transfer: the BC driver *is* the base. Zero the actor
+            # so the initial residual is 0 → training starts driving as pure BC.
+            zero_residual_actor(model)
+            warm_started_from = "residual(BC base + zeroed actor)"
+        elif not args.no_warmstart:
             load_bc_backbone_into_actor(model, Path(args.bc_checkpoint))
             warm_started_from = str(args.bc_checkpoint)
         reset_num_timesteps = True
 
     run_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+    mode_tag = "residual" if args.residual else "direct"
     run_config = {
         "run_id": run_id,
         "git_sha": _git_sha(),
         "algorithm": "SAC",
+        "mode": mode_tag,
         "reward_version": args.reward_version,
         "total_timesteps": args.total_timesteps,
         "critic_warmup_steps": args.critic_warmup_steps,
@@ -145,7 +170,7 @@ def main() -> None:
         "seed": args.seed,
     }
     RUN_LOG_DIR.mkdir(parents=True, exist_ok=True)
-    run_log_path = RUN_LOG_DIR / f"{run_id}_{args.reward_version}.json"
+    run_log_path = RUN_LOG_DIR / f"{run_id}_{mode_tag}_{args.reward_version}.json"
     run_log_path.write_text(json.dumps(run_config, indent=2))
     logger.info("Run config logged: %s", run_log_path)
 
@@ -161,7 +186,7 @@ def main() -> None:
             total_timesteps=args.total_timesteps,
             callback=checkpoint_cb,
             reset_num_timesteps=reset_num_timesteps,
-            tb_log_name=f"sac_{args.reward_version}",
+            tb_log_name=f"sac_{mode_tag}_{args.reward_version}",
         )
     finally:
         save_path = Path(args.save_path)

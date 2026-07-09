@@ -36,9 +36,15 @@ def evaluate(
     output_path: Path | None = None,
     max_steps: int = 20000,
     checkpoint: str | None = None,
+    residual: bool = False,
 ) -> dict:
-    driver_name = "rl"
-    driver = RLDriver(checkpoint_path=Path(checkpoint)) if checkpoint else RLDriver()
+    if residual:
+        from drivers.rl.residual_driver import ResidualRLDriver
+        driver_name = "rl_residual"
+        driver = ResidualRLDriver(checkpoint_path=Path(checkpoint)) if checkpoint else ResidualRLDriver()
+    else:
+        driver_name = "rl"
+        driver = RLDriver(checkpoint_path=Path(checkpoint)) if checkpoint else RLDriver()
 
     lap_times: list[float] = []
     speed_samples: list[float] = []
@@ -137,7 +143,9 @@ def main() -> None:
     parser.add_argument("--max-steps", type=int, default=20000,
                         help="Abort (record no-lap) if a lap isn't completed within this many steps.")
     parser.add_argument("--checkpoint", default=None,
-                        help="Path to a SAC .zip checkpoint (default: drivers/rl/models/sac_corkscrew_v1.zip).")
+                        help="Path to a SAC .zip checkpoint (default depends on --residual).")
+    parser.add_argument("--residual", action="store_true",
+                        help="Evaluate the residual driver (BC base + SAC correction).")
     args = parser.parse_args()
 
     evaluate(
@@ -147,6 +155,7 @@ def main() -> None:
         output_path=Path(args.output) if args.output else None,
         max_steps=args.max_steps,
         checkpoint=args.checkpoint,
+        residual=args.residual,
     )
 
 
