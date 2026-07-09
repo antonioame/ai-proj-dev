@@ -34,6 +34,7 @@ def evaluate(
     host: str | None = None,
     port: int | None = None,
     output_path: Path | None = None,
+    max_steps: int = 20000,
 ) -> dict:
     driver_name = "rl"
     driver = RLDriver()
@@ -44,6 +45,7 @@ def evaluate(
     total_steps = 0
     total_damage = 0.0
     lap_count = 0
+    aborted_no_lap = False
 
     with TORCSClient(host=host, port=port) as client:
         logger.info("Evaluating '%s' for %d lap(s).", driver_name, laps)
@@ -78,6 +80,17 @@ def evaluate(
                 if lap_count >= laps:
                     break
 
+            # Safety cap: a policy that can't complete a lap (e.g. drives
+            # off-track and stops) would otherwise loop forever, since the
+            # driver keeps sending actions and TORCS never times out. Abort
+            # and record the failure rather than hang.
+            if total_steps >= max_steps:
+                logger.warning(
+                    "Aborting after %d steps without completing %d lap(s).", total_steps, laps
+                )
+                aborted_no_lap = True
+                break
+
     off_track_pct = (off_track_steps / max(total_steps, 1)) * 100.0
     avg_speed = sum(speed_samples) / len(speed_samples) if speed_samples else 0.0
     max_speed = max(speed_samples) if speed_samples else 0.0
@@ -95,6 +108,7 @@ def evaluate(
         "off_track_pct": round(off_track_pct, 2),
         "damage": round(total_damage, 2),
         "total_steps": total_steps,
+        "aborted_no_lap": aborted_no_lap,
     }
 
     logger.info("Results: %s", json.dumps(results, indent=2))
@@ -119,6 +133,8 @@ def main() -> None:
     parser.add_argument("--host", default=None)
     parser.add_argument("--port", type=int, default=None)
     parser.add_argument("--output", default=None)
+    parser.add_argument("--max-steps", type=int, default=20000,
+                        help="Abort (record no-lap) if a lap isn't completed within this many steps.")
     args = parser.parse_args()
 
     evaluate(
@@ -126,6 +142,7 @@ def main() -> None:
         host=args.host,
         port=args.port,
         output_path=Path(args.output) if args.output else None,
+        max_steps=args.max_steps,
     )
 
 

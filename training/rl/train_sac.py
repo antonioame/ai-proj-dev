@@ -1,9 +1,11 @@
 """SAC training entry point for Phase 3 (REINFORCEMENT_LEARNING.md Sections 6 & 9).
 
-Connects to a TORCS server that must already be running and listening on the
-SCR UDP port (same expectation run_agent.py/evaluate.py already have — see
-scripts/launch_race.py for the launch pattern). Warm-starts the actor from
-the BC corner model (bc_from_olddriver_v1) unless --no-warmstart is given.
+By default this auto-launches a headless TORCS itself (with the correct working
+directory — see the TORCS_EXE comment below) once the SAC model is built, so the
+client connects before TORCS's short pre-connection timeout fires. Pass
+--no-launch-torcs to instead connect to a server you started separately.
+Warm-starts the actor from the BC corner model (bc_from_olddriver_v1) unless
+--no-warmstart is given.
 
 Usage:
     conda run -n ai_env python training/rl/train_sac.py \\
@@ -89,9 +91,18 @@ def main() -> None:
     parser.add_argument("--resume", default=None, help="Path to an existing SAC .zip checkpoint to resume from")
     parser.add_argument("--save-path", default=str(DEFAULT_SAVE_PATH))
     parser.add_argument("--seed", type=int, default=None)
+    parser.add_argument(
+        "--no-launch-torcs", action="store_true",
+        help="Don't auto-launch TORCS; connect to a server already running on the SCR port.",
+    )
     args = parser.parse_args()
 
-    env = TorcsSacEnv(host=args.host, port=args.port, reward_version=args.reward_version)
+    env = TorcsSacEnv(
+        host=args.host,
+        port=args.port,
+        reward_version=args.reward_version,
+        auto_launch_torcs=not args.no_launch_torcs,
+    )
 
     if args.resume:
         logger.info("Resuming SAC model from %s", args.resume)
@@ -142,6 +153,9 @@ def main() -> None:
         save_dir=CHECKPOINT_DIR / run_id, episodes_per_checkpoint=args.episodes_per_checkpoint
     )
 
+    # TORCS is launched and torn down per-episode by the env itself
+    # (TorcsSacEnv, auto_launch_torcs) — see that module for why we relaunch
+    # instead of using an in-race restart.
     try:
         model.learn(
             total_timesteps=args.total_timesteps,

@@ -13,7 +13,11 @@ BC-warm-started actor's output layout lines up with the environment.
 from __future__ import annotations
 
 import logging
+import os
+import socket
+import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -31,6 +35,8 @@ from training.rl.reward import REWARD_VERSIONS
 
 logger = logging.getLogger(__name__)
 
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
 # Automatic-gear thresholds, mirrored from _DRIVER/driver.py.BCDriver so the
 # RL policy and the eventual RLDriver see the same gear behaviour.
 _GEAR_UP_RPM = 12000.0
@@ -47,11 +53,40 @@ _OFF_TRACK_STEPS_LIMIT = 25  # ~0.5s at 50 steps/s — "aggressive termination" 
 _STANDING_STILL_KMH = 5.0
 _STANDING_STILL_STEPS_LIMIT = 150  # ~3s
 _MAX_EPISODE_STEPS = 20000  # a Corkscrew lap is ~13.6k steps at 50/s (see memory: torcs_setup)
-_RESTART_RETRIES = 5
+_EPISODE_START_RETRIES = 4
+
+# TORCS process management. Each episode gets a FRESH TORCS process rather than
+# an in-race meta=1 restart: empirically that in-race restart is unreliable on
+# this setup (the connection half-recovers then drops a few steps into the next
+# episode — the same instability the earlier, removed Phase 3 attempt hit).
+# Relaunching sidesteps it entirely. Two launch requirements, both learned the
+# hard way and both load-bearing:
+#   1. CWD must be the TORCS install dir, or TORCS can't resolve the car's
+#      category files ("Bad Car category for driver scr_server 1") and never
+#      binds the SCR port.
+#   2. Connect only AFTER a short grace once the port is bound — TORCS binds the
+#      port a moment before its sim loop can actually stream sensors, and
+#      connecting into that gap deadlocks.
+TORCS_EXE = Path(os.environ.get("TORCS_EXE", r"U:\AI-Partition\torcs\torcs\wtorcs.exe"))
+RACE_XML = PROJECT_ROOT / "torcs_env" / "race_config" / "corkscrew_solo.xml"
+_TORCS_PORT_TIMEOUT = 30.0
+_TORCS_STARTUP_GRACE = 4.0
 
 DEFAULT_NORM_STATS_PATH = (
-    Path(__file__).resolve().parents[2] / "_DRIVER" / "models" / "bc_from_olddriver_v1.npz"
+    PROJECT_ROOT / "_DRIVER" / "models" / "bc_from_olddriver_v1.npz"
 )
+
+
+def _port_is_bound(port: int) -> bool:
+    """True if something already holds *port* on UDP (i.e. TORCS is up)."""
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.bind(("", port))
+        return False
+    except OSError:
+        return True
+    finally:
+        sock.close()
 
 
 class TorcsSacEnv(gym.Env):
@@ -67,12 +102,15 @@ class TorcsSacEnv(gym.Env):
         reward_version: str = "baseline_v1",
         norm_stats_path: Path = DEFAULT_NORM_STATS_PATH,
         max_episode_steps: int = _MAX_EPISODE_STEPS,
+        auto_launch_torcs: bool = True,
     ) -> None:
         super().__init__()
         if reward_version not in REWARD_VERSIONS:
             raise ValueError(f"Unknown reward_version {reward_version!r}; choices: {list(REWARD_VERSIONS)}")
         self.reward_version = REWARD_VERSIONS[reward_version]
         self.max_episode_steps = max_episode_steps
+        self._auto_launch = auto_launch_torcs
+        self._port = int(port or os.environ.get("TORCS_PORT", "3001"))
 
         stats = np.load(norm_stats_path)
         self._obs_mean = stats["mean"].astype(np.float32)
@@ -88,6 +126,7 @@ class TorcsSacEnv(gym.Env):
         )
 
         self._client = TORCSClient(host=host, port=port)
+        self._torcs_proc: Optional[subprocess.Popen] = None
         self._connected = False
         self._current_gear = 1
         self._step_in_episode = 0
@@ -122,12 +161,10 @@ class TorcsSacEnv(gym.Env):
         try:
             state = self._await_fresh_state()
         except ConnectionError as exc:
-            # SCR connection dropped mid-episode (see _restart_episode docstring
-            # for why this happens). The (obs, action, next_obs) transition is
-            # no longer valid, so end the episode via truncation rather than
-            # feeding a corrupted transition into the replay buffer. Mark the
-            # client disconnected so the next reset() does a full connect()
-            # instead of retrying send_restart() on an already-dead socket.
+            # SCR connection dropped mid-episode. The (obs, action, next_obs)
+            # transition is no longer valid, so end the episode via truncation
+            # rather than feeding a corrupted transition into the replay buffer.
+            # Mark disconnected so the next reset() relaunches TORCS cleanly.
             logger.warning("Connection dropped mid-episode: %s", exc)
             self._connected = False
             obs = self._normalize(build_feature_vector(self._last_state))
@@ -153,6 +190,49 @@ class TorcsSacEnv(gym.Env):
         if self._connected:
             self._client.close()
             self._connected = False
+        self._kill_torcs()
+
+    # ------------------------------------------------------------------
+    # TORCS process management
+    # ------------------------------------------------------------------
+
+    def _kill_torcs(self) -> None:
+        proc = self._torcs_proc
+        self._torcs_proc = None
+        if proc is None or proc.poll() is not None:
+            return
+        proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+
+    def _launch_torcs(self) -> None:
+        """Start a fresh headless TORCS and block until it's ready to drive.
+
+        See the module-level TORCS_EXE comment for why cwd and the post-bind
+        grace are both mandatory.
+        """
+        if not TORCS_EXE.exists():
+            raise FileNotFoundError(f"TORCS executable not found: {TORCS_EXE}")
+        self._kill_torcs()
+        proc = subprocess.Popen(
+            [str(TORCS_EXE), "-r", str(RACE_XML)],
+            cwd=str(TORCS_EXE.parent),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        self._torcs_proc = proc
+        deadline = time.monotonic() + _TORCS_PORT_TIMEOUT
+        while time.monotonic() < deadline:
+            if proc.poll() is not None:
+                raise ConnectionError(f"TORCS exited during startup (code {proc.returncode}).")
+            if _port_is_bound(self._port):
+                time.sleep(_TORCS_STARTUP_GRACE)
+                return
+            time.sleep(0.2)
+        self._kill_torcs()
+        raise ConnectionError(f"TORCS did not open the SCR port within {_TORCS_PORT_TIMEOUT}s.")
 
     # ------------------------------------------------------------------
     # Helpers
@@ -167,30 +247,27 @@ class TorcsSacEnv(gym.Env):
                 raise ConnectionError("TORCS server sent shutdown while the RL env was running.")
             return result
 
-    def _start_episode(self, retries: int = _RESTART_RETRIES) -> SensorState:
-        """Get the car to a fresh, driveable standing start: connect (or
-        request a restart on an existing connection), then run the startup
-        throttle grace period, retrying the whole sequence on connection
-        drops.
+    def _start_episode(self, retries: int = _EPISODE_START_RETRIES) -> SensorState:
+        """Bring the car to a fresh, driveable standing start.
 
-        Empirically, the SCR connection can drop (WinError 10054 on Windows)
-        anywhere in this sequence, not just immediately after send_restart():
-        TORCS tears down and respawns the car without a steady stream of
-        control packets during the transition, which can trip the server's
-        ~2.85s per-action timeout (see torcs_env/client.py's ConnectionError
-        message). This project's earlier — since removed — Phase 3 attempt
-        hit the same instability and worked around it with multi-session
-        checkpoint recovery; retrying here keeps a single training run alive
-        instead of crashing on the first transient drop.
+        Each episode gets its own TORCS process (see the TORCS_EXE comment on
+        why we relaunch instead of using an in-race meta=1 restart). The whole
+        sequence — (re)launch, connect, run the startup throttle grace period —
+        is retried as a unit, since TORCS launch itself can occasionally crash
+        or the SCR handshake can drop on this setup; a clean relaunch recovers
+        where an in-race restart could not.
         """
         last_exc: Optional[Exception] = None
         for attempt in range(1, retries + 1):
             try:
-                if not self._connected:
-                    self._client.connect()
-                    self._connected = True
-                else:
-                    self._client.send_restart()
+                if self._connected:
+                    self._client.close()
+                    self._connected = False
+                if self._auto_launch:
+                    self._launch_torcs()
+
+                self._client.connect()
+                self._connected = True
                 state = self._await_fresh_state()
 
                 for _ in range(_STARTUP_STEPS):
@@ -200,11 +277,10 @@ class TorcsSacEnv(gym.Env):
                     state = self._await_fresh_state()
 
                 return state
-            except ConnectionError as exc:
+            except (ConnectionError, OSError) as exc:
                 last_exc = exc
                 logger.warning(
-                    "Connection dropped while starting episode (attempt %d/%d): %s",
-                    attempt, retries, exc,
+                    "Episode start failed (attempt %d/%d): %s", attempt, retries, exc,
                 )
                 try:
                     self._client.close()
