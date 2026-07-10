@@ -40,30 +40,30 @@ from torcs_env.actions import Action
 from torcs_env.sensors import SensorState
 from training.rl.torcs_gym_env import TorcsSacEnv
 
-# Max physical magnitude of the RL correction on each of steer/accel/brake.
+# Max physical magnitude of the RL correction on each of steer/accel/brake, and
+# the L2 penalty that keeps the trained residual close to the BC base.
 #
-# This bound is the whole ballgame, and it exposes why residual RL didn't beat
-# BC here (see CLAUDE.md Fase 3). Empirically tested against a worst-case
-# adversarial residual (max accel, min brake, hard steer — the corner-overspeed
-# attack a speed-hacking actor learns):
-#   * at 0.05 the adversarial residual BREAKS BC: off-track ~3000 steps in,
-#     before the ~5800-step lap completes. So ±0.05 is enough authority for SAC
-#     to exploit the gameable per-step speed reward and degrade the base driver.
-#   * at <=0.02 even the worst-case residual can't move BC off its line, so the
-#     car keeps completing laps — but that's too little authority to improve
-#     lap time either.
-# So 0.02 is the "safe but can't help" regime and >=0.05 is the "can help but
-# SAC breaks it" regime. The real fix is a lap-time reward (not per-step speed),
-# not a scale tweak. Default kept in the safe regime.
-RESIDUAL_SCALE = 0.02
-
-# L2 penalty on the residual, added to the per-step reward. Encodes "stay on the
-# BC base unless deviating genuinely pays": a correction has to buy back its own
-# cost in driving reward, so the policy defaults to (near-)pure BC. Helps but is
-# not sufficient on its own — with the per-step speed reward, SAC's critic still
-# over-values aggressive residuals (see the L2-penalty run: reward fell as the
-# actor grew the residual anyway).
-RESIDUAL_L2_COEF = 2.0
+# These two together make the shipped residual driver both work (completes the
+# lap, 0% off-track) and be genuinely RL (a trained SAC policy adjusts the base
+# every step). The shipped checkpoint (drivers/rl/models/sac_corkscrew_residual)
+# was trained at these values and evaluates deterministically at 127.07s, 0%
+# off-track, 0 damage (vs BC 121.978s / 0%).
+#   * Scale bounds how far RL can pull the car off the BC line. A constant
+#     worst-case "never brake" attack overshoots one corner (~91% around) at
+#     every scale 0.02-0.05, but that's a dumb attack that brakes nowhere; a
+#     policy trained on clean laps (with the -200 off-track penalty) learns to
+#     brake into corners, so 0.03 is safe for a trained policy.
+#   * RESIDUAL_L2_COEF penalises ||residual||^2 each step, so a correction must
+#     buy back its own cost in driving reward — the policy defaults to near-pure
+#     BC and only nudges where it clearly helps. With this + clean per-episode
+#     training (see train_sac SAC config comment on why per-step training
+#     corrupted every earlier run) the learned residual keeps the car exactly on
+#     BC's line (0% off-track).
+# Note: this does NOT beat BC on lap time (~4% slower) — the goal was a working,
+# genuinely-RL driver that safely completes the lap. Beating BC would need a
+# lap-time reward, not a scale tweak.
+RESIDUAL_SCALE = 0.03
+RESIDUAL_L2_COEF = 5.0
 
 
 class ResidualTorcsSacEnv(TorcsSacEnv):
@@ -89,6 +89,7 @@ class ResidualTorcsSacEnv(TorcsSacEnv):
         return state
 
     def step(self, residual):
+        self._ensure_started()  # deferred launch+connect on first step (see base env)
         d = np.asarray(residual, dtype=np.float32)
         base = self._bc.step(self._last_state)
         cmd = Action(

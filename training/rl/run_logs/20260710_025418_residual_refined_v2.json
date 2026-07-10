@@ -1,0 +1,16 @@
+{
+  "run_id": "20260710_025418",
+  "git_sha": "1d1ee98",
+  "algorithm": "SAC",
+  "mode": "residual",
+  "reward_version": "refined_v2",
+  "total_timesteps": 25000,
+  "critic_warmup_steps": 100,
+  "warm_started_from": "residual(BC base + zeroed actor)",
+  "resumed_from": null,
+  "net_arch": [
+    128,
+    64
+  ],
+  "seed": null
+}

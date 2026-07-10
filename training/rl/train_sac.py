@@ -85,6 +85,9 @@ def main() -> None:
     parser.add_argument("--host", default=None)
     parser.add_argument("--port", type=int, default=None)
     parser.add_argument("--critic-warmup-steps", type=int, default=3000)
+    parser.add_argument("--gradient-steps", type=int, default=512,
+                        help="Gradient updates done between episodes (train_freq is per-episode; "
+                             "see the SAC config comment on why per-step training corrupts driving).")
     parser.add_argument("--episodes-per-checkpoint", type=int, default=50)
     parser.add_argument("--bc-checkpoint", default=str(DEFAULT_BC_CHECKPOINT))
     parser.add_argument("--no-warmstart", action="store_true", help="Skip BC warm-start, train SAC from scratch")
@@ -128,6 +131,17 @@ def main() -> None:
         # Residual RL keeps exploration gentle (a fixed small entropy coef) so
         # the correction stays close to the BC base; the direct-action variant
         # auto-tunes entropy from scratch.
+        # CRITICAL: collect a whole episode before doing gradient updates
+        # (train_freq per episode), instead of SB3's default gradient update
+        # after every single step. TORCS `-r` headless runs on its own clock and
+        # does NOT wait for a late client — it keeps advancing the sim with the
+        # last action. A per-step gradient update (~10-30ms on CPU) is enough lag
+        # for the car to drift off the racing line at the high-speed launch and
+        # crash, which silently corrupted every earlier RL run (episodes ended
+        # off-track ~300 steps in regardless of the policy — verified by forcing
+        # the action to pure BC and still crashing under per-step training).
+        # Doing the gradient updates between episodes (car stationary/resetting)
+        # keeps the per-step latency low so the car actually drives.
         model = WarmStartSAC(
             "MlpPolicy",
             env,
@@ -137,6 +151,8 @@ def main() -> None:
             batch_size=256,
             gamma=0.99,
             tau=0.005,
+            train_freq=(1, "episode"),
+            gradient_steps=args.gradient_steps,
             ent_coef=0.02 if args.residual else "auto",
             critic_warmup_steps=args.critic_warmup_steps,
             seed=args.seed,
@@ -163,6 +179,7 @@ def main() -> None:
         "mode": mode_tag,
         "reward_version": args.reward_version,
         "total_timesteps": args.total_timesteps,
+        "gradient_steps_per_episode": args.gradient_steps,
         "critic_warmup_steps": args.critic_warmup_steps,
         "warm_started_from": warm_started_from,
         "resumed_from": args.resume,

@@ -128,6 +128,7 @@ class TorcsSacEnv(gym.Env):
         self._client = TORCSClient(host=host, port=port)
         self._torcs_proc: Optional[subprocess.Popen] = None
         self._connected = False
+        self._needs_start = False
         self._current_gear = 1
         self._step_in_episode = 0
         self._off_track_run = 0
@@ -146,14 +147,37 @@ class TorcsSacEnv(gym.Env):
         self._off_track_run = 0
         self._standing_run = 0
 
-        state = self._start_episode()
+        if self._auto_launch:
+            # DEFER the TORCS launch+connect to the first step(). When training
+            # with per-episode gradient updates, SB3 does the (long) batch of
+            # gradient updates AFTER reset() and BEFORE the first step(). If we
+            # launched+connected TORCS here, it would sit idle waiting through
+            # that whole pause, which disrupts the standing-start and crashes
+            # the episode ~300 steps in (verified: happens even with a pure-BC
+            # action). Deferring means the gradient updates run while no TORCS
+            # is waiting; the first step() then launches a fresh one. See the
+            # SAC config comment in train_sac.py.
+            self._needs_start = True
+            self._last_state = None
+            return np.zeros(FEATURE_DIM, dtype=np.float32), {}
 
+        state = self._start_episode()
         self._prev_lap_time = state.lastLapTime
         self._last_state = state
         obs = self._normalize(build_feature_vector(state))
         return obs, {"distRaced": state.distRaced}
 
+    def _ensure_started(self) -> None:
+        """Perform the deferred launch+connect+standing-start on the first
+        step() of an episode (see reset())."""
+        if self._needs_start:
+            state = self._start_episode()
+            self._prev_lap_time = state.lastLapTime
+            self._last_state = state
+            self._needs_start = False
+
     def step(self, action):
+        self._ensure_started()
         steer, accel, brake = (float(a) for a in np.asarray(action, dtype=np.float32))
         self._update_gear(self._last_state.rpm)
         cmd = Action(steer=steer, accel=accel, brake=brake, gear=self._current_gear)
@@ -182,6 +206,13 @@ class TorcsSacEnv(gym.Env):
 
         reward, terminated, reason = self._reward_and_termination(self._last_state, state)
         truncated = (not terminated) and self._step_in_episode >= self.max_episode_steps
+
+        if terminated or truncated:
+            logger.info(
+                "Episode end: step=%d reason=%s dist=%.0f speed=%.1f trackPos=%.3f",
+                self._step_in_episode, reason or ("max_steps" if truncated else "?"),
+                state.distRaced, state.speed, state.trackPos,
+            )
 
         self._last_state = state
         obs = self._normalize(build_feature_vector(state))

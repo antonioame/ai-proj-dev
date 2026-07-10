@@ -39,9 +39,16 @@ def run(
     host: Optional[str] = None,
     port: Optional[int] = None,
     save_telemetry: bool = False,
+    residual: bool = False,
+    checkpoint: Optional[str] = None,
 ) -> dict:
-    driver_name = DRIVER_NAME
-    driver = RLDriver()
+    if residual:
+        from drivers.rl.residual_driver import ResidualRLDriver
+        driver_name = "rl_residual"
+        driver = ResidualRLDriver(checkpoint_path=Path(checkpoint)) if checkpoint else ResidualRLDriver()
+    else:
+        driver_name = DRIVER_NAME
+        driver = RLDriver(checkpoint_path=Path(checkpoint)) if checkpoint else RLDriver()
 
     rows: list[dict] = []
     lap_times: list[float] = []
@@ -157,8 +164,13 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=None)
     parser.add_argument("--telemetry", action="store_true",
                         help="Save full telemetry to data/<driver>_<ts>.csv")
+    parser.add_argument("--residual", action="store_true",
+                        help="Run the residual driver (BC base + SAC correction).")
+    parser.add_argument("--checkpoint", default=None,
+                        help="Path to a SAC .zip checkpoint (default depends on --residual).")
     args = parser.parse_args()
-    run(laps=args.laps, host=args.host, port=args.port, save_telemetry=args.telemetry)
+    run(laps=args.laps, host=args.host, port=args.port, save_telemetry=args.telemetry,
+        residual=args.residual, checkpoint=args.checkpoint)
 
 
 if __name__ == "__main__":
