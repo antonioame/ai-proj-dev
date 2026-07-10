@@ -128,7 +128,6 @@ def main(host: str = "localhost", port: int = 3001):
     prev_lap_time = 0.0
     step_counter = 0
     current_gear = 1
-    prev_steer = 0.0
 
     print("Running 5 laps. Press Ctrl+C to stop.\n")
 

@@ -122,11 +122,14 @@ def zero_residual_actor(model) -> None:
 
     Qui la std di esplorazione conta molto: si somma a un driver BC che già
     inserisce le curve strette del Corkscrew, quindi anche un rumore di
-    sterzo modesto (un tentativo precedente con std≈0.22 → ~±0.06 di jitter
-    fisico sullo sterzo per step) si accumula e manda l'auto fuori pista dopo
-    ~285 step, prima ancora che completi un giro — così l'agente non vede mai
-    il reward per aver finito. log_std = -3.0 (std≈0.05 → ~±0.0075 di sterzo
-    fisico) mantiene l'esplorazione abbastanza delicata da far restare l'auto
+    sterzo modesto (un tentativo precedente con std di esplorazione ≈0.22,
+    sensibilmente più ampia dell'attuale) si accumula e manda l'auto fuori
+    pista dopo ~285 step, prima ancora che completi un giro — così l'agente
+    non vede mai il reward per aver finito. log_std = -3.0 (std≈0.05, che
+    dopo la compressione tanh e la scala RESIDUAL_SCALE corrisponde a un
+    jitter fisico di sterzo per step dell'ordine di qualche millesimo, con
+    picchi fino a ~±0.007 su lunghe sequenze — verificato per simulazione)
+    mantiene l'esplorazione abbastanza delicata da far restare l'auto
     in pista e far girare gli episodi per giri completi, dando a SAC un vero
     segnale di giro completato da cui imparare. La policy deterministica
     mantiene comunque la piena autorità ±RESIDUAL_SCALE — solo il rumore in

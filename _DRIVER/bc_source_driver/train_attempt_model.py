@@ -4,7 +4,6 @@ Usage:
     conda run -n ai_env python _DRIVER/bc_source_driver/train_attempt_model.py --csv data/rule_based_20260628_203648.csv
 """
 
-import sys
 import numpy as np
 import pandas as pd
 import joblib

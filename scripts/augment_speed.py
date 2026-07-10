@@ -19,7 +19,6 @@ Usage:
 """
 
 import pandas as pd
-import numpy as np
 import argparse
 
 
@@ -42,7 +41,7 @@ def augment_csv(
     df["steer"] = (df["steer"] * (1.0 + steer_pct / 100.0)).clip(-1.0, 1.0)
     df["brake"] = (df["brake"] * (1.0 - brake_reduction_pct / 100.0)).clip(0.0, 1.0)
 
-    print(f"\n[AUGMENTATION] Applied (outputs only, sensor inputs unchanged):")
+    print("\n[AUGMENTATION] Applied (outputs only, sensor inputs unchanged):")
     print(f"  - accel: +{accel_pct}%  → {df['accel'].min():.3f} - {df['accel'].max():.3f}")
     print(f"  - steer: +{steer_pct}%  → {df['steer'].min():.3f} - {df['steer'].max():.3f}")
     print(f"  - brake: -{brake_reduction_pct}%  → {df['brake'].min():.3f} - {df['brake'].max():.3f}")

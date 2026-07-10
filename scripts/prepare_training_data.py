@@ -21,7 +21,6 @@ Usage:
 
 import argparse
 import pandas as pd
-import numpy as np
 
 # Colonne di input dei sensori — mai modificate
 INPUT_COLS = (
@@ -82,7 +81,7 @@ def augment(df: pd.DataFrame, accel_pct: float, steer_pct: float, brake_reductio
     df["steer"] = (df["steer"] * (1.0 + steer_pct / 100.0)).clip(-1.0, 1.0)
     df["brake"] = (df["brake"] * (1.0 - brake_reduction_pct / 100.0)).clip(0.0, 1.0)
 
-    print(f"\n[AUGMENT] Sensor inputs: unchanged")
+    print("\n[AUGMENT] Sensor inputs: unchanged")
     print(f"[AUGMENT] accel: {before['accel'][0]:.3f}-{before['accel'][1]:.3f}  →  "
           f"{df['accel'].min():.3f}-{df['accel'].max():.3f}  (+{accel_pct}%)")
     print(f"[AUGMENT] steer: {before['steer'][0]:.3f}-{before['steer'][1]:.3f}  →  "
@@ -118,11 +117,11 @@ def main():
     df_aug.to_csv(args.output_augmented, index=False)
     print(f"[OK] Augmented CSV saved: {args.output_augmented}  ({len(df_aug)} rows)")
 
-    print(f"\n[NEXT] Train BC with:")
-    print(f"  conda run -n ai_env python scripts/train_bc_from_attempt1.py \\")
+    print("\n[NEXT] Train BC with:")
+    print("  conda run -n ai_env python scripts/train_bc_from_attempt1.py \\")
     print(f"    --original {args.output_clean} \\")
     print(f"    --augmented {args.output_augmented} \\")
-    print(f"    --output-name bc_from_olddriver_v1")
+    print("    --output-name bc_from_olddriver_v1")
 
 
 if __name__ == "__main__":

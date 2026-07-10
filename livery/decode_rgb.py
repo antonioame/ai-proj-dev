@@ -2,7 +2,6 @@
 
 from pathlib import Path
 from PIL import Image
-import sys
 
 def decode_radiance_rgb(path: Path) -> Image.Image | None:
     """Decodifica un file Radiance RGB e restituisce un'immagine PIL."""

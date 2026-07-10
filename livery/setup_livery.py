@@ -184,7 +184,7 @@ def show_status() -> None:
             if "source" in state:
                 print(f"Last source:      {state['source']}")
     else:
-        print(f"Last action:      unknown (state file not found)")
+        print("Last action:      unknown (state file not found)")
     print()
 
 

@@ -102,7 +102,7 @@ class BCDriver:
         self.corner_model, self.corner_mean, self.corner_std = _load_bc_model(
             corner_model_path, corner_stats_path, self._device
         )
-        print(f"[BCDriver] Hybrid model loaded: straight=bc_from_attempt1_v1, corner=bc_from_olddriver_v1")
+        print("[BCDriver] Hybrid model loaded: straight=bc_from_attempt1_v1, corner=bc_from_olddriver_v1")
 
     def reset(self) -> None:
         pass

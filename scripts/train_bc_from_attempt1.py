@@ -239,9 +239,9 @@ def main():
     print(f"[INFO] Best validation loss: {best_val_loss:.4f}")
 
     # Mostra le istruzioni
-    print(f"\n[NEXT] To use this model:")
+    print("\n[NEXT] To use this model:")
     print(f"  1. Update _DRIVER/driver.py to load: _DRIVER/models/{args.output_name}.pth")
-    print(f"  2. Run: conda run -n ai_env python scripts/run_agent.py --laps 1")
+    print("  2. Run: conda run -n ai_env python scripts/run_agent.py --laps 1")
 
 
 if __name__ == "__main__":
