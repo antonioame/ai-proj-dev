@@ -26,8 +26,9 @@ pip install torch --index-url https://download.pytorch.org/whl/cu121   # con GPU
 pip install torch --index-url https://download.pytorch.org/whl/cpu
 ```
 
-Alcuni script accessori richiedono anche `Pillow`, `joblib`, `h5py` — installare se un
-import fallisce (`pip install pillow joblib h5py`).
+Alcuni script accessori richiedono anche `Pillow` (livrea) e `joblib` (salvataggio
+scaler/modelli in `_DRIVER/bc_source_driver/`) — installare se un import fallisce
+(`pip install pillow joblib`).
 
 ---
 

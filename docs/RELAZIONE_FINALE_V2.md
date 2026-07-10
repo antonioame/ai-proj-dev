@@ -129,7 +129,7 @@ Questa formula garantisce che la distanza di frenata, e non una tabella statica,
 2. **TCS** — monitora lo slittamento della ruota posteriore e riduce l'accelerazione quando lo slip supera la soglia, con un guadagno di correzione più aggressivo nelle marce basse e più permissivo nelle marce alte
 3. **EBD** — riduce la pressione frenante in curva proporzionalmente all'angolo di sterzo, preservando la stabilità
 
-**Performance:** 148,4 s per giro, 0 incidenti, meno del 5% di uscite di pista
+**Performance:** 148,4 s per giro, 0 incidenti, 0% di uscite di pista
 
 ### 2.3 Driver Behavioral Cloning ibrido — candidato alla consegna (_DRIVER/)
 
@@ -256,26 +256,26 @@ Un ulteriore approccio, basato su una traiettoria precalcolata a partire dalla t
 
 ### 4.2 Metriche telemetria (driver rule-based, isolato di riferimento)
 
+Valori incrociati con le registrazioni di telemetria reali (`data/driver_6-*.csv`,
+`data/driver_7-*.csv`, otto sessioni indipendenti) e con `laptime_ledger.csv`
+(config `phase_b_abs_higher_brakes`, lo stesso tuning ABS/freni citato in questo
+documento).
+
 | Metrica | Valore |
 |---------|--------|
 | Tempo sul giro | 148,4 s |
-| Velocità massima | ~215 km/h |
+| Velocità massima | ~172 km/h |
 | Velocità media | ~87 km/h |
-| Uscite di pista | <5% |
+| Uscite di pista | 0% |
 | Danno auto | 0 |
 | Marcia media | 4,2 |
 | RPM di picco | 9.800 |
 
 ### 4.3 Velocità per settore
 
-| Settore (m) | Tipo | Vel. max (km/h) | Vel. media (km/h) | Note |
-|-------------|------|-----------------|-------------------|------|
-| 0–500 | Rettilineo | 195 | 140 | Partenza da fermo |
-| 500–1200 | Curve | 115 | 85 | S-curve Corkscrew |
-| 1200–1800 | Rettilineo | 210 | 155 | Settore veloce |
-| 1800–2400 | Curva | 90 | 65 | Complesso stretto |
-| 2400–3100 | Misto | 130 | 95 | Terreno variato |
-| 3100–3608 | Rettilineo finale | 200 | 120 | Sprint finale |
+Non è stata implementata un'analisi per-settore della velocità (nessuno script nel
+repository calcola una scomposizione per tratti di pista): solo le metriche
+aggregate per giro in §4.2 sono verificate contro la telemetria reale.
 
 ---
 
