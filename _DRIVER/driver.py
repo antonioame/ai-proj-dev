@@ -1,4 +1,4 @@
-"""Behavioral Cloning driver — hybrid of two BC models blended by track context."""
+"""Driver di Behavioral Cloning — ibrido di due modelli BC fusi in base al contesto della pista."""
 
 import sys
 from pathlib import Path
@@ -14,7 +14,7 @@ from torcs_env.sensors import SensorState
 
 
 class BCPolicy(nn.Module):
-    """Behavioral Cloning MLP for TORCS driving."""
+    """MLP di Behavioral Cloning per la guida in TORCS."""
     def __init__(self, input_dim: int = 26, hidden_dims: list = None):
         super().__init__()
         if hidden_dims is None:
@@ -44,7 +44,7 @@ class BCPolicy(nn.Module):
 
 
 def _load_bc_model(model_path: Path, stats_path: Path, device: torch.device):
-    """Load a BCPolicy model and its normalization stats."""
+    """Carica un modello BCPolicy e le sue statistiche di normalizzazione."""
     stats = np.load(stats_path)
     X_mean = torch.from_numpy(stats["mean"]).float().to(device)
     X_std = torch.from_numpy(stats["std"]).float().to(device)
@@ -55,26 +55,30 @@ def _load_bc_model(model_path: Path, stats_path: Path, device: torch.device):
 
 
 class BCDriver:
-    """Hybrid BC driver: blends two models based on straight vs corner context.
+    """Driver BC ibrido: fonde due modelli in base al contesto rettilineo/curva.
 
-    - straight_model: trained on rule_based data — better on straights
-    - corner_model:   trained on old hybrid driver data — better in corners
+    - straight_model: addestrato sulla telemetria del precedente tentativo di
+      driving-net (bc_source_driver/), a sua volta addestrato su dati rule_based
+      — migliore sui rettilinei
+    - corner_model:   addestrato sulla telemetria del vecchio driver ibrido
+      (project_V1, regole + predittore BC) — migliore in curva
 
-    Blend weight is determined by track[9] (front distance sensor):
-      - track[9] > STRAIGHT_THRESHOLD → full straight model
-      - track[9] < CORNER_THRESHOLD   → full corner model
-      - between the two               → smooth linear blend
+    Il peso della fusione è determinato da track[9] (sensore di distanza frontale):
+      - track[9] > STRAIGHT_THRESHOLD → modello rettilineo puro
+      - track[9] < CORNER_THRESHOLD   → modello curva puro
+      - tra i due                     → fusione lineare morbida
     """
 
-    STEER_GAIN = 1.8   # Applied to the blended steer output
-    ACCEL_GAIN = 1.40  # Applied to the blended accel output
-    BRAKE_GAIN = 0.80  # Applied to the blended brake output
+    STEER_GAIN = 1.8   # Applicato all'output di sterzo fuso
+    ACCEL_GAIN = 1.40  # Applicato all'output di accelerazione fuso
+    BRAKE_GAIN = 0.80  # Applicato all'output di frenata fuso
 
-    STRAIGHT_THRESHOLD = 44.0   # m — above this: pure straight model
-    CORNER_THRESHOLD   = 22.0   # m — below this: pure corner model
+    STRAIGHT_THRESHOLD = 44.0   # m — sopra questa soglia: modello rettilineo puro
+    CORNER_THRESHOLD   = 22.0   # m — sotto questa soglia: modello curva puro
 
-    # Startup phase: feed full throttle with zero steer for this many steps.
-    # Keeps the car straight while the models receive OOD inputs (speed≈0, gear=0).
+    # Fase di avvio: applica pieno gas con sterzo a zero per questo numero di step.
+    # Mantiene l'auto dritta mentre i modelli ricevono input fuori distribuzione
+    # (OOD: velocità≈0, marcia=0).
     STARTUP_STEPS = 80
 
     def __init__(self):
@@ -108,7 +112,7 @@ class BCDriver:
         self._step_count = 0
 
     def _infer(self, model, X_mean, X_std, sensor_vec: np.ndarray) -> dict:
-        """Run inference on a single model."""
+        """Esegue l'inferenza su un singolo modello."""
         t = torch.from_numpy(sensor_vec).float().to(self._device)
         t = (t - X_mean) / X_std
         with torch.no_grad():
@@ -116,7 +120,7 @@ class BCDriver:
         return {k: float(v.squeeze().item()) for k, v in out.items()}
 
     def _blend_weight(self, front_dist: float) -> float:
-        """Return corner weight in [0, 1]. 0 = pure straight, 1 = pure corner."""
+        """Restituisce il peso curva in [0, 1]. 0 = rettilineo puro, 1 = curva pura."""
         if front_dist >= self.STRAIGHT_THRESHOLD:
             return 0.0
         if front_dist <= self.CORNER_THRESHOLD:
@@ -149,11 +153,11 @@ class BCDriver:
             float(state.gear),
         ], dtype=np.float32)
 
-        # Infer from both models
+        # Inferenza da entrambi i modelli
         straight_out = self._infer(self.straight_model, self.straight_mean, self.straight_std, sensor_vec)
         corner_out   = self._infer(self.corner_model,   self.corner_mean,   self.corner_std,   sensor_vec)
 
-        # Blend based on front sensor distance
+        # Fusione basata sulla distanza del sensore frontale
         front_dist = state.track[9] if len(state.track) > 9 else 100.0
         w_corner = self._blend_weight(front_dist)
         w_straight = 1.0 - w_corner
@@ -162,12 +166,12 @@ class BCDriver:
         accel = w_straight * straight_out["accel"] + w_corner * corner_out["accel"]
         brake = w_straight * straight_out["brake"] + w_corner * corner_out["brake"]
 
-        # Apply gains
+        # Applica i guadagni
         steer = max(-1.0, min(1.0, steer * self.STEER_GAIN))
         accel = max(0.0,  min(1.0, accel * self.ACCEL_GAIN))
         brake = max(0.0,  min(1.0, brake * self.BRAKE_GAIN))
 
-        # RPM-based gear management
+        # Gestione marcia basata su RPM
         if state.rpm > 12000 and self.current_gear < 6:
             self.current_gear += 1
         elif state.rpm < 6000 and self.current_gear > 1:

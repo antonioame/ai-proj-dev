@@ -1,5 +1,5 @@
 """
-Train the earlier driving-net attempt using existing telemetry CSV.
+Addestra il precedente tentativo di driving-net usando un CSV di telemetria esistente.
 Usage:
     conda run -n ai_env python _DRIVER/bc_source_driver/train_attempt_model.py --csv data/rule_based_20260628_203648.csv
 """
@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from pathlib import Path
 import argparse
 
-# Input feature columns (matches actual CSV format from our telemetry)
+# Colonne delle feature di input (corrisponde al formato CSV reale della nostra telemetria)
 TRACK_COLS = [f"track_{i}" for i in range(19)]
 WHEEL_COLS = [f"wheel_{i}" for i in range(4)]
 INPUT_COLS = (
@@ -26,7 +26,7 @@ GEAR_OFFSET = 1
 
 
 class DrivingNet(nn.Module):
-    """Multi-Layer Perceptron for driving control."""
+    """Multi-Layer Perceptron per il controllo di guida."""
     def __init__(self, input_dim: int, num_gears: int = 8):
         super().__init__()
         self.backbone = nn.Sequential(
@@ -48,14 +48,14 @@ class DrivingNet(nn.Module):
 
 
 def load_and_clean(csv_path: str) -> pd.DataFrame:
-    """Load and clean telemetry CSV."""
+    """Carica e pulisce il CSV di telemetria."""
     df = pd.read_csv(csv_path)
     print(f"[PREPROCESSING] Raw rows: {len(df)}")
 
-    # Drop rows with missing values in critical columns
+    # Scarta le righe con valori mancanti nelle colonne critiche
     df.dropna(subset=INPUT_COLS + ['steer', 'accel', 'brake', 'gear'], inplace=True)
 
-    # Filter to clean driving (on track)
+    # Filtra per tenere solo la guida pulita (in pista)
     df = df[df['trackPos'].abs() < 0.9]
     print(f"[PREPROCESSING] Rows after cleaning: {len(df)}")
 
@@ -70,19 +70,19 @@ def main():
                         help="Output directory for model")
     args = parser.parse_args()
 
-    # Load and preprocess
+    # Carica e preprocessa
     df = load_and_clean(args.csv)
     feature_matrix = df[INPUT_COLS].values.astype(np.float32)
     steer_target = df[['steer']].values.astype(np.float32)
     pedals_target = df[['accel', 'brake']].values.astype(np.float32)
     gear_target = (df['gear'].values + GEAR_OFFSET).astype(np.int64)
 
-    # Normalize
+    # Normalizza
     feature_mean = feature_matrix.mean(axis=0)
     feature_std = feature_matrix.std(axis=0) + 1e-6
     normalized_features = (feature_matrix - feature_mean) / feature_std
 
-    # Save scaler
+    # Salva lo scaler
     output_path = Path(args.output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
 
@@ -96,7 +96,7 @@ def main():
     joblib.dump(scaler_info, scaler_path)
     print(f"[INFO] Scaler saved: {scaler_path}")
 
-    # Create dataset
+    # Crea il dataset
     full_dataset = TensorDataset(
         torch.from_numpy(normalized_features),
         torch.from_numpy(steer_target),
@@ -112,7 +112,7 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=256, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=512, shuffle=False)
 
-    # Train
+    # Addestramento
     device = torch.device("cpu")
     driving_model = DrivingNet(input_dim=len(INPUT_COLS)).to(device)
     optimizer = torch.optim.Adam(driving_model.parameters(), lr=1e-3)

@@ -1,4 +1,4 @@
-"""Unit tests for SCR sensor string parsing."""
+"""Test unitari per l'interpretazione delle stringhe di sensori SCR."""
 
 import sys
 from pathlib import Path
@@ -8,7 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import pytest
 from torcs_env.sensors import SensorState
 
-# A representative SCR sensor string
+# Una stringa di sensori SCR rappresentativa
 SAMPLE = (
     "(angle 0.123)"
     "(speedX 87.5)"
@@ -62,7 +62,7 @@ def test_track_length():
 
 def test_track_centre_sensor():
     s = SensorState.from_string(SAMPLE)
-    # Index 9 is straight ahead
+    # L'indice 9 è dritto davanti
     assert s.track[9] == pytest.approx(60.0)
 
 

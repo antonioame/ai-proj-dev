@@ -2,8 +2,8 @@
 
 Agente AI che completa un giro del circuito Corkscrew in TORCS il più velocemente
 possibile da una partenza da fermo, senza schiantarsi. Il driver principale
-(candidato alla consegna finale) è un modello di **behavioral cloning**: **125.790 s**,
-199.0 km/h di punta.
+(candidato alla consegna finale) è un modello di **behavioral cloning**: **121.978 s**,
+199.6 km/h di punta.
 
 ---
 
@@ -35,7 +35,7 @@ import fallisce (`pip install pillow joblib h5py`).
 
 ```bash
 # 1. Avvia il server TORCS in modalità headless
-torcs.exe -r torcs_env\race_config\corkscrew_solo.xml
+wtorcs.exe -r torcs_env\race_config\corkscrew_solo.xml
 
 # 2. In un altro terminale, esegui il driver bc
 conda run -n ai_env python scripts/run_agent.py --laps 1

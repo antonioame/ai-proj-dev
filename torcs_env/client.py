@@ -1,18 +1,18 @@
-"""UDP client implementing the SCR (Simulated Car Racing) protocol for TORCS.
+"""Client UDP che implementa il protocollo SCR (Simulated Car Racing) per TORCS.
 
-Protocol overview
------------------
-1. Client sends an identification string on first connect:
+Panoramica del protocollo
+--------------------------
+1. Alla prima connessione il client invia una stringa di identificazione:
      SCR(init -45 -38 -30 -22 -15 -10 -6 -3 -1 0 1 3 6 10 15 22 30 38 45)
-   The numbers are the rangefinder angles in degrees.
+   I numeri sono gli angoli dei rangefinder in gradi.
 
-2. Server responds with a sensor string each simulation step (~50 ms).
+2. Il server risponde con una stringa di sensori ad ogni step di simulazione (~20 ms, 50 step/s).
 
-3. Client responds with a control string:
+3. Il client risponde con una stringa di controllo:
      (accel X)(brake X)(steer X)(gear X)(clutch X)(meta X)
 
-4. Server sends "***restart***" to signal a race restart.
-   Server sends "***shutdown***" to signal it is closing.
+4. Il server invia "***restart***" per segnalare il restart della gara.
+   Il server invia "***shutdown***" per segnalare che si sta chiudendo.
 """
 
 from __future__ import annotations
@@ -28,20 +28,20 @@ from .sensors import SensorState
 
 logger = logging.getLogger(__name__)
 
-# Default sensor angles for the 19 rangefinders (degrees)
+# Angoli di default dei sensori per i 19 rangefinder (gradi)
 _DEFAULT_ANGLES = [-45, -38, -30, -22, -15, -10, -6, -3, -1, 0, 1, 3, 6, 10, 15, 22, 30, 38, 45]
 
 _MSG_RESTART = b"***restart***"
 _MSG_SHUTDOWN = b"***shutdown***"
 _MSG_IDENTIFIED = b"***identified***"
 
-# Sentinel values returned by receive() to signal protocol events
+# Valori sentinella restituiti da receive() per segnalare eventi di protocollo
 RESTART = "RESTART"
 SHUTDOWN = "SHUTDOWN"
 
 
 class TORCSClient:
-    """UDP client for the SCR TORCS server."""
+    """Client UDP per il server SCR di TORCS."""
 
     def __init__(
         self,
@@ -60,22 +60,22 @@ class TORCSClient:
         self._sock: Optional[socket.socket] = None
         self._server_addr = (self.host, self.port)
 
-        # Lap tracking via distRaced resets
+        # Conteggio giri tramite i reset di distRaced
         self._prev_dist_raced: float = 0.0
         self._lap: int = 1
 
     # ------------------------------------------------------------------
-    # Connection management
+    # Gestione della connessione
     # ------------------------------------------------------------------
 
     def connect(self) -> None:
-        """Create UDP socket and perform the SCR handshake."""
+        """Crea il socket UDP ed esegue l'handshake SCR."""
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self._sock.settimeout(self.timeout)
         self._handshake()
 
     def _handshake(self) -> None:
-        """Send the SCR identification string and wait for the first sensor."""
+        """Invia la stringa di identificazione SCR e attende la prima risposta del server."""
         angles_str = " ".join(str(a) for a in self.sensor_angles)
         init_msg = f"SCR(init {angles_str})".encode()
 
@@ -87,7 +87,7 @@ class TORCSClient:
                 )
                 self._sock.sendto(init_msg, self._server_addr)
                 data, _ = self._sock.recvfrom(4096)
-                # Strip null terminators the SCR server appends
+                # Rimuove i terminatori null che il server SCR aggiunge
                 clean = data.rstrip(b'\x00')
                 if clean == _MSG_IDENTIFIED or clean.startswith(_MSG_IDENTIFIED):
                     logger.info("Handshake successful (server identified client).")
@@ -113,18 +113,18 @@ class TORCSClient:
             self._sock = None
 
     # ------------------------------------------------------------------
-    # Communication
+    # Comunicazione
     # ------------------------------------------------------------------
 
     def receive(self) -> SensorState | str:
-        """Receive one sensor packet from the server.
+        """Riceve un pacchetto di sensori dal server.
 
         Returns
         -------
         SensorState
-            Parsed sensor data for this simulation step.
+            Dati dei sensori interpretati per questo step di simulazione.
         str
-            One of the RESTART or SHUTDOWN sentinels.
+            Una delle sentinelle RESTART o SHUTDOWN.
         """
         assert self._sock is not None, "Call connect() first."
 
@@ -133,10 +133,10 @@ class TORCSClient:
                 data, _ = self._sock.recvfrom(4096)
                 break
             except ConnectionResetError as exc:
-                # Windows raises WinError 10054 when TORCS closes the UDP port
-                # (ICMP Port Unreachable).  This typically means TORCS aborted
-                # the race because the SCR pre-connection timeout fired before
-                # the handshake, or the per-action timeout fired mid-race.
+                # Windows solleva WinError 10054 quando TORCS chiude la porta UDP
+                # (ICMP Port Unreachable). Di solito significa che TORCS ha interrotto
+                # la gara perché il timeout SCR di pre-connessione è scattato prima
+                # dell'handshake, oppure il timeout per-azione è scattato a gara in corso.
                 raise ConnectionError(
                     "TORCS reset the connection (WinError 10054). "
                     "The SCR server likely timed out waiting for the client. "
@@ -165,36 +165,36 @@ class TORCSClient:
         return state
 
     def send(self, action: Action) -> None:
-        """Send a control action to the server."""
+        """Invia un'azione di controllo al server."""
         assert self._sock is not None, "Call connect() first."
         msg = action.clamp().to_string().encode()
         self._sock.sendto(msg, self._server_addr)
 
     def send_restart(self) -> None:
-        """Ask the server to restart the race."""
+        """Chiede al server di riavviare la gara."""
         assert self._sock is not None, "Call connect() first."
         self._sock.sendto(b"(meta 1)", self._server_addr)
 
     def send_shutdown(self) -> None:
-        """Signal the server to end the session cleanly (meta 2)."""
+        """Segnala al server di terminare la sessione in modo pulito (meta 2)."""
         assert self._sock is not None, "Call connect() first."
         msg = Action(meta=2).to_string().encode()
         self._sock.sendto(msg, self._server_addr)
 
     # ------------------------------------------------------------------
-    # Lap tracking
+    # Conteggio giri
     # ------------------------------------------------------------------
 
     def _update_lap(self, dist_raced: float) -> int:
-        """Increment lap counter when distRaced resets (new lap starts)."""
+        """Incrementa il contatore giri quando distRaced si resetta (inizia un nuovo giro)."""
         if dist_raced < self._prev_dist_raced - 100.0:
-            # distRaced dropped — server reset it for the new lap
+            # distRaced è calato — il server lo ha resettato per il nuovo giro
             self._lap += 1
         self._prev_dist_raced = dist_raced
         return self._lap
 
     # ------------------------------------------------------------------
-    # Context manager
+    # Gestore di contesto
     # ------------------------------------------------------------------
 
     def __enter__(self) -> "TORCSClient":

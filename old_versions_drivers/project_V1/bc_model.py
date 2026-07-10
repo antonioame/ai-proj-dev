@@ -1,5 +1,5 @@
 """
-Behavioral Cloning Model for TORCS Racing
+Modello di Behavioral Cloning per le corse in TORCS
 Impara dalle azioni manuali per controllare il veicolo
 """
 import numpy as np

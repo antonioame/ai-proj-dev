@@ -125,7 +125,7 @@ STUCK_STARTUP_IMMUNITY: float = 6.0
 
 
 class RuleBasedDriver:
-    """Physics-optimised steering + braking + RPM gearbox."""
+    """Sterzo + frenata + cambio marcia RPM ottimizzati sulla fisica."""
 
     def __init__(self) -> None:
         self.reset()
@@ -150,14 +150,14 @@ class RuleBasedDriver:
         self._prev_time = now
         self._step_count += 1
 
-        # Startup: attenuated steering, full throttle, speed-based gear
+        # Avvio: sterzo attenuato, pieno gas, marcia basata sulla velocità
         if self._step_count <= STARTUP_STEPS:
             steer = self._compute_steering(state) * 0.5
             self._prev_steer = steer
             gear = self._startup_gear(state)
             return Action(steer=steer, accel=1.0, brake=0.0, gear=gear).clamp()
 
-        # Recovery overrides normal driving
+        # Il recupero sovrascrive la guida normale
         if self._in_recovery(state, now):
             return self._recovery_action(state, now)
 
@@ -172,20 +172,20 @@ class RuleBasedDriver:
         return Action(steer=steer, accel=accel, brake=brake, gear=gear).clamp()
 
     # ------------------------------------------------------------------
-    # Steering
+    # Sterzo
     # ------------------------------------------------------------------
 
     def _compute_steering(self, state: SensorState) -> float:
-        # Apex-seeking: estimate curve direction from outer sensor pairs
+        # Ricerca dell'apice: stima la direzione della curva dalle coppie di sensori esterni
         sensors = state.track
         if len(sensors) >= 17:
-            # sensors[2:5] → −30°, −22°, −15° (left-of-car)
-            # sensors[14:17] → 15°, 22°, 30° (right-of-car)
+            # sensors[2:5] → −30°, −22°, −15° (a sinistra dell'auto)
+            # sensors[14:17] → 15°, 22°, 30° (a destra dell'auto)
             left_avg  = (sensors[2] + sensors[3] + sensors[4]) / 3.0
             right_avg = (sensors[14] + sensors[15] + sensors[16]) / 3.0
             total = left_avg + right_avg
             curvature = (left_avg - right_avg) / total if total > 1.0 else 0.0
-            # Positive curvature (left sees further) → right-hand corner → target inside (negative trackPos)
+            # Curvatura positiva (sinistra vede più lontano) → curva a destra → target verso l'interno (trackPos negativo)
             target_tp = max(-CURVE_TRACKPOS_MAX, min(CURVE_TRACKPOS_MAX, -curvature * CURVE_TRACKPOS_GAIN))
         else:
             target_tp = 0.0
@@ -203,16 +203,17 @@ class RuleBasedDriver:
         return steer
 
     # ------------------------------------------------------------------
-    # Forward distance — used for both speed target and throttle / brake
+    # Distanza frontale — usata sia per il target di velocità sia per gas/freno
     # ------------------------------------------------------------------
 
     def _fwd_dist(self, state: SensorState) -> float:
-        """Min of sensors 7–11 (≈ ±1–3°): the narrowest forward sector.
+        """Minimo dei sensori 7–11 (≈ ±1–3°): il settore frontale più stretto.
 
-        Using the minimum means every central sensor must see clear road before
-        we consider the path open; the maximum of the forward arc is deliberately
-        NOT used so that a side sensor looking into the inside of a corner cannot
-        inflate the estimated clear distance.
+        Usare il minimo significa che ogni sensore centrale deve vedere strada
+        libera prima di considerare il percorso aperto; il massimo dell'arco
+        frontale NON viene usato deliberatamente, così un sensore laterale che
+        guarda verso l'interno di una curva non può gonfiare la distanza
+        libera stimata.
         """
         sensors = state.track
         if len(sensors) < 12:
@@ -220,16 +221,17 @@ class RuleBasedDriver:
         return min(sensors[7:12])
 
     # ------------------------------------------------------------------
-    # Speed target — physics-based, never lookup-table limited
+    # Target di velocità — basato sulla fisica, mai limitato da tabelle di ricerca
     # ------------------------------------------------------------------
 
     def _target_speed(self, state: SensorState, fwd_dist: float) -> float:
-        """Return TARGET_PHYSICS_SCALE × physics equilibrium speed.
+        """Restituisce TARGET_PHYSICS_SCALE × velocità di equilibrio fisico.
 
-        The physics equilibrium is the speed at which the stopping distance
-        exactly equals fwd_dist.  Setting the target above equilibrium means
-        braking (not the table) always limits corner speed — and there are no
-        step discontinuities between breakpoints.
+        L'equilibrio fisico è la velocità alla quale la distanza di arresto
+        eguaglia esattamente fwd_dist. Impostare il target sopra l'equilibrio
+        significa che è sempre la frenata (non la tabella) a limitare la
+        velocità in curva — e non ci sono discontinuità a scalino tra i
+        breakpoint.
         """
         target = min(MAX_SPEED, _physics_safe_speed(fwd_dist) * TARGET_PHYSICS_SCALE)
 
@@ -242,7 +244,7 @@ class RuleBasedDriver:
         return target
 
     # ------------------------------------------------------------------
-    # Throttle / brake
+    # Gas / freno
     # ------------------------------------------------------------------
 
     def _compute_throttle_brake(
@@ -256,8 +258,8 @@ class RuleBasedDriver:
         speed = state.speed
         stopping_dist = speed * speed / BRAKE_DECEL_FACTOR + BRAKE_MARGIN
 
-        # PRIORITY 1 — Brake when wall is within stopping distance AND we are above
-        # the physics-safe speed for that distance.
+        # PRIORITÀ 1 — Frena quando il muro è entro la distanza di arresto E siamo
+        # sopra la velocità fisicamente sicura per quella distanza.
         if fwd_dist < stopping_dist and speed > physics_safe:
             diff = speed - physics_safe
             if speed > 140.0:
@@ -274,7 +276,7 @@ class RuleBasedDriver:
             self._speed_integral = 0.0
             return 0.0, brake
 
-        # PRIORITY 2 — Over target but no immediate braking needed: coast.
+        # PRIORITÀ 2 — Sopra il target ma senza necessità di frenata immediata: in scia.
         if speed > target:
             diff = speed - target
             self._speed_integral = max(
@@ -283,7 +285,7 @@ class RuleBasedDriver:
             )
             return 0.0, 0.0
 
-        # PRIORITY 3 — Below target and road is clear: flat out.
+        # PRIORITÀ 3 — Sotto il target e strada libera: a tavoletta.
         if fwd_dist >= FULL_THROTTLE_LOOKAHEAD:
             self._speed_integral = min(
                 THROTTLE_MAX_INTEGRAL,
@@ -291,7 +293,7 @@ class RuleBasedDriver:
             )
             return 1.0, 0.0
 
-        # PRIORITY 4 — Below target but corner ahead: proportional + integral throttle.
+        # PRIORITÀ 4 — Sotto il target ma curva in vista: gas proporzionale + integrale.
         error = target - speed
         self._speed_integral = max(
             -THROTTLE_MAX_INTEGRAL,
@@ -301,11 +303,11 @@ class RuleBasedDriver:
         return min(control, 1.0), 0.0
 
     # ------------------------------------------------------------------
-    # Anti-lock Braking System
+    # Sistema frenante antibloccaggio (ABS)
     # ------------------------------------------------------------------
 
     def _apply_abs(self, brake: float, state: SensorState) -> float:
-        """Reduce brake pressure if front wheels are locking up."""
+        """Riduce la pressione frenante se le ruote anteriori stanno bloccandosi."""
         if brake < 0.05 or state.speed < 10.0 or len(state.wheelSpinVel) < 2:
             return brake
         speed_ms = state.speed * (1000.0 / 3600.0)
@@ -313,14 +315,14 @@ class RuleBasedDriver:
         if expected < 1.0:
             return brake
         front = (state.wheelSpinVel[0] + state.wheelSpinVel[1]) / 2.0
-        ratio = front / expected  # 1.0 = rolling, <threshold = locking
+        ratio = front / expected  # 1.0 = rotola liberamente, <soglia = bloccaggio
         if ratio < ABS_SLIP_THRESHOLD:
             lockup = ABS_SLIP_THRESHOLD - ratio
             brake = max(0.0, brake * (1.0 - lockup / ABS_SLIP_THRESHOLD))
         return brake
 
     # ------------------------------------------------------------------
-    # Traction control
+    # Controllo di trazione
     # ------------------------------------------------------------------
 
     def _wheel_slip_factor(self, state: SensorState) -> float:
@@ -353,7 +355,7 @@ class RuleBasedDriver:
         return accel
 
     # ------------------------------------------------------------------
-    # Gear shifting
+    # Cambio marcia
     # ------------------------------------------------------------------
 
     def _startup_gear(self, state: SensorState) -> int:
@@ -383,7 +385,7 @@ class RuleBasedDriver:
         return gear
 
     # ------------------------------------------------------------------
-    # Stuck / recovery
+    # Blocco / recupero
     # ------------------------------------------------------------------
 
     def _is_stuck(self, state: SensorState) -> bool:
@@ -427,11 +429,11 @@ class RuleBasedDriver:
 
 
 # ---------------------------------------------------------------------------
-# Module-level helper (no state, easy to unit-test)
+# Funzione di supporto a livello di modulo (senza stato, facile da testare)
 # ---------------------------------------------------------------------------
 
 def _physics_safe_speed(fwd_dist: float) -> float:
-    """Speed (km/h) at which stopping distance equals fwd_dist.
+    """Velocità (km/h) alla quale la distanza di arresto eguaglia fwd_dist.
 
     stopping_dist = v²/BRAKE_DECEL_FACTOR + BRAKE_MARGIN = fwd_dist
     → v = sqrt(max(0, (fwd_dist - BRAKE_MARGIN) * BRAKE_DECEL_FACTOR))

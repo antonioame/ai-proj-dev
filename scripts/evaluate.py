@@ -1,4 +1,4 @@
-"""Evaluate the BC driver (_DRIVER/) and save a structured results JSON.
+"""Valuta il driver BC (_DRIVER/) e salva un JSON di risultati strutturato.
 
 Usage:
     python scripts/evaluate.py [--laps 1] [--output results/eval.json]
@@ -62,7 +62,7 @@ def evaluate(
             if abs(state.trackPos) > 1.0:
                 off_track_steps += 1
 
-            # Detect new lap time
+            # Rileva un nuovo tempo sul giro
             if state.lastLapTime > 0 and (
                 not lap_times or state.lastLapTime != lap_times[-1]
             ):

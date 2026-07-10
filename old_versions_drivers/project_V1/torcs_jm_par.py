@@ -517,18 +517,18 @@ def destringify(s):
             return [destringify(i) for i in s]
 
 def drive_example(c):
-    '''Hybrid: Original steering (proven) + BC acceleration hints.
-    The original algorithm works great - this only enhances it safely.'''
+    '''Ibrido: sterzo originale (collaudato) + suggerimenti di accelerazione da BC.
+    L'algoritmo originale funziona benissimo - questo lo potenzia solo in modo sicuro.'''
     S, R = c.S.d, c.R.d
-    
-    # === STEP 1: PROVEN ORIGINAL STEERING (DO NOT MODIFY) ===
-    # This steering logic completes laps successfully
+
+    # === STEP 1: STERZO ORIGINALE COLLAUDATO (NON MODIFICARE) ===
+    # Questa logica di sterzo completa i giri con successo
     R['steer'] = S['angle'] * 25 / PI
     R['steer'] -= S['trackPos'] * 0.25
     R['steer'] = clip(R['steer'], -1, 1)
-    
-    # === STEP 2: ORIGINAL ACCELERATION LOGIC (PROVEN) ===
-    # Dynamic target speed based on track curvature
+
+    # === STEP 2: LOGICA DI ACCELERAZIONE ORIGINALE (COLLAUDATA) ===
+    # Velocità target dinamica basata sulla curvatura della pista
     track = S['track']
     front_dist = 100.0
     if len(track) >= 19:
@@ -550,11 +550,11 @@ def drive_example(c):
     if S['speedX'] < 10:
         R['accel'] += 1.0 / (S['speedX'] + 0.1)
     
-    # Aggressive curve entry guard: reduce accel when steering or off-center
+    # Guardia aggressiva in ingresso curva: riduce l'accelerazione se si sterza o si è decentrati
     steer_abs = abs(R['steer'])
     track_abs = abs(S['trackPos'])
     if steer_abs > 0.15 or track_abs > 0.25:
-        # Scale down acceleration proportionally to steering and track position
+        # Riduce l'accelerazione in proporzione a sterzo e posizione in pista
         curve_penalty = max(steer_abs, track_abs)
         R['accel'] *= (1.0 - 0.75 * min(1.0, curve_penalty))
     
@@ -565,8 +565,8 @@ def drive_example(c):
     
     R['accel'] = clip(R['accel'], 0, 1)
     
-    # === STEP 3: BC ENHANCEMENT (OPTIONAL, CONSERVATIVE) ===
-    # Only use BC if available AND we're in a safe situation
+    # === STEP 3: POTENZIAMENTO BC (OPZIONALE, CONSERVATIVO) ===
+    # Usa BC solo se disponibile E se siamo in una situazione sicura
     state_dict = {
         'speedX': S['speedX'],
         'trackPos': S['trackPos'],
@@ -579,17 +579,17 @@ def drive_example(c):
     if c.bc_model and c.bc_model.is_loaded:
         bc_actions = c.bc_model.predict_actions(state_dict)
     
-    # Apply BC ONLY for accel hint, very conservatively
+    # Applica BC SOLO come suggerimento di accelerazione, in modo molto conservativo
     if bc_actions is not None:
-        # Only trust BC in safe conditions (centered on track, low steering)
+        # Fidati di BC solo in condizioni sicure (centrati in pista, sterzo basso)
         safety_margin = min(1.0 - abs(S['trackPos']), 1.0 - abs(R['steer']))
-        
+
         if safety_margin > 0.5:
-            # Let BC have more influence in safe conditions
+            # Lascia più influenza a BC in condizioni sicure
             bc_accel_hint = 0.85 * R['accel'] + 0.15 * bc_actions['accel']
             R['accel'] = min(R['accel'], bc_accel_hint)
     
-    # === STEP 4: GEAR CONTROL (ORIGINAL SIMPLE STRATEGY) ===
+    # === STEP 4: CONTROLLO MARCE (STRATEGIA SEMPLICE ORIGINALE) ===
     R['gear'] = 1
     if S['speedX'] > 60:
         R['gear'] = 2
@@ -602,15 +602,15 @@ def drive_example(c):
     if S['speedX'] > 220:
         R['gear'] = 6
     
-    # Final safety clip
+    # Limitazione di sicurezza finale
     R['steer'] = clip(R['steer'], -1, 1)
-    
-    # Active braking logic for violent curves - adaptive to speed
+
+    # Logica di frenata attiva per curve violente - adattiva alla velocità
     track = S['track']
     if len(track) >= 19:
         front_dist = track[9]
-        # Brake threshold scales with speed for better anticipation
-        brake_dist_threshold = 70.0 + (S['speedX'] - 80.0) * 0.3  # More anticipation at high speed
+        # La soglia di frenata scala con la velocità per un'anticipazione migliore
+        brake_dist_threshold = 70.0 + (S['speedX'] - 80.0) * 0.3  # Più anticipazione ad alta velocità
         brake_dist_threshold = max(70.0, min(120.0, brake_dist_threshold))
         
         if front_dist < brake_dist_threshold and S['speedX'] > 70:

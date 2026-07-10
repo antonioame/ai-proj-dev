@@ -1,4 +1,4 @@
-"""Record a lap with the BC driver (_DRIVER/) and save telemetry to CSV.
+"""Registra un giro con il driver BC (_DRIVER/) e salva la telemetria in CSV.
 
 Usage:
     python scripts/record_agent.py [--laps 1] [--host HOST] [--port PORT]
@@ -108,7 +108,7 @@ def record(
                     logger.info("Lap %d done in %.1f s", laps_done, state.lastLapTime)
                     lap_complete_step = step
 
-                # Allow ~1 s of data after lap ends before stopping / resetting
+                # Consente ~1 s di dati dopo la fine del giro prima di fermarsi/resettare
                 if lap_complete_step >= 0 and (step - lap_complete_step) >= 50:
                     if laps_done >= laps:
                         break

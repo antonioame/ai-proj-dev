@@ -1,4 +1,4 @@
-"""Unit tests for Action serialisation."""
+"""Test unitari per la serializzazione di Action."""
 
 import sys
 from pathlib import Path
@@ -63,7 +63,7 @@ def test_clamp_gear_min():
 def test_clamp_does_not_mutate_original():
     original = Action(steer=3.0, accel=2.0)
     clamped = original.clamp()
-    assert original.steer == 3.0  # unchanged
+    assert original.steer == 3.0  # invariato
     assert clamped.steer == 1.0
 
 

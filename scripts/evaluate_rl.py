@@ -1,10 +1,10 @@
-"""Evaluate the Phase 3 RL driver (drivers/rl/) and save a structured results JSON.
+"""Valuta il driver RL di Fase 3 (drivers/rl/) e salva un JSON di risultati strutturato.
 
-Dedicated entry point — mirrors scripts/evaluate.py exactly but hardcodes
-RLDriver instead of BCDriver, so evaluate.py itself stays untouched and the
-BC baseline it evaluates remains the zero-risk fallback. Produces the same
-JSON schema as evaluate.py (lap time, off-track fraction, damage) so results
-are directly comparable side-by-side.
+Entry point dedicato — rispecchia esattamente scripts/evaluate.py ma
+codifica RLDriver invece di BCDriver, così evaluate.py stesso resta intatto
+e la baseline BC che valuta rimane il fallback a rischio zero. Produce lo
+stesso schema JSON di evaluate.py (tempo giro, frazione fuori pista, danni)
+così i risultati sono direttamente confrontabili fianco a fianco.
 
 Usage:
     python scripts/evaluate_rl.py [--laps 1] [--output results/eval_rl.json]
@@ -77,7 +77,7 @@ def evaluate(
             if abs(state.trackPos) > 1.0:
                 off_track_steps += 1
 
-            # Detect new lap time
+            # Rileva un nuovo tempo sul giro
             if state.lastLapTime > 0 and (
                 not lap_times or state.lastLapTime != lap_times[-1]
             ):
@@ -87,10 +87,11 @@ def evaluate(
                 if lap_count >= laps:
                     break
 
-            # Safety cap: a policy that can't complete a lap (e.g. drives
-            # off-track and stops) would otherwise loop forever, since the
-            # driver keeps sending actions and TORCS never times out. Abort
-            # and record the failure rather than hang.
+            # Limite di sicurezza: una policy che non riesce a completare un
+            # giro (es. esce di pista e si ferma) altrimenti andrebbe in loop
+            # per sempre, dato che il driver continua a inviare azioni e
+            # TORCS non va mai in timeout. Aborta e registra il fallimento
+            # invece di restare bloccato.
             if total_steps >= max_steps:
                 logger.warning(
                     "Aborting after %d steps without completing %d lap(s).", total_steps, laps

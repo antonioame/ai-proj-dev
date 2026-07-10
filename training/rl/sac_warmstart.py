@@ -1,18 +1,19 @@
-"""BC -> SAC warm-start utilities (REINFORCEMENT_LEARNING.md Section 6.1).
+"""Utility di warm-start BC -> SAC (REINFORCEMENT_LEARNING.md Sezione 6.1).
 
-Phase 2's "BC-trained network" is, in this repo, actually a hybrid blend of
-two separately-trained models (_DRIVER/driver.py: BCDriver blends
-bc_from_attempt1_v1 for straights with bc_from_olddriver_v1 for corners, plus
-post-hoc gain multipliers and manual RPM-based gear shifting outside either
-network). There is no single network to transplant weights from as Section
-6.1 assumes.
+La "rete addestrata con BC" della Fase 2 è, in questo repo, in realtà una
+fusione ibrida di due modelli addestrati separatamente (_DRIVER/driver.py:
+BCDriver fonde bc_from_attempt1_v1 per i rettilinei con bc_from_olddriver_v1
+per le curve, più moltiplicatori di guadagno applicati a posteriori e cambio
+marcia manuale basato su RPM esterno a entrambe le reti). Non esiste un'unica
+rete da cui trapiantare i pesi come assume la Sezione 6.1.
 
-Decision (confirmed with the user 2026-07-08): warm-start the SAC actor from
-bc_from_olddriver_v1 (the corner model) only — the more general-purpose of
-the two. The blend logic, STEER/ACCEL/BRAKE gain multipliers and RPM gear
-shifting are treated as BC-only heuristics; RL fine-tuning is free to
-relearn/override them (gear shifting stays outside the network either way,
-handled by training/rl/torcs_gym_env.py and drivers/rl/driver.py directly).
+Decisione (confermata con l'utente il 2026-07-08): fare il warm-start
+dell'attore SAC solo da bc_from_olddriver_v1 (il modello curva) — il più
+generalista dei due. La logica di fusione, i moltiplicatori di guadagno
+STEER/ACCEL/BRAKE e il cambio marcia basato su RPM sono trattati come
+euristiche solo-BC; il fine-tuning RL è libero di reimpararli/sostituirli (il
+cambio marcia resta comunque esterno alla rete in entrambi i casi, gestito
+direttamente da training/rl/torcs_gym_env.py e drivers/rl/driver.py).
 """
 
 from __future__ import annotations
@@ -39,25 +40,27 @@ DEFAULT_BC_CHECKPOINT = BC_MODELS_DIR / "bc_from_olddriver_v1.pth"
 
 
 def load_bc_backbone_into_actor(model: SAC, bc_checkpoint: Path = DEFAULT_BC_CHECKPOINT) -> None:
-    """Copy the BC MLP backbone + action heads into model.policy.actor.
+    """Copia il backbone MLP di BC + le teste di azione in model.policy.actor.
 
-    BCPolicy layout (input_dim=26, hidden_dims=[128, 64]):
+    Layout di BCPolicy (input_dim=26, hidden_dims=[128, 64]):
         backbone.0  Linear(26, 128)  -> actor.latent_pi.0
         backbone.2  Linear(128, 64)  -> actor.latent_pi.2
         head_steer  Linear(64, 1)  ┐
-        head_accel  Linear(64, 1)  ├─ stacked -> actor.mu  Linear(64, 3)
+        head_accel  Linear(64, 1)  ├─ impilate -> actor.mu  Linear(64, 3)
         head_brake  Linear(64, 1)  ┘
-        head_gear   Linear(64, 1)    (dropped — gear is handled outside the
-                                       network; see torcs_gym_env.py)
+        head_gear   Linear(64, 1)    (scartata — la marcia è gestita fuori
+                                       dalla rete; vedi torcs_gym_env.py)
 
-    This is an approximate adapter, not a bit-exact transfer: BC applies
-    tanh/sigmoid/sigmoid per head, while SB3's SAC actor always squashes `mu`
-    through tanh internally before rescaling to the action space bounds. Close
-    enough for a warm start — Section 6.1 explicitly allows "an adapter layer
-    rather than retraining feature extraction from scratch" for this case.
+    È un adattatore approssimato, non un trasferimento bit-esatto: BC applica
+    tanh/sigmoid/sigmoid per ciascuna testa, mentre l'attore SAC di SB3
+    comprime sempre `mu` con tanh internamente prima di riscalare ai limiti
+    dello spazio d'azione. Abbastanza vicino per un warm-start — la Sezione
+    6.1 permette esplicitamente "an adapter layer rather than retraining
+    feature extraction from scratch" per questo caso.
 
-    Requires the SAC policy to have been built with policy_kwargs
-    net_arch=[128, 64] so actor.latent_pi/mu shapes match BCPolicy's exactly.
+    Richiede che la policy SAC sia stata costruita con policy_kwargs
+    net_arch=[128, 64] così le forme di actor.latent_pi/mu combaciano
+    esattamente con quelle di BCPolicy.
     """
     bc_state: dict[str, torch.Tensor] = torch.load(bc_checkpoint, map_location="cpu")
     actor = model.policy.actor
@@ -85,10 +88,11 @@ def load_bc_backbone_into_actor(model: SAC, bc_checkpoint: Path = DEFAULT_BC_CHE
         actor.mu.weight.copy_(mu_weight)
         actor.mu.bias.copy_(mu_bias)
 
-        # Modest, non-zero initial exploration noise instead of SB3's default
-        # random init — the actor starts close to the deterministic BC policy
-        # (Section 4.2.4: prefer changes that don't unlearn safe BC behaviour
-        # in early fine-tuning).
+        # Rumore di esplorazione iniziale modesto e non nullo, invece
+        # dell'inizializzazione casuale di default di SB3 — l'attore parte
+        # vicino alla policy BC deterministica (Sezione 4.2.4: preferire
+        # cambiamenti che non disimparino il comportamento BC sicuro nelle
+        # prime fasi del fine-tuning).
         actor.log_std.weight.zero_()
         actor.log_std.bias.fill_(-1.0)
 
@@ -96,17 +100,18 @@ def load_bc_backbone_into_actor(model: SAC, bc_checkpoint: Path = DEFAULT_BC_CHE
 
 
 class WarmStartSAC(SAC):
-    """SAC with a critic-only warm-up window.
+    """SAC con una finestra di warm-up solo per il critic.
 
-    Section 6.1: "Initialize the SAC critic separately (it has no BC
+    Sezione 6.1: "Initialize the SAC critic separately (it has no BC
     equivalent) — a few thousand steps of critic-only warm-up before joint
     actor-critic updates begin can reduce early instability, since the actor
     starts 'ahead' of an untrained critic."
 
-    train() is a line-for-line copy of stable_baselines3.sac.sac.SAC.train()
-    (SB3 2.9.0) with one change: while self._n_updates is below
-    critic_warmup_steps, the actor and entropy-coefficient optimizer steps
-    are skipped so only the critics (and their target networks) update.
+    train() è una copia riga per riga di stable_baselines3.sac.sac.SAC.train()
+    (SB3 2.9.0) con una modifica: finché self._n_updates è sotto
+    critic_warmup_steps, gli step degli optimizer dell'attore e del
+    coefficiente di entropia vengono saltati, così si aggiornano solo i
+    critic (e le loro reti target).
     """
 
     def __init__(self, *args: Any, critic_warmup_steps: int = 3000, **kwargs: Any) -> None:

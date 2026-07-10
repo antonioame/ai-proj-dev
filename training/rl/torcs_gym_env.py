@@ -1,13 +1,14 @@
-"""Gymnasium wrapper around the existing TORCS SCR client.
+"""Wrapper Gymnasium attorno al client SCR di TORCS esistente.
 
-Purely additive: imports torcs_env.client.TORCSClient as-is and orchestrates
-it from the outside. No changes to torcs_env/client.py, sensors.py or
-actions.py (REINFORCEMENT_LEARNING.md Section 1 / Section 6.3).
+Puramente additivo: importa torcs_env.client.TORCSClient così com'è e lo
+orchestra dall'esterno. Nessuna modifica a torcs_env/client.py, sensors.py o
+actions.py (REINFORCEMENT_LEARNING.md Sezione 1 / Sezione 6.3).
 
-Action space is steer/accel/brake only — gear stays automatic (RPM-based,
-same thresholds _DRIVER/driver.py uses), matching Section 3's requirement
-that the RL action space stay identical to what Phase 1/2 already use so the
-BC-warm-started actor's output layout lines up with the environment.
+Lo spazio d'azione è solo steer/accel/brake — la marcia resta automatica
+(basata su RPM, con le stesse soglie usate da _DRIVER/driver.py), rispettando
+il requisito della Sezione 3 secondo cui lo spazio d'azione RL deve restare
+identico a quello già usato da Fase 1/2, così il layout di output
+dell'attore con warm-start BC coincide con quello dell'ambiente.
 """
 
 from __future__ import annotations
@@ -37,36 +38,39 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-# Automatic-gear thresholds, mirrored from _DRIVER/driver.py.BCDriver so the
-# RL policy and the eventual RLDriver see the same gear behaviour.
+# Soglie del cambio marcia automatico, rispecchiate da _DRIVER/driver.py.BCDriver
+# così la policy RL e l'eventuale RLDriver vedono lo stesso comportamento marce.
 _GEAR_UP_RPM = 12000.0
 _GEAR_DOWN_RPM = 6000.0
 
-# Startup grace period: feed full-throttle/zero-steer for this many steps
-# before handing control to the policy. Mirrors BCDriver.STARTUP_STEPS —
-# keeps the warm-started actor from ever seeing the OOD (speed≈0, gear=0)
-# launch state it never saw during BC training.
+# Periodo di grazia all'avvio: applica pieno gas/sterzo zero per questo numero
+# di step prima di passare il controllo alla policy. Rispecchia
+# BCDriver.STARTUP_STEPS — evita che l'attore con warm-start veda mai lo stato
+# di lancio fuori distribuzione (OOD: velocità≈0, marcia=0) che non ha mai
+# visto durante il training BC.
 _STARTUP_STEPS = 80
 
-# Episode termination thresholds.
-_OFF_TRACK_STEPS_LIMIT = 25  # ~0.5s at 50 steps/s — "aggressive termination" per Section 8
+# Soglie di terminazione episodio.
+_OFF_TRACK_STEPS_LIMIT = 25  # ~0.5s a 50 step/s — "terminazione aggressiva" per la Sezione 8
 _STANDING_STILL_KMH = 5.0
 _STANDING_STILL_STEPS_LIMIT = 150  # ~3s
-_MAX_EPISODE_STEPS = 20000  # a Corkscrew lap is ~13.6k steps at 50/s (see memory: torcs_setup)
+_MAX_EPISODE_STEPS = 20000  # un giro Corkscrew è ~5.800 step a 50 step/s (vedi CLAUDE.md, Fase 3) — ampio margine
 _EPISODE_START_RETRIES = 4
 
-# TORCS process management. Each episode gets a FRESH TORCS process rather than
-# an in-race meta=1 restart: empirically that in-race restart is unreliable on
-# this setup (the connection half-recovers then drops a few steps into the next
-# episode — the same instability the earlier, removed Phase 3 attempt hit).
-# Relaunching sidesteps it entirely. Two launch requirements, both learned the
-# hard way and both load-bearing:
-#   1. CWD must be the TORCS install dir, or TORCS can't resolve the car's
-#      category files ("Bad Car category for driver scr_server 1") and never
-#      binds the SCR port.
-#   2. Connect only AFTER a short grace once the port is bound — TORCS binds the
-#      port a moment before its sim loop can actually stream sensors, and
-#      connecting into that gap deadlocks.
+# Gestione del processo TORCS. Ogni episodio ottiene un processo TORCS NUOVO
+# invece di un restart in-gara con meta=1: empiricamente quel restart in-gara
+# è inaffidabile su questo setup (la connessione si riprende a metà e poi cade
+# dopo pochi step nell'episodio successivo — la stessa instabilità che
+# affliggeva il precedente tentativo di Fase 3, poi rimosso). Rilanciare il
+# processo aggira il problema del tutto. Due requisiti di lancio, imparati a
+# caro prezzo ed entrambi indispensabili:
+#   1. La CWD deve essere la cartella d'installazione di TORCS, altrimenti
+#      TORCS non riesce a risolvere i file di categoria dell'auto ("Bad Car
+#      category for driver scr_server 1") e non apre mai la porta SCR.
+#   2. Connettersi solo DOPO una breve pausa di grazia una volta che la porta
+#      è aperta — TORCS apre la porta un istante prima che il suo loop di
+#      simulazione sia davvero in grado di inviare i sensori, e connettersi
+#      in quella finestra causa un deadlock.
 TORCS_EXE = Path(os.environ.get("TORCS_EXE", r"U:\AI-Partition\torcs\torcs\wtorcs.exe"))
 RACE_XML = PROJECT_ROOT / "torcs_env" / "race_config" / "corkscrew_solo.xml"
 _TORCS_PORT_TIMEOUT = 30.0
@@ -78,7 +82,7 @@ DEFAULT_NORM_STATS_PATH = (
 
 
 def _port_is_bound(port: int) -> bool:
-    """True if something already holds *port* on UDP (i.e. TORCS is up)."""
+    """True se qualcosa occupa già *port* in UDP (cioè TORCS è attivo)."""
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         sock.bind(("", port))
@@ -90,8 +94,8 @@ def _port_is_bound(port: int) -> bool:
 
 
 class TorcsSacEnv(gym.Env):
-    """One episode = one lap attempt (ends on lap completion, sustained
-    off-track excursion, or sustained standing-still)."""
+    """Un episodio = un tentativo di giro (termina al completamento del giro,
+    a un'uscita di pista prolungata, o a una sosta prolungata)."""
 
     metadata = {"render_modes": []}
 
@@ -137,7 +141,7 @@ class TorcsSacEnv(gym.Env):
         self._last_state: Optional[SensorState] = None
 
     # ------------------------------------------------------------------
-    # Gymnasium API
+    # API Gymnasium
     # ------------------------------------------------------------------
 
     def reset(self, *, seed=None, options=None):
@@ -148,15 +152,16 @@ class TorcsSacEnv(gym.Env):
         self._standing_run = 0
 
         if self._auto_launch:
-            # DEFER the TORCS launch+connect to the first step(). When training
-            # with per-episode gradient updates, SB3 does the (long) batch of
-            # gradient updates AFTER reset() and BEFORE the first step(). If we
-            # launched+connected TORCS here, it would sit idle waiting through
-            # that whole pause, which disrupts the standing-start and crashes
-            # the episode ~300 steps in (verified: happens even with a pure-BC
-            # action). Deferring means the gradient updates run while no TORCS
-            # is waiting; the first step() then launches a fresh one. See the
-            # SAC config comment in train_sac.py.
+            # DIFFERISCE il lancio+connessione di TORCS al primo step(). Con un
+            # training a update del gradiente per-episodio, SB3 esegue il
+            # (lungo) blocco di update del gradiente DOPO reset() e PRIMA del
+            # primo step(). Se lanciassimo+connettessimo TORCS qui, resterebbe
+            # fermo ad aspettare per tutta quella pausa, il che disturba la
+            # partenza da fermo e manda in crash l'episodio dopo ~300 step
+            # (verificato: succede anche con un'azione puro-BC). Differire
+            # significa che gli update del gradiente girano mentre nessun
+            # TORCS è in attesa; il primo step() lancia poi un processo nuovo.
+            # Vedi il commento sulla config SAC in train_sac.py.
             self._needs_start = True
             self._last_state = None
             return np.zeros(FEATURE_DIM, dtype=np.float32), {}
@@ -168,8 +173,8 @@ class TorcsSacEnv(gym.Env):
         return obs, {"distRaced": state.distRaced}
 
     def _ensure_started(self) -> None:
-        """Perform the deferred launch+connect+standing-start on the first
-        step() of an episode (see reset())."""
+        """Esegue il lancio+connessione+partenza da fermo differiti al primo
+        step() di un episodio (vedi reset())."""
         if self._needs_start:
             state = self._start_episode()
             self._prev_lap_time = state.lastLapTime
@@ -184,18 +189,20 @@ class TorcsSacEnv(gym.Env):
         return self._send_and_observe(cmd)
 
     def _send_and_observe(self, cmd: Action):
-        """Send one control command, await the next sensor packet, and turn it
-        into the Gym (obs, reward, terminated, truncated, info) tuple. Shared
-        by the direct-action step() and the residual env's step()."""
+        """Invia un comando di controllo, attende il prossimo pacchetto di
+        sensori e lo trasforma nella tupla Gym (obs, reward, terminated,
+        truncated, info). Condiviso tra lo step() ad azione diretta e lo
+        step() dell'env residual."""
         self._client.send(cmd.clamp())
 
         try:
             state = self._await_fresh_state()
         except ConnectionError as exc:
-            # SCR connection dropped mid-episode. The (obs, action, next_obs)
-            # transition is no longer valid, so end the episode via truncation
-            # rather than feeding a corrupted transition into the replay buffer.
-            # Mark disconnected so the next reset() relaunches TORCS cleanly.
+            # Connessione SCR caduta a metà episodio. La transizione
+            # (obs, action, next_obs) non è più valida, quindi l'episodio
+            # termina per truncation invece di alimentare una transizione
+            # corrotta nel replay buffer. Segna la disconnessione così il
+            # prossimo reset() rilancia TORCS in modo pulito.
             logger.warning("Connection dropped mid-episode: %s", exc)
             self._connected = False
             obs = self._normalize(build_feature_vector(self._last_state))
@@ -231,7 +238,7 @@ class TorcsSacEnv(gym.Env):
         self._kill_torcs()
 
     # ------------------------------------------------------------------
-    # TORCS process management
+    # Gestione del processo TORCS
     # ------------------------------------------------------------------
 
     def _kill_torcs(self) -> None:
@@ -246,10 +253,10 @@ class TorcsSacEnv(gym.Env):
             proc.kill()
 
     def _launch_torcs(self) -> None:
-        """Start a fresh headless TORCS and block until it's ready to drive.
+        """Avvia un nuovo TORCS headless e blocca finché non è pronto a guidare.
 
-        See the module-level TORCS_EXE comment for why cwd and the post-bind
-        grace are both mandatory.
+        Vedi il commento a livello di modulo su TORCS_EXE per il motivo per
+        cui sia la cwd sia la grazia post-bind sono entrambe obbligatorie.
         """
         if not TORCS_EXE.exists():
             raise FileNotFoundError(f"TORCS executable not found: {TORCS_EXE}")
@@ -273,7 +280,7 @@ class TorcsSacEnv(gym.Env):
         raise ConnectionError(f"TORCS did not open the SCR port within {_TORCS_PORT_TIMEOUT}s.")
 
     # ------------------------------------------------------------------
-    # Helpers
+    # Funzioni di supporto
     # ------------------------------------------------------------------
 
     def _await_fresh_state(self) -> SensorState:
@@ -286,14 +293,15 @@ class TorcsSacEnv(gym.Env):
             return result
 
     def _start_episode(self, retries: int = _EPISODE_START_RETRIES) -> SensorState:
-        """Bring the car to a fresh, driveable standing start.
+        """Porta l'auto a una partenza da fermo nuova e guidabile.
 
-        Each episode gets its own TORCS process (see the TORCS_EXE comment on
-        why we relaunch instead of using an in-race meta=1 restart). The whole
-        sequence — (re)launch, connect, run the startup throttle grace period —
-        is retried as a unit, since TORCS launch itself can occasionally crash
-        or the SCR handshake can drop on this setup; a clean relaunch recovers
-        where an in-race restart could not.
+        Ogni episodio ottiene il proprio processo TORCS (vedi il commento su
+        TORCS_EXE sul perché si rilancia invece di usare un restart in-gara
+        con meta=1). L'intera sequenza — (ri)lancio, connessione, esecuzione
+        del periodo di grazia con gas in avvio — viene ritentata come unità,
+        poiché il lancio di TORCS stesso può occasionalmente andare in crash
+        o l'handshake SCR può cadere su questo setup; un rilancio pulito
+        recupera situazioni in cui un restart in-gara non potrebbe.
         """
         last_exc: Optional[Exception] = None
         for attempt in range(1, retries + 1):
@@ -321,10 +329,10 @@ class TorcsSacEnv(gym.Env):
         raise ConnectionError(f"Could not start an episode after {retries} attempts.") from last_exc
 
     def _run_startup(self, state: SensorState) -> SensorState:
-        """Feed full-throttle/zero-steer for _STARTUP_STEPS to get the car off
-        the standing start before the policy takes over (see _STARTUP_STEPS).
-        Overridable: the residual env skips this and lets its BC base driver
-        own the launch instead.
+        """Applica pieno gas/sterzo zero per _STARTUP_STEPS step per far
+        partire l'auto da ferma prima che la policy prenda il controllo (vedi
+        _STARTUP_STEPS). Sovrascrivibile: l'env residual salta questo passo e
+        lascia che sia il suo driver base BC a gestire il lancio.
         """
         for _ in range(_STARTUP_STEPS):
             gear = self._startup_gear(state.speed)

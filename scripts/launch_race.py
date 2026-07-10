@@ -1,11 +1,12 @@
-"""Autonomous launcher: starts TORCS headless then runs the Python agent.
+"""Launcher autonomo: avvia TORCS headless e poi esegue l'agente Python.
 
 Usage:
     python scripts/launch_race.py [--laps 1] [--telemetry]
 
-The script discovers the TORCS installation under U:\\AI-Partition\\torcs\\torcs,
-starts wtorcs.exe with -r (race mode), waits for the server to open its UDP
-port, then launches run_agent.py.  Both processes are cleaned up on exit.
+Lo script individua l'installazione di TORCS sotto U:\\AI-Partition\\torcs\\torcs,
+avvia wtorcs.exe con -r (modalità gara), attende che il server apra la sua
+porta UDP, poi lancia run_agent.py. Entrambi i processi vengono ripuliti
+all'uscita.
 """
 
 from __future__ import annotations
@@ -26,30 +27,31 @@ TORCS_EXE = Path(r"U:\AI-Partition\torcs\torcs\wtorcs.exe")
 RACE_XML = PROJECT_ROOT / "torcs_env" / "race_config" / "corkscrew_solo.xml"
 TORCS_HOST = "localhost"
 TORCS_PORT = 3001
-TORCS_READY_TIMEOUT = 30   # seconds to wait for TORCS to open the port
-TORCS_POLL_INTERVAL = 0.5  # seconds between readiness checks
+TORCS_READY_TIMEOUT = 30   # secondi di attesa per l'apertura della porta da parte di TORCS
+TORCS_POLL_INTERVAL = 0.5  # secondi tra un controllo di prontezza e l'altro
 
 
 def _port_bound(port: int) -> bool:
-    """Return True if something is already bound to *port* on UDP.
+    """Restituisce True se qualcosa è già collegato a *port* in UDP.
 
-    We try to bind a socket ourselves — if it fails, another process owns it.
-    Sending SCR probe packets to TORCS would corrupt its handshake state, so
-    we detect readiness without transmitting any data.
+    Proviamo a fare il bind di un socket noi stessi — se fallisce, un altro
+    processo lo possiede già. Inviare pacchetti probe SCR a TORCS
+    corromperebbe il suo stato di handshake, quindi rileviamo la prontezza
+    senza trasmettere alcun dato.
     """
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     try:
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 0)
         sock.bind(("", port))
-        return False   # bind succeeded → port is free
+        return False   # bind riuscito → la porta è libera
     except OSError:
-        return True    # bind failed → port is taken (TORCS is up)
+        return True    # bind fallito → la porta è occupata (TORCS è attivo)
     finally:
         sock.close()
 
 
 def wait_for_torcs(port: int = TORCS_PORT, timeout: float = TORCS_READY_TIMEOUT) -> bool:
-    """Poll until TORCS binds the UDP port or *timeout* elapses."""
+    """Esegue polling finché TORCS non apre la porta UDP o scade *timeout*."""
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         if _port_bound(port):

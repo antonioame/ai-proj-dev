@@ -1,15 +1,16 @@
 """
-Augment telemetry data for more aggressive driving performance.
+Aumenta i dati di telemetria per una guida più aggressiva.
 
-Only OUTPUT columns (steer, accel, brake) are modified.
-INPUT columns (speed, track_*, angle, etc.) are left untouched to avoid
-train/inference distribution mismatch.
+Vengono modificate solo le colonne di OUTPUT (steer, accel, brake).
+Le colonne di INPUT (speed, track_*, angle, ecc.) restano intatte per
+evitare un disallineamento tra la distribuzione di training e quella di
+inferenza.
 
-Strategy:
-  - accel:  +7%  (more throttle → faster straights and corner exits)
-  - steer:  +5%  (tighter cornering lines)
-  - brake:  -10% (later braking → more speed into corners)
-  All clipped to valid ranges.
+Strategia:
+  - accel:  +7%  (più gas → rettilinei e uscite di curva più veloci)
+  - steer:  +5%  (linee di curva più strette)
+  - brake:  -10% (frenata più tardiva → più velocità in ingresso curva)
+  Tutto limitato agli intervalli validi.
 
 Usage:
     conda run -n ai_env python scripts/augment_speed.py \
@@ -36,7 +37,7 @@ def augment_csv(
     print(f"[INFO] Steer range:  {df['steer'].min():.3f} - {df['steer'].max():.3f}")
     print(f"[INFO] Brake range:  {df['brake'].min():.3f} - {df['brake'].max():.3f}")
 
-    # Only touch OUTPUT columns — sensor inputs are left untouched
+    # Tocca solo le colonne di OUTPUT — gli input dei sensori restano intatti
     df["accel"] = (df["accel"] * (1.0 + accel_pct / 100.0)).clip(0.0, 1.0)
     df["steer"] = (df["steer"] * (1.0 + steer_pct / 100.0)).clip(-1.0, 1.0)
     df["brake"] = (df["brake"] * (1.0 - brake_reduction_pct / 100.0)).clip(0.0, 1.0)

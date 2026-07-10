@@ -1,27 +1,27 @@
-"""Record keyboard-driven lap with real-time telemetry to CSV.
+"""Registra un giro guidato da tastiera con telemetria in tempo reale su CSV.
 
 Workflow:
-  Windows: launch TORCS in GUI mode (no -r flag)
-           Start a race on Corkscrew
-           Run this script to connect and record
+  Windows: avvia TORCS in modalità GUI (senza flag -r)
+           Avvia una gara sul Corkscrew
+           Esegui questo script per connetterti e registrare
 
-This script:
-  - Listens to keyboard input in real-time
-  - Translates keypresses to steering/accel/brake commands
-  - Sends actions to TORCS via SCR UDP
-  - Records all sensors and actions to CSV
-  - Detects lap completion and exits
+Questo script:
+  - Ascolta l'input da tastiera in tempo reale
+  - Traduce le pressioni dei tasti in comandi di sterzo/accelerazione/frenata
+  - Invia le azioni a TORCS via UDP SCR
+  - Registra tutti i sensori e le azioni su CSV
+  - Rileva il completamento del giro ed esce
 
-Key bindings:
-  W / ↑    : Accelerate
-  S / ↓    : Brake
-  A / ←    : Steer left
-  D / →    : Steer right
-  Q        : Downshift (manual control only)
-  E        : Upshift (manual control only)
-  (Gear shifting is manual — YOU have full control)
+Associazioni tasti:
+  W / ↑    : Accelera
+  S / ↓    : Frena
+  A / ←    : Sterza a sinistra
+  D / →    : Sterza a destra
+  Q        : Scala marcia (solo controllo manuale)
+  E        : Sale di marcia (solo controllo manuale)
+  (Il cambio marcia è manuale — hai il controllo completo)
 
-CSV output: data/keyboard_YYYYMMDD_HHMMSS.csv
+Output CSV: data/keyboard_YYYYMMDD_HHMMSS.csv
 """
 
 from __future__ import annotations
@@ -57,22 +57,22 @@ FIELDNAMES = [
 
 
 class KeyboardController:
-    """Manages keyboard input and translates to TORCS actions."""
+    """Gestisce l'input da tastiera e lo traduce in azioni TORCS."""
 
     def __init__(self, auto_gear: bool = False):
         self.pressed_keys: set = set()
         self.lock = Lock()
         self.current_gear = 1
-        self.auto_gear = auto_gear  # Disabled by default (manual only)
+        self.auto_gear = auto_gear  # Disabilitato di default (solo manuale)
 
-        # Steering: how much to steer per key press
+        # Sterzo: quanto sterzare per ogni pressione tasto
         self.steer_scale = 0.5
 
-        # Accel/brake intensity
+        # Intensità accelerazione/frenata
         self.accel_scale = 0.8
         self.brake_scale = 0.8
 
-        # Gear change cooldown (0.3s = ~15 steps at 50Hz)
+        # Cooldown cambio marcia (0.3s = ~15 step a 50Hz)
         self.gear_cooldown_steps = 15
         self.last_gear_change_step = -100
 
@@ -83,7 +83,7 @@ class KeyboardController:
                 with self.lock:
                     self.pressed_keys.add(char.lower())
         except AttributeError:
-            # Special keys (arrows, etc)
+            # Tasti speciali (frecce, ecc.)
             with self.lock:
                 self.pressed_keys.add(key)
 
@@ -98,31 +98,31 @@ class KeyboardController:
                 self.pressed_keys.discard(key)
 
     def get_action(self, state, step: int = 0) -> Action:
-        """Return current Action based on pressed keys and current state."""
+        """Restituisce l'Action corrente in base ai tasti premuti e allo stato attuale."""
         with self.lock:
             keys = self.pressed_keys.copy()
 
-        # Sync with actual gear from TORCS (to stay in sync)
+        # Sincronizza con la marcia reale da TORCS (per restare allineati)
         self.current_gear = state.gear
 
         steer = 0.0
         accel = 0.0
         brake = 0.0
 
-        # Steering: -1 (right) to +1 (left)
+        # Sterzo: -1 (destra) a +1 (sinistra)
         if 'a' in keys or keyboard.Key.left in keys:
             steer += self.steer_scale
         if 'd' in keys or keyboard.Key.right in keys:
             steer -= self.steer_scale
 
-        # Accel / Brake
+        # Accelerazione / Frenata
         if 'w' in keys or keyboard.Key.up in keys:
             accel = self.accel_scale
         if 's' in keys or keyboard.Key.down in keys:
             brake = self.brake_scale
 
-        # Manual gear control (Q=down, E=up) with cooldown
-        # Cooldown = 15 steps = ~0.3 seconds at 50Hz (empirically tuned debounce window)
+        # Controllo manuale marcia (Q=scala, E=sale) con cooldown
+        # Cooldown = 15 step = ~0.3 secondi a 50Hz (finestra di debounce tarata empiricamente)
         if (step - self.last_gear_change_step) >= self.gear_cooldown_steps:
             if 'q' in keys and self.current_gear > 1:
                 self.current_gear -= 1
@@ -140,7 +140,7 @@ class KeyboardController:
         return action.clamp()
 
     def start_listening(self):
-        """Start background keyboard listener."""
+        """Avvia il listener da tastiera in background."""
         self.listener = keyboard.Listener(
             on_press=self.on_press,
             on_release=self.on_release
@@ -149,14 +149,14 @@ class KeyboardController:
         logger.info("Keyboard listener started.")
 
     def stop_listening(self):
-        """Stop background keyboard listener."""
+        """Ferma il listener da tastiera in background."""
         if self.listener:
             self.listener.stop()
             logger.info("Keyboard listener stopped.")
 
 
 def record(host: str | None = None, port: int | None = None) -> Path:
-    """Record one keyboard-driven lap with telemetry."""
+    """Registra un giro guidato da tastiera con telemetria."""
     controller = KeyboardController()
     controller.start_listening()
 
@@ -219,7 +219,7 @@ def record(host: str | None = None, port: int | None = None) -> Path:
                 }
                 rows.append(row)
 
-                # Live status every ~1 second (20 steps @ 50ms each)
+                # Stato live ogni 20 step (~0.4s a 50 step/s)
                 if len(rows) % 20 == 0:
                     logger.info(
                         "time=%.1f speed=%.1f gear=%d trackPos=%.2f angle=%.2f "
@@ -228,14 +228,15 @@ def record(host: str | None = None, port: int | None = None) -> Path:
                         state.angle, action.steer, action.accel, action.brake
                     )
 
-                # Detect lap completion
+                # Rileva il completamento del giro
                 if state.lastLapTime > 0 and rows and lap_complete_step < 0:
                     lap_time = state.lastLapTime
                     logger.info("✓ Lap completed in %.3f s", lap_time)
                     lap_complete_step = step
 
-                # Wait 20 more steps (~1 second) after lap completion before exiting
-                # This gives TORCS time to stabilize before closing
+                # Attende altri 20 step (~0.4s a 50 step/s) dopo il completamento
+                # del giro prima di uscire. Dà a TORCS il tempo di stabilizzarsi
+                # prima della chiusura
                 if lap_complete_step >= 0 and (step - lap_complete_step) >= 20:
                     lap_completed = True
 

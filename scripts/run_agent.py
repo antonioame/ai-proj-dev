@@ -1,4 +1,4 @@
-"""Run the BC driver (_DRIVER/) against a TORCS server.
+"""Esegue il driver BC (_DRIVER/) contro un server TORCS.
 
 Usage:
     python scripts/run_agent.py [--laps 1] [--host HOST] [--port PORT] [--telemetry]
@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-STATUS_EVERY = 50  # log one status line per simulated second (~50 steps/s)
+STATUS_EVERY = 50  # una riga di stato per ogni secondo simulato (~50 step/s)
 DRIVER_NAME = "bc"
 
 
@@ -105,10 +105,11 @@ def run(
                 lap_count += 1
                 logger.info("Lap %d completed in %.3f s", lap_count, state.lastLapTime)
                 if lap_count >= laps:
-                    # Do NOT force a meta=2 shutdown — that aborts the session
-                    # before TORCS can display the lap-results screen. For a
-                    # finite-lap race TORCS ends naturally once the line is
-                    # crossed; just stop driving and let it show the results.
+                    # NON forzare uno shutdown meta=2 — interromperebbe la
+                    # sessione prima che TORCS possa mostrare la schermata dei
+                    # risultati del giro. Per una gara a giri limitati TORCS
+                    # termina naturalmente una volta tagliato il traguardo;
+                    # basta smettere di guidare e lasciare che mostri i risultati.
                     logger.info("Target laps reached — releasing control to TORCS.")
                     break
 

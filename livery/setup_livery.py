@@ -1,11 +1,11 @@
-"""Setup and reset the car1-ow1 livery in TORCS.
+"""Installa e ripristina la livrea car1-ow1 in TORCS.
 
 Usage:
-    python livery/setup_livery.py                 install livery/car1-ow1.rgb as-is
-    python livery/setup_livery.py mia_livrea.png   convert PNG -> livery/car1-ow1.rgb, then install
-    python livery/setup_livery.py --reset          restore the default IBM livery
-    python livery/setup_livery.py --status         show current state
-    python livery/setup_livery.py --rollback       restore the last TORCS-side backup
+    python livery/setup_livery.py                 installa livery/car1-ow1.rgb così com'è
+    python livery/setup_livery.py mia_livrea.png   converte PNG -> livery/car1-ow1.rgb, poi installa
+    python livery/setup_livery.py --reset          ripristina la livrea IBM di default
+    python livery/setup_livery.py --status         mostra lo stato attuale
+    python livery/setup_livery.py --rollback       ripristina l'ultimo backup lato TORCS
 """
 
 from __future__ import annotations
@@ -39,19 +39,19 @@ STATE_FILE = LIVERY_DIR / f".livery_state_{CAR}.json"
 
 
 def _check_dependencies() -> None:
-    """Verify PIL is available for PNG→RGB conversion."""
+    """Verifica che PIL sia disponibile per la conversione PNG→RGB."""
     if Image is None:
         logger.error("PIL/Pillow not found. Install with: pip install Pillow")
         raise ImportError("PIL/Pillow required for PNG→RGB conversion")
 
 
 def _png_to_sgi_rgb(png_path: Path, rgb_path: Path, size: tuple[int, int] = TEXTURE_SIZE) -> None:
-    """Convert a PNG to the uncompressed SGI RGB format car1-ow1 expects.
+    """Converte un PNG nel formato SGI RGB non compresso atteso da car1-ow1.
 
-    512-byte header (magic 0x01DA, storage=0/verbatim, 4 channels) followed by
-    one (width*height)-byte plane per channel, in R, G, B, A order — the same
-    layout livery/decode_sgi.py reads back, verified against the real
-    car1-ow1.rgb shipped with the car (also storage=0, 512x512, 4 channels).
+    Header di 512 byte (magic 0x01DA, storage=0/verbatim, 4 canali) seguito da
+    un piano di (width*height) byte per canale, in ordine R, G, B, A — lo
+    stesso layout che livery/decode_sgi.py rilegge, verificato contro il vero
+    car1-ow1.rgb distribuito con l'auto (anch'esso storage=0, 512x512, 4 canali).
     """
     logger.info(f"Converting {png_path} to SGI RGB format: {rgb_path}")
     img = Image.open(png_path).convert("RGBA")
@@ -64,15 +64,15 @@ def _png_to_sgi_rgb(png_path: Path, rgb_path: Path, size: tuple[int, int] = TEXT
 
     header = bytearray(512)
     header[0:2] = (0x01DA).to_bytes(2, "big")  # magic
-    header[2] = 0                                # storage: 0 = verbatim (uncompressed)
-    header[3] = 1                                # bpc: 1 byte per channel
-    header[4:6] = (3).to_bytes(2, "big")         # dim: 3 = multi-channel image
+    header[2] = 0                                # storage: 0 = verbatim (non compresso)
+    header[3] = 1                                # bpc: 1 byte per canale
+    header[4:6] = (3).to_bytes(2, "big")         # dim: 3 = immagine multicanale
     header[6:8] = width.to_bytes(2, "big")
     header[8:10] = height.to_bytes(2, "big")
-    header[10:12] = (4).to_bytes(2, "big")       # zsize: 4 channels (RGBA)
+    header[10:12] = (4).to_bytes(2, "big")       # zsize: 4 canali (RGBA)
     header[12:16] = (0).to_bytes(4, "big")       # pixmin
     header[16:20] = (255).to_bytes(4, "big")     # pixmax
-    # bytes 20:512 (dummy, imagename, colormap, padding) left zeroed
+    # byte 20:512 (dummy, nome immagine, colormap, padding) lasciati a zero
 
     rgb_path.parent.mkdir(parents=True, exist_ok=True)
     with open(rgb_path, "wb") as f:
@@ -84,7 +84,7 @@ def _png_to_sgi_rgb(png_path: Path, rgb_path: Path, size: tuple[int, int] = TEXT
 
 
 def _install(source_rgb: Path) -> None:
-    """Copy source_rgb into the TORCS car1-ow1 texture slot, backing up the original first."""
+    """Copia source_rgb nello slot texture car1-ow1 di TORCS, facendo prima il backup dell'originale."""
     if not source_rgb.exists():
         logger.error(f"Livery source not found: {source_rgb}")
         raise FileNotFoundError(f"Missing livery: {source_rgb}")
@@ -118,7 +118,7 @@ def _install(source_rgb: Path) -> None:
 
 
 def install_from_png(png_path: Path) -> None:
-    """Convert a PNG livery to livery/car1-ow1.rgb and install it."""
+    """Converte una livrea PNG in livery/car1-ow1.rgb e la installa."""
     _check_dependencies()
     if not png_path.exists():
         logger.error(f"PNG not found: {png_path}")
@@ -128,12 +128,12 @@ def install_from_png(png_path: Path) -> None:
 
 
 def install_existing() -> None:
-    """Install the livery already at livery/car1-ow1.rgb, as-is."""
+    """Installa la livrea già presente in livery/car1-ow1.rgb, così com'è."""
     _install(LIVERY_RGB)
 
 
 def reset_to_default() -> None:
-    """Regenerate the original IBM livery from its source PNG and install it."""
+    """Rigenera la livrea IBM originale a partire dal suo PNG sorgente e la installa."""
     _check_dependencies()
     if not IBM_PNG.exists():
         logger.error(f"Original IBM livery PNG not found: {IBM_PNG}")
@@ -143,7 +143,7 @@ def reset_to_default() -> None:
 
 
 def rollback_livery() -> None:
-    """Restore whatever TORCS texture was backed up before the last install (byte-for-byte)."""
+    """Ripristina byte-per-byte qualunque texture TORCS fosse stata salvata in backup prima dell'ultima installazione."""
     backup_path = TORCS_TEXTURE_PATH.with_suffix(".rgb.backup")
     if not backup_path.exists():
         logger.error(f"No backup found: {backup_path}")
@@ -163,7 +163,7 @@ def rollback_livery() -> None:
 
 
 def show_status() -> None:
-    """Show current livery state."""
+    """Mostra lo stato attuale della livrea."""
     backup_path = TORCS_TEXTURE_PATH.with_suffix(".rgb.backup")
 
     print(f"\n--- Livery Status ({CAR}) ---")

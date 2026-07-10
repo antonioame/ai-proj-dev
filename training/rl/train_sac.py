@@ -1,17 +1,18 @@
-"""SAC training entry point for Phase 3 (REINFORCEMENT_LEARNING.md Sections 6 & 9).
+"""Entry point di training SAC per la Fase 3 (REINFORCEMENT_LEARNING.md Sezioni 6 e 9).
 
-By default this auto-launches a headless TORCS itself (with the correct working
-directory — see the TORCS_EXE comment below) once the SAC model is built, so the
-client connects before TORCS's short pre-connection timeout fires. Pass
---no-launch-torcs to instead connect to a server you started separately.
-Warm-starts the actor from the BC corner model (bc_from_olddriver_v1) unless
---no-warmstart is given.
+Di default questo script lancia da sé un TORCS headless (con la working
+directory corretta — vedi il commento su TORCS_EXE più sotto) una volta
+costruito il modello SAC, così il client si connette prima che scatti il
+breve timeout di pre-connessione di TORCS. Passa --no-launch-torcs per
+connetterti invece a un server avviato separatamente.
+Fa il warm-start dell'attore dal modello BC per le curve (bc_from_olddriver_v1)
+a meno che non sia passato --no-warmstart.
 
 Usage:
     conda run -n ai_env python training/rl/train_sac.py \\
         --total-timesteps 200000 --reward-version baseline_v1
 
-Resume an interrupted run (e.g. after a TORCS/SCR connection drop):
+Riprendere un run interrotto (es. dopo una caduta della connessione TORCS/SCR):
     conda run -n ai_env python training/rl/train_sac.py \\
         --resume training/rl/checkpoints/<run_id>/checkpoint_ep150.zip \\
         --total-timesteps 200000
@@ -42,14 +43,15 @@ CHECKPOINT_DIR = Path(__file__).resolve().parent / "checkpoints"
 RUN_LOG_DIR = Path(__file__).resolve().parent / "run_logs"
 DEFAULT_SAVE_PATH = PROJECT_ROOT / "drivers" / "rl" / "models" / "sac_corkscrew_v1.zip"
 
-# Matches BCPolicy's hidden_dims=[128, 64] so the warm-started actor's layer
-# shapes line up exactly with what load_bc_backbone_into_actor() expects.
+# Corrisponde a hidden_dims=[128, 64] di BCPolicy così le forme dei layer
+# dell'attore con warm-start combaciano esattamente con ciò che si aspetta
+# load_bc_backbone_into_actor().
 NET_ARCH = [128, 64]
 
 
 class EpisodeCheckpointCallback(BaseCallback):
-    """Saves a checkpoint every `episodes_per_checkpoint` completed episodes
-    (Section 8: "Checkpoint every ~50 episodes")."""
+    """Salva un checkpoint ogni `episodes_per_checkpoint` episodi completati
+    (Sezione 8: "Checkpoint every ~50 episodes")."""
 
     def __init__(self, save_dir: Path, episodes_per_checkpoint: int = 50, verbose: int = 1):
         super().__init__(verbose)
@@ -128,20 +130,23 @@ def main() -> None:
         reset_num_timesteps = False
         warm_started_from = None
     else:
-        # Residual RL keeps exploration gentle (a fixed small entropy coef) so
-        # the correction stays close to the BC base; the direct-action variant
-        # auto-tunes entropy from scratch.
-        # CRITICAL: collect a whole episode before doing gradient updates
-        # (train_freq per episode), instead of SB3's default gradient update
-        # after every single step. TORCS `-r` headless runs on its own clock and
-        # does NOT wait for a late client — it keeps advancing the sim with the
-        # last action. A per-step gradient update (~10-30ms on CPU) is enough lag
-        # for the car to drift off the racing line at the high-speed launch and
-        # crash, which silently corrupted every earlier RL run (episodes ended
-        # off-track ~300 steps in regardless of the policy — verified by forcing
-        # the action to pure BC and still crashing under per-step training).
-        # Doing the gradient updates between episodes (car stationary/resetting)
-        # keeps the per-step latency low so the car actually drives.
+        # Il residual RL mantiene l'esplorazione delicata (un coefficiente di
+        # entropia fisso e piccolo) così la correzione resta vicina alla base
+        # BC; la variante ad azione diretta auto-regola l'entropia da zero.
+        # CRITICO: raccogliere un intero episodio prima di fare gli update del
+        # gradiente (train_freq per episodio), invece dell'update del
+        # gradiente di default di SB3 dopo ogni singolo step. TORCS `-r`
+        # headless gira sul proprio clock e NON aspetta un client lento —
+        # continua ad avanzare la simulazione con l'ultima azione. Un update
+        # del gradiente per-step (~10-30ms su CPU) è un ritardo sufficiente
+        # perché l'auto derivi dalla linea di gara al lancio ad alta velocità
+        # e si schianti, il che ha corrotto silenziosamente ogni run RL
+        # precedente (gli episodi finivano fuori pista dopo ~300 step a
+        # prescindere dalla policy — verificato forzando l'azione a puro BC e
+        # schiantandosi comunque con il training per-step).
+        # Fare gli update del gradiente tra un episodio e l'altro (auto ferma
+        # o in fase di reset) mantiene bassa la latenza per-step così l'auto
+        # guida davvero.
         model = WarmStartSAC(
             "MlpPolicy",
             env,
@@ -161,8 +166,9 @@ def main() -> None:
         )
         warm_started_from = None
         if args.residual:
-            # No BC weight transfer: the BC driver *is* the base. Zero the actor
-            # so the initial residual is 0 → training starts driving as pure BC.
+            # Nessun trasferimento di pesi BC: il driver BC *è* la base. Azzera
+            # l'attore così il residuo iniziale è 0 → il training parte guidando
+            # come puro BC.
             zero_residual_actor(model)
             warm_started_from = "residual(BC base + zeroed actor)"
         elif not args.no_warmstart:
@@ -195,9 +201,9 @@ def main() -> None:
         save_dir=CHECKPOINT_DIR / run_id, episodes_per_checkpoint=args.episodes_per_checkpoint
     )
 
-    # TORCS is launched and torn down per-episode by the env itself
-    # (TorcsSacEnv, auto_launch_torcs) — see that module for why we relaunch
-    # instead of using an in-race restart.
+    # TORCS viene lanciato e chiuso per-episodio dall'ambiente stesso
+    # (TorcsSacEnv, auto_launch_torcs) — vedi quel modulo per il motivo per
+    # cui si rilancia invece di usare un restart in-gara.
     try:
         model.learn(
             total_timesteps=args.total_timesteps,

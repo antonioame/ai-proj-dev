@@ -1,4 +1,4 @@
-"""Benchmark a driver over K laps and append metrics to laptime_ledger.csv.
+"""Fa il benchmark di un driver su K giri e aggiunge le metriche a laptime_ledger.csv.
 
 Usage:
     python scripts/benchmark.py [--laps 3] [--config-id my_config] [--compare baseline_rule_based] [--notes "ABS added"]
@@ -41,7 +41,7 @@ def _run_race(laps: int) -> dict:
         "--laps", str(laps),
     ]
     subprocess.run(cmd, cwd=PROJECT_ROOT)
-    # find the freshest JSON result for the BC driver
+    # trova il risultato JSON più recente per il driver BC
     results_dir = PROJECT_ROOT / "results"
     candidates = sorted(results_dir.glob("bc_*.json"), key=lambda p: p.stat().st_mtime)
     if not candidates:

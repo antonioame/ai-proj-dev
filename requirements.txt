@@ -1,11 +1,11 @@
-# Install PyTorch separately per platform:
+# Installare PyTorch separatamente in base alla piattaforma:
 #   Apple Silicon (MPS): pip install torch --index-url https://download.pytorch.org/whl/cpu
 #   CUDA (Linux/Windows): pip install torch --index-url https://download.pytorch.org/whl/cu121
 torch>=2.1.0
 
-# Data handling
+# Gestione dati
 numpy>=1.24.0
 pandas>=2.0.0
 
-# Testing
+# Test
 pytest>=7.4.0

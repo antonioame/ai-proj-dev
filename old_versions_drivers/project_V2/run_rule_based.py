@@ -1,6 +1,6 @@
-"""Minimal standalone runner for the archived rule_based driver.
+"""Runner standalone minimale per il driver rule_based archiviato.
 
-Not wired into the main _DRIVER pipeline (scripts/run_agent.py etc).
+Non collegato alla pipeline principale di _DRIVER (scripts/run_agent.py ecc.).
 Usage:
     python old_versions_drivers/project_V2/run_rule_based.py [--laps 1] [--host HOST] [--port PORT]
 """

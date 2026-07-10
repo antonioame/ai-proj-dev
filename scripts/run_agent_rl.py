@@ -1,9 +1,10 @@
-"""Run the Phase 3 RL driver (drivers/rl/) against a TORCS server.
+"""Esegue il driver RL di Fase 3 (drivers/rl/) contro un server TORCS.
 
-Dedicated entry point — mirrors scripts/run_agent.py exactly but hardcodes
-RLDriver instead of BCDriver, the same way old_versions_drivers/project_V2/
-run_rule_based.py is a dedicated entry point for the rule_based driver.
-run_agent.py itself is untouched, so BC stays the zero-risk fallback.
+Entry point dedicato — rispecchia esattamente scripts/run_agent.py ma
+codifica RLDriver invece di BCDriver, allo stesso modo in cui
+old_versions_drivers/project_V2/run_rule_based.py è un entry point dedicato
+per il driver rule_based. run_agent.py stesso resta intatto, così BC rimane
+il fallback a rischio zero.
 
 Usage:
     python scripts/run_agent_rl.py [--laps 1] [--host HOST] [--port PORT] [--telemetry]
@@ -30,7 +31,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-STATUS_EVERY = 50  # log one status line per simulated second (~50 steps/s)
+STATUS_EVERY = 50  # una riga di stato per ogni secondo simulato (~50 step/s)
 DRIVER_NAME = "rl"
 
 
@@ -117,10 +118,11 @@ def run(
                 lap_count += 1
                 logger.info("Lap %d completed in %.3f s", lap_count, state.lastLapTime)
                 if lap_count >= laps:
-                    # Do NOT force a meta=2 shutdown — that aborts the session
-                    # before TORCS can display the lap-results screen. For a
-                    # finite-lap race TORCS ends naturally once the line is
-                    # crossed; just stop driving and let it show the results.
+                    # NON forzare uno shutdown meta=2 — interromperebbe la
+                    # sessione prima che TORCS possa mostrare la schermata dei
+                    # risultati del giro. Per una gara a giri limitati TORCS
+                    # termina naturalmente una volta tagliato il traguardo;
+                    # basta smettere di guidare e lasciare che mostri i risultati.
                     logger.info("Target laps reached — releasing control to TORCS.")
                     break
 

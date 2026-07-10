@@ -1,16 +1,16 @@
-"""Record sensor + action telemetry to CSV for one lap.
+"""Registra la telemetria di sensori + azioni in CSV per un giro.
 
-Because SCR has no true observer mode, this script drives in "shadow mode":
-it forwards a fixed neutral action while recording every sensor frame.
-The intended workflow:
+Dato che SCR non ha una vera modalità osservatore, questo script guida in
+"modalità ombra": inoltra un'azione neutra fissa mentre registra ogni frame
+di sensori. Il workflow previsto:
 
-  Windows: launch TORCS headlessly with corkscrew_solo.xml
+  Windows: avvia TORCS headless con corkscrew_solo.xml
   Mac:     python scripts/record_human.py
 
-The CSV is saved as data/human_YYYYMMDD_HHMMSS.csv.
-One row = one simulation step (~50 ms).
+Il CSV viene salvato come data/human_YYYYMMDD_HHMMSS.csv.
+Una riga = uno step di simulazione (~20 ms, 50 step/s).
 
-CSV columns: timestamp, angle, speed, speedY, speedZ, trackPos,
+Colonne CSV: timestamp, angle, speed, speedY, speedZ, trackPos,
              track_0 … track_18, rpm, gear, distRaced, curLapTime,
              steer, accel, brake, gear_cmd
 """
@@ -108,7 +108,7 @@ def record(host: str | None = None, port: int | None = None) -> Path:
             }
             rows.append(row)
 
-            # Detect lap completion
+            # Rileva il completamento del giro
             if state.lastLapTime > 0 and rows:
                 lap_time = state.lastLapTime
                 logger.info("Lap completed in %.3f s", lap_time)

@@ -1,12 +1,13 @@
 """
-Source driver used to generate the telemetry that trained _DRIVER/models/bc_from_attempt1_v1.
-This is an earlier driving-net attempt, kept only to regenerate training samples.
-Run this again if you need fresh samples to retrain that BC model.
+Driver sorgente usato per generare la telemetria con cui è stato addestrato
+_DRIVER/models/bc_from_attempt1_v1. È un precedente tentativo di driving-net,
+mantenuto solo per rigenerare campioni di training.
+Rieseguilo se servono campioni nuovi per riaddestrare quel modello BC.
 
 Usage:
     conda run -n ai_env python _DRIVER/bc_source_driver/run_attempt_model.py [--host localhost] [--port 3001]
 
-The model must be pre-trained:
+Il modello deve essere già addestrato:
     conda run -n ai_env python _DRIVER/bc_source_driver/train_attempt_model.py --csv data/<telemetry>.csv
 """
 
@@ -27,7 +28,7 @@ import snakeoil3_jm2 as snakeoil3
 
 
 class DrivingNet(nn.Module):
-    """Earlier driving-net attempt (precursor to the BC straight-line model)."""
+    """Precedente tentativo di driving-net (precursore del modello BC rettilineo)."""
     def __init__(self, input_dim: int, num_gears: int = 8):
         super().__init__()
         self.backbone = nn.Sequential(
@@ -49,7 +50,7 @@ class DrivingNet(nn.Module):
 
 
 def build_input_vector(sensor_state, selected_columns):
-    """Build normalized input vector from sensors (TORCS format)."""
+    """Costruisce il vettore di input grezzo dai sensori (formato TORCS); la normalizzazione avviene a parte, lato chiamante."""
     track_distances = sensor_state.get("track", [200.0] * 19)
     wheel_rotation = sensor_state.get("wheelSpinVel", [0.0] * 4)
 
@@ -64,7 +65,7 @@ def build_input_vector(sensor_state, selected_columns):
     for i in range(4):
         feature_dict[f"wheel_{i}"] = float(wheel_rotation[i])
 
-    # Map TORCS speedX to 'speed' (as in our CSV training data)
+    # Mappa speedX di TORCS su 'speed' (come nei nostri dati CSV di training)
     feature_dict["speed"] = float(sensor_state.get("speedX", 0))
     feature_dict["trackPos"] = float(sensor_state.get("trackPos", 0))
     feature_dict["angle"] = float(sensor_state.get("angle", 0))
@@ -87,7 +88,7 @@ def main(host: str = "localhost", port: int = 3001):
         print(f"[ERROR] Scaler not found: {scaler_path}")
         sys.exit(1)
 
-    # Load scaler
+    # Carica lo scaler
     print("[INFO] Loading model and scaler...")
     scaler_data = joblib.load(scaler_path)
     norm_mean = scaler_data["mean"]
@@ -101,18 +102,18 @@ def main(host: str = "localhost", port: int = 3001):
     driving_model.eval()
     print(f"[INFO] Model loaded from {model_path}")
 
-    # Connect to TORCS
+    # Connessione a TORCS
     print(f"[INFO] Connecting to TORCS ({host}:{port})...")
     torcs_client = snakeoil3.Client(H=host, p=port, vision=False)
     torcs_client.get_servers_input()
     print("[INFO] Connected to TORCS. Starting data collection...\n")
 
-    # Output CSV
+    # CSV di output
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_file = Path(__file__).resolve().parents[2] / "data" / f"attempt_model_{timestamp}.csv"
     output_file.parent.mkdir(exist_ok=True)
 
-    # CSV columns: mirror the original attempt's data format
+    # Colonne CSV: rispecchiano il formato dati dell'attempt originale
     csv_columns = [
         "timestamp", "distFromStart", "distRaced", "curLapTime", "angle", "speed",
         "trackPos", "track_0", "track_1", "track_2", "track_3", "track_4", "track_5",
@@ -136,7 +137,7 @@ def main(host: str = "localhost", port: int = 3001):
             torcs_client.get_servers_input()
             sensors = torcs_client.S.d
 
-            # Lap detection
+            # Rilevamento giro
             cur_lap_time = sensors.get("curLapTime", 0.0)
             if cur_lap_time < prev_lap_time - 1.0:
                 lap_count += 1
@@ -145,7 +146,7 @@ def main(host: str = "localhost", port: int = 3001):
                     break
             prev_lap_time = cur_lap_time
 
-            # Model inference
+            # Inferenza del modello
             input_vector = build_input_vector(sensors, input_cols)
             normalized_input = (input_vector - norm_mean) / norm_std
             input_tensor = torch.from_numpy(normalized_input).unsqueeze(0).to(device)
@@ -158,7 +159,7 @@ def main(host: str = "localhost", port: int = 3001):
             brake = float(pedals_pred[0, 1].item())
             predicted_gear = int(gear_logits.argmax(dim=1).item()) - gear_offset
 
-            # Startup phase
+            # Fase di avvio
             if step_counter < 80:
                 accel = 1.0
                 brake = 0.0
@@ -172,14 +173,14 @@ def main(host: str = "localhost", port: int = 3001):
             else:
                 current_gear = predicted_gear
 
-            # Send action
+            # Invia l'azione
             torcs_client.R.d["steer"] = steer_angle
             torcs_client.R.d["accel"] = accel
             torcs_client.R.d["brake"] = brake
             torcs_client.R.d["gear"] = current_gear
             torcs_client.respond_to_server()
 
-            # Record data
+            # Registra i dati
             track_list = sensors.get("track", [200.0] * 19)
             wheel_list = sensors.get("wheelSpinVel", [0.0] * 4)
 
@@ -209,7 +210,7 @@ def main(host: str = "localhost", port: int = 3001):
     except KeyboardInterrupt:
         print("\n[INFO] Interrupted by user.")
 
-    # Save CSV
+    # Salva il CSV
     print(f"\n[INFO] Saving {len(rows)} samples to {output_file}")
     with open(output_file, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=csv_columns)

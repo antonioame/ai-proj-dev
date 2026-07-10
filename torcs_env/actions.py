@@ -1,4 +1,4 @@
-"""Action dataclass: wraps the SCR control string sent to the TORCS server."""
+"""Dataclass Action: incapsula la stringa di controllo SCR inviata al server TORCS."""
 
 from __future__ import annotations
 
@@ -7,26 +7,26 @@ from dataclasses import dataclass, field
 
 @dataclass
 class Action:
-    # Steering: -1 (full right) to +1 (full left)
+    # Sterzo: -1 (tutto a destra) a +1 (tutto a sinistra)
     steer: float = 0.0
 
-    # Throttle: 0–1
+    # Acceleratore: 0–1
     accel: float = 0.0
 
-    # Brake: 0–1
+    # Freno: 0–1
     brake: float = 0.0
 
-    # Gear: -1 (reverse), 0 (neutral), 1–6
+    # Marcia: -1 (retromarcia), 0 (folle), 1–6
     gear: int = 1
 
-    # Clutch: 0–1
+    # Frizione: 0–1
     clutch: float = 0.0
 
-    # Optional meta: request race restart or client shutdown
+    # Meta opzionale: richiede il restart della gara o lo shutdown del client
     meta: int = 0
 
     def to_string(self) -> str:
-        """Serialise to the SCR control string format."""
+        """Serializza nel formato della stringa di controllo SCR."""
         return (
             f"(accel {self.accel:.4f})"
             f"(brake {self.brake:.4f})"
@@ -37,7 +37,7 @@ class Action:
         )
 
     def clamp(self) -> "Action":
-        """Return a new Action with all values clamped to valid ranges."""
+        """Restituisce una nuova Action con tutti i valori limitati agli intervalli validi."""
         return Action(
             steer=max(-1.0, min(1.0, self.steer)),
             accel=max(0.0, min(1.0, self.accel)),

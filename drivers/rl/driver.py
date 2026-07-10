@@ -1,9 +1,12 @@
-"""Phase 3 RL driver — SAC fine-tuned from the BC corner model.
+"""Driver RL Fase 3 — SAC fine-tuned a partire dal modello BC per le curve.
 
-Same step() interface as _DRIVER.driver.BCDriver so it's a drop-in swap for
-scripts/run_agent_rl.py / scripts/evaluate_rl.py. Not the active/default
-driver — see CLAUDE.md Phase 3 section for promotion criteria (must match or
-beat the BC baseline on safety and not be worse on lap time).
+Stessa interfaccia step() di _DRIVER.driver.BCDriver, quindi è intercambiabile
+in scripts/run_agent_rl.py / scripts/evaluate_rl.py. Non è il driver
+attivo/di default: SAC puro (senza base BC) sfrutta tutta l'autorità sul
+reward di velocità e va in reward-hacking — con i checkpoint disponibili
+(sac_corkscrew_v1, sac_corkscrew_refined_v2) la policy si blocca (0 giri
+completati, velocità media <1 km/h — vedi la sezione Fase 3 di CLAUDE.md).
+Il driver RL funzionante è drivers/rl/residual_driver.py (ResidualRLDriver).
 """
 
 from __future__ import annotations
@@ -24,15 +27,16 @@ MODELS_DIR = Path(__file__).resolve().parent / "models"
 DEFAULT_CHECKPOINT = MODELS_DIR / "sac_corkscrew_v1.zip"
 NORM_STATS_PATH = Path(__file__).resolve().parents[2] / "_DRIVER" / "models" / "bc_from_olddriver_v1.npz"
 
-# Mirrors _DRIVER/driver.py.BCDriver so the RL driver's launch/gear behaviour
-# matches what the policy was actually trained under (training/rl/torcs_gym_env.py).
+# Rispecchia _DRIVER/driver.py.BCDriver in modo che il comportamento di
+# avvio/marce del driver RL corrisponda a ciò su cui la policy è stata
+# effettivamente addestrata (training/rl/torcs_gym_env.py).
 _GEAR_UP_RPM = 12000.0
 _GEAR_DOWN_RPM = 6000.0
 _STARTUP_STEPS = 80
 
 
 class RLDriver:
-    """Loads a trained SAC checkpoint and drives with deterministic actions."""
+    """Carica un checkpoint SAC addestrato e guida con azioni deterministiche."""
 
     def __init__(self, checkpoint_path: Path = DEFAULT_CHECKPOINT):
         if not checkpoint_path.exists():

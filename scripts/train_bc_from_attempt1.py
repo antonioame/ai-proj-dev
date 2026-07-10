@@ -1,17 +1,18 @@
 """
-Train Behavioral Cloning model from the earlier driving-net attempt's data.
+Addestra il modello di Behavioral Cloning sui dati del precedente tentativo
+di driving-net.
 
 Usage:
-    # First: collect 5 laps from the attempt model
+    # Primo: raccogliere 5 giri dall'attempt model
     conda run -n ai_env python _DRIVER/bc_source_driver/train_attempt_model.py --csv data/rule_based_20260628_203648.csv
     conda run -n ai_env python _DRIVER/bc_source_driver/run_attempt_model.py
 
-    # Second: augment data for more aggressive driving
+    # Secondo: aumentare i dati per una guida più aggressiva
     conda run -n ai_env python scripts/augment_speed.py \\
         --input data/attempt_model_20260629_*.csv \\
         --output data/attempt_model_augmented_20260629_*.csv
 
-    # Third: train BC model on both datasets
+    # Terzo: addestrare il modello BC su entrambi i dataset
     conda run -n ai_env python scripts/train_bc_from_attempt1.py \\
         --original data/attempt_model_20260629_*.csv \\
         --augmented data/attempt_model_augmented_20260629_*.csv \\
@@ -45,11 +46,11 @@ class BCPolicy(nn.Module):
 
         self.backbone = nn.Sequential(*layers)
 
-        # Output heads
-        self.head_steer = nn.Linear(prev_dim, 1)  # tanh(steering angle)
-        self.head_accel = nn.Linear(prev_dim, 1)  # sigmoid(acceleration)
-        self.head_brake = nn.Linear(prev_dim, 1)  # sigmoid(brake)
-        self.head_gear = nn.Linear(prev_dim, 1)   # gear selection (regression)
+        # Teste di output
+        self.head_steer = nn.Linear(prev_dim, 1)  # tanh(angolo di sterzo)
+        self.head_accel = nn.Linear(prev_dim, 1)  # sigmoid(accelerazione)
+        self.head_brake = nn.Linear(prev_dim, 1)  # sigmoid(freno)
+        self.head_gear = nn.Linear(prev_dim, 1)   # selezione marcia (regressione)
 
     def forward(self, x):
         features = self.backbone(x)
@@ -62,7 +63,7 @@ class BCPolicy(nn.Module):
 
 
 def load_csv_files(pattern: str):
-    """Load and concatenate CSV files matching pattern."""
+    """Carica e concatena i file CSV che corrispondono al pattern."""
     files = glob.glob(pattern)
     if not files:
         print(f"[ERROR] No CSV files found matching: {pattern}")
@@ -77,21 +78,21 @@ def load_csv_files(pattern: str):
 
 
 def build_bc_dataset(csv_path: str):
-    """Load CSV and build training dataset for BC."""
+    """Carica il CSV e costruisce il dataset di training per BC."""
     df = pd.read_csv(csv_path)
     print(f"[INFO] Loaded {len(df)} samples from {csv_path}")
 
-    # Input features: angle, speed, speedY, speedZ, trackPos, track_0-18, rpm, gear
+    # Feature di input: angle, speed, speedY, speedZ, trackPos, track_0-18, rpm, gear
     input_cols = (
         ["angle", "speed", "speedY", "speedZ", "trackPos"] +
         [f"track_{i}" for i in range(19)] +
         ["rpm", "gear"]
     )
 
-    # Output targets
+    # Target di output
     output_cols = ["steer", "accel", "brake"]
 
-    # Filter: only on-track samples
+    # Filtra: solo campioni in pista
     df_clean = df[df["trackPos"].abs() < 0.95].copy()
     print(f"[INFO] After filtering (trackPos < 0.95): {len(df_clean)} samples")
 
@@ -123,14 +124,14 @@ def main():
     df_original = load_csv_files(args.original)
     df_augmented = load_csv_files(args.augmented)
 
-    # Combine datasets (80% original, 20% augmented for gentle augmentation)
+    # Combina i dataset (80% originale, 20% aumentato per un'augmentation delicata)
     df_combined = pd.concat([
         df_original.sample(frac=0.8, random_state=42),
         df_augmented.sample(frac=0.2, random_state=42),
     ], ignore_index=True)
     print(f"[INFO] Combined dataset: {len(df_combined)} samples (80% original, 20% augmented)")
 
-    # Build dataset
+    # Costruisce il dataset
     input_cols = (
         ["angle", "speed", "speedY", "speedZ", "trackPos"] +
         [f"track_{i}" for i in range(19)] +
@@ -154,7 +155,7 @@ def main():
     print(f"\n[INFO] Input shape: {X_tensor.shape}")
     print(f"[INFO] Output shape: {Y_tensor.shape}")
 
-    # Train/val split
+    # Split train/val
     dataset = TensorDataset(X_tensor, Y_tensor)
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
@@ -165,7 +166,7 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False)
 
-    # Model
+    # Modello
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"\n[INFO] Training on device: {device}")
 
@@ -177,7 +178,7 @@ def main():
 
     print("[INFO] Starting training...\n")
     for epoch in range(1, args.epochs + 1):
-        # Training
+        # Addestramento
         model.train()
         train_loss = 0.0
         for X_batch, Y_batch in train_loader:
@@ -186,7 +187,7 @@ def main():
             optimizer.zero_grad()
             outputs = model(X_batch)
 
-            # Loss: steer + accel + brake (equal weight)
+            # Loss: steer + accel + brake (peso uguale)
             steer_loss = criterion(outputs["steer"].squeeze(), Y_batch[:, 0])
             accel_loss = criterion(outputs["accel"].squeeze(), Y_batch[:, 1])
             brake_loss = criterion(outputs["brake"].squeeze(), Y_batch[:, 2])
@@ -198,7 +199,7 @@ def main():
 
         train_loss /= len(train_loader)
 
-        # Validation
+        # Validazione
         model.eval()
         val_loss = 0.0
         with torch.no_grad():
@@ -223,7 +224,7 @@ def main():
         if epoch % 5 == 0 or epoch == 1:
             print(f"Epoch {epoch:3d}/{args.epochs} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}{marker}")
 
-    # Save model
+    # Salva il modello
     output_dir = Path(__file__).resolve().parent.parent / "_DRIVER" / "models"
     output_dir.mkdir(exist_ok=True)
 
@@ -237,7 +238,7 @@ def main():
     print(f"[OK] Stats saved to {stats_path}")
     print(f"[INFO] Best validation loss: {best_val_loss:.4f}")
 
-    # Show instructions
+    # Mostra le istruzioni
     print(f"\n[NEXT] To use this model:")
     print(f"  1. Update _DRIVER/driver.py to load: _DRIVER/models/{args.output_name}.pth")
     print(f"  2. Run: conda run -n ai_env python scripts/run_agent.py --laps 1")

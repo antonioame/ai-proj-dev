@@ -1,4 +1,4 @@
-"""Decode SGI/Radiance RGB files to PNG for visual inspection.
+"""Decodifica i file SGI/Radiance RGB in PNG per l'ispezione visiva.
 
 UTILITÀ:
   TORCS usa il formato SGI RGB (512x512 RGBA) per le texture delle auto.
@@ -20,7 +20,7 @@ import struct, pathlib
 from PIL import Image
 
 def read_sgi(path):
-    """Decode SGI RGB file to PIL Image (RGB)."""
+    """Decodifica un file SGI RGB in un'immagine PIL (RGB)."""
     data = pathlib.Path(path).read_bytes()
     # Leggi header SGI: magic(2) storage(1) bpc(1) dim(2) xsize(2) ysize(2) zsize(2)
     magic, storage, bpc, dim, xsize, ysize, zsize = struct.unpack_from('>HBBHHhH', data, 0)

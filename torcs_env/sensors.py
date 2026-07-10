@@ -1,6 +1,6 @@
-"""Parse SCR sensor strings into a typed dataclass.
+"""Interpreta le stringhe di sensori SCR in una dataclass tipizzata.
 
-SCR sensor strings look like:
+Le stringhe di sensori SCR hanno questa forma:
   (angle 0.1)(speedX 50.2)(trackPos 0.0)(track 200 180 ...)(rpm 4500)...
 """
 
@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 
-# Regex: matches (key val1 val2 ...) tokens
+# Regex: intercetta i token (chiave val1 val2 ...)
 _TOKEN_RE = re.compile(r'\((\w+)\s+([^)]+)\)')
 
 
@@ -25,32 +25,32 @@ def _int(raw: str) -> int:
 
 @dataclass
 class SensorState:
-    # Car orientation vs track axis (radians, positive = pointing left)
+    # Orientamento auto rispetto all'asse pista (radianti, positivo = punta a sinistra)
     angle: float = 0.0
 
-    # Longitudinal / lateral / vertical speed (km/h)
+    # Velocità longitudinale / laterale / verticale (km/h)
     speed: float = 0.0
     speedY: float = 0.0
     speedZ: float = 0.0
 
-    # Track position: 0 = centre, ±1 = edge, > ±1 = off-track
+    # Posizione in pista: 0 = centro, ±1 = bordo, > ±1 = fuori pista
     trackPos: float = 0.0
 
-    # 19 range-finder readings (metres, 200 m max), evenly spaced -90° to +90°
+    # 19 letture dei range-finder (metri, max 200 m), da -45° a +45°, più fitti vicino a 0°
     track: list[float] = field(default_factory=lambda: [200.0] * 19)
 
-    # 36 opponent distance sensors (metres, 200 m max)
+    # 36 sensori di distanza dagli avversari (metri, max 200 m)
     opponents: list[float] = field(default_factory=lambda: [200.0] * 36)
 
     rpm: float = 0.0
     gear: int = 0
     damage: float = 0.0
 
-    # Distance covered since race start (metres)
+    # Distanza percorsa dall'inizio gara (metri)
     distRaced: float = 0.0
     distFromStart: float = 0.0
 
-    # Lap counter derived from distRaced resets (set externally by client)
+    # Contatore giri derivato dai reset di distRaced (impostato dall'esterno dal client)
     lap: int = 1
 
     lastLapTime: float = 0.0
@@ -58,18 +58,18 @@ class SensorState:
     racePos: int = 1
     fuel: float = 94.0
 
-    # Four wheel spin velocities (rad/s)
+    # Velocità di rotazione delle quattro ruote (rad/s)
     wheelSpinVel: list[float] = field(default_factory=lambda: [0.0] * 4)
 
-    # Car height above track surface (metres)
+    # Altezza dell'auto rispetto alla superficie della pista (metri)
     z: float = 0.0
 
-    # Raw string (useful for debugging)
+    # Stringa grezza (utile per il debug)
     raw: Optional[str] = field(default=None, repr=False)
 
     @classmethod
     def from_string(cls, sensor_str: str) -> "SensorState":
-        """Parse a raw SCR sensor string into a SensorState."""
+        """Interpreta una stringa di sensori SCR grezza in un SensorState."""
         state = cls(raw=sensor_str)
         tokens = _TOKEN_RE.findall(sensor_str)
 

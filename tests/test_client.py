@@ -1,4 +1,4 @@
-"""Unit tests for TORCSClient — all network calls are mocked."""
+"""Test unitari per TORCSClient — tutte le chiamate di rete sono mockate."""
 
 import sys
 from pathlib import Path
@@ -11,7 +11,7 @@ from torcs_env.client import TORCSClient, RESTART, SHUTDOWN
 from torcs_env.sensors import SensorState
 from torcs_env.actions import Action
 
-# A minimal valid sensor string
+# Una stringa di sensori minima valida
 _SENSOR = (
     b"(angle 0.0)(speedX 50.0)(speedY 0.0)(speedZ 0.0)(trackPos 0.0)"
     b"(track 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200 200)"
@@ -24,7 +24,7 @@ _SENSOR = (
 
 @patch("torcs_env.client.socket.socket")
 def test_handshake_sends_init_message(mock_socket_cls):
-    """connect() must send the SCR init string."""
+    """connect() deve inviare la stringa di init SCR."""
     mock_sock = MagicMock()
     mock_socket_cls.return_value = mock_sock
     mock_sock.recvfrom.return_value = (_SENSOR, ("127.0.0.1", 3001))
@@ -34,15 +34,15 @@ def test_handshake_sends_init_message(mock_socket_cls):
 
     sent_data = mock_sock.sendto.call_args[0][0]
     assert sent_data.startswith(b"SCR(init ")
-    assert b"0" in sent_data  # contains the 0-degree centre angle
+    assert b"0" in sent_data  # contiene l'angolo centrale di 0 gradi
 
 
 @patch("torcs_env.client.socket.socket")
 def test_receive_returns_sensor_state(mock_socket_cls):
-    """receive() returns a SensorState for a normal sensor packet."""
+    """receive() restituisce un SensorState per un normale pacchetto di sensori."""
     mock_sock = MagicMock()
     mock_socket_cls.return_value = mock_sock
-    # First call: handshake; second: receive
+    # Prima chiamata: handshake; seconda: receive
     mock_sock.recvfrom.side_effect = [
         (_SENSOR, ("127.0.0.1", 3001)),
         (_SENSOR, ("127.0.0.1", 3001)),
@@ -58,12 +58,12 @@ def test_receive_returns_sensor_state(mock_socket_cls):
 
 @patch("torcs_env.client.socket.socket")
 def test_receive_returns_restart_sentinel(mock_socket_cls):
-    """receive() returns RESTART when the server sends ***restart***."""
+    """receive() restituisce RESTART quando il server invia ***restart***."""
     mock_sock = MagicMock()
     mock_socket_cls.return_value = mock_sock
     mock_sock.recvfrom.side_effect = [
         (_SENSOR, ("127.0.0.1", 3001)),        # handshake
-        (b"***restart***", ("127.0.0.1", 3001)),  # restart signal
+        (b"***restart***", ("127.0.0.1", 3001)),  # segnale di restart
     ]
 
     client = TORCSClient()
@@ -74,7 +74,7 @@ def test_receive_returns_restart_sentinel(mock_socket_cls):
 
 @patch("torcs_env.client.socket.socket")
 def test_receive_returns_shutdown_sentinel(mock_socket_cls):
-    """receive() returns SHUTDOWN when the server sends ***shutdown***."""
+    """receive() restituisce SHUTDOWN quando il server invia ***shutdown***."""
     mock_sock = MagicMock()
     mock_socket_cls.return_value = mock_sock
     mock_sock.recvfrom.side_effect = [
@@ -90,7 +90,7 @@ def test_receive_returns_shutdown_sentinel(mock_socket_cls):
 
 @patch("torcs_env.client.socket.socket")
 def test_send_encodes_action_string(mock_socket_cls):
-    """send() encodes the action to the expected wire format."""
+    """send() codifica l'azione nel formato atteso sul filo."""
     mock_sock = MagicMock()
     mock_socket_cls.return_value = mock_sock
     mock_sock.recvfrom.return_value = (_SENSOR, ("127.0.0.1", 3001))
@@ -100,7 +100,7 @@ def test_send_encodes_action_string(mock_socket_cls):
     action = Action(steer=0.25, accel=0.7, brake=0.0, gear=2)
     client.send(action)
 
-    # The last sendto call (after the handshake sendto) carries the action
+    # L'ultima chiamata sendto (dopo quella dell'handshake) trasporta l'azione
     last_sent = mock_sock.sendto.call_args_list[-1][0][0]
     assert b"(steer 0.2500)" in last_sent
     assert b"(accel 0.7000)" in last_sent
@@ -134,7 +134,7 @@ def test_context_manager_closes_on_exit(mock_socket_cls):
 
 @patch("torcs_env.client.socket.socket")
 def test_lap_counter_increments_on_dist_raced_reset(mock_socket_cls):
-    """Lap counter increments when distRaced drops (server reset)."""
+    """Il contatore giri si incrementa quando distRaced cala (reset del server)."""
     mock_sock = MagicMock()
     mock_socket_cls.return_value = mock_sock
 
@@ -150,9 +150,9 @@ def test_lap_counter_increments_on_dist_raced_reset(mock_socket_cls):
         ).encode()
 
     mock_sock.recvfrom.side_effect = [
-        (sensor(5000.0), ("127.0.0.1", 3001)),   # handshake reply
-        (sensor(5000.0), ("127.0.0.1", 3001)),   # normal step (lap 1)
-        (sensor(10.0),   ("127.0.0.1", 3001)),   # distRaced reset → lap 2
+        (sensor(5000.0), ("127.0.0.1", 3001)),   # risposta handshake
+        (sensor(5000.0), ("127.0.0.1", 3001)),   # step normale (giro 1)
+        (sensor(10.0),   ("127.0.0.1", 3001)),   # reset distRaced → giro 2
     ]
 
     client = TORCSClient()

@@ -1,15 +1,16 @@
 """
-Clean and augment telemetry CSV for BC training.
+Pulisce e aumenta il CSV di telemetria per il training BC.
 
-Two operations:
-  1. CLEAN: remove duplicate columns, drop off-track rows, drop damage rows
-  2. AUGMENT: modify only OUTPUT columns (steer, accel, brake)
-              sensor inputs are never touched to avoid train/inference mismatch
+Due operazioni:
+  1. CLEAN: rimuove colonne duplicate, scarta righe fuori pista, scarta righe con danni
+  2. AUGMENT: modifica solo le colonne di OUTPUT (steer, accel, brake)
+              gli input dei sensori non vengono mai toccati per evitare un
+              disallineamento tra training e inferenza
 
-Augmentation strategy (performance-oriented):
-  - accel:  +7%  clipped to [0, 1]   — more throttle on exits and straights
-  - steer:  +5%  clipped to [-1, 1]  — tighter cornering line
-  - brake:  -10% clipped to [0, 1]   — later braking point
+Strategia di augmentation (orientata alla performance):
+  - accel:  +7%  limitato a [0, 1]   — più gas in uscita di curva e sui rettilinei
+  - steer:  +5%  limitato a [-1, 1]  — linea di curva più stretta
+  - brake:  -10% limitato a [0, 1]   — punto di frenata più tardivo
 
 Usage:
     conda run -n ai_env python scripts/prepare_training_data.py \
@@ -22,45 +23,45 @@ import argparse
 import pandas as pd
 import numpy as np
 
-# Sensor input columns — never modified
+# Colonne di input dei sensori — mai modificate
 INPUT_COLS = (
     ["timestamp", "angle", "speed", "speedY", "speedZ", "trackPos"] +
     [f"track_{i}" for i in range(19)] +
     ["rpm", "gear", "damage", "distRaced", "curLapTime"]
 )
 
-# Action output columns — augmented
+# Colonne di output azione — aumentate
 OUTPUT_COLS = ["steer", "accel", "brake"]
 
 EXPECTED_COLS = INPUT_COLS + OUTPUT_COLS
 
 
 def clean(df: pd.DataFrame) -> pd.DataFrame:
-    """Remove duplicates and invalid rows."""
+    """Rimuove duplicati e righe non valide."""
     print(f"[CLEAN] Input rows: {len(df)}")
 
-    # Drop duplicate columns (keep first occurrence)
+    # Scarta le colonne duplicate (mantiene la prima occorrenza)
     df = df.loc[:, ~df.columns.duplicated()]
 
-    # Keep only expected columns (drop any extra)
+    # Mantiene solo le colonne attese (scarta ogni extra)
     cols_present = [c for c in EXPECTED_COLS if c in df.columns]
     missing = [c for c in EXPECTED_COLS if c not in df.columns]
     if missing:
         print(f"[CLEAN] WARNING: missing columns: {missing}")
     df = df[cols_present]
 
-    # Drop NaN in critical columns
+    # Scarta i NaN nelle colonne critiche
     critical = ["angle", "speed", "trackPos", "steer", "accel", "brake"] + [f"track_{i}" for i in range(19)]
     df = df.dropna(subset=[c for c in critical if c in df.columns])
 
-    # Keep only on-track samples
+    # Mantiene solo i campioni in pista
     df = df[df["trackPos"].abs() < 0.95]
 
-    # Drop samples with damage (car hit something)
+    # Scarta i campioni con danni (l'auto ha urtato qualcosa)
     if "damage" in df.columns:
         df = df[df["damage"] == 0.0]
 
-    # Drop startup samples where car is still stationary
+    # Scarta i campioni di avvio in cui l'auto è ancora ferma
     df = df[df["speed"].abs() > 1.0]
 
     print(f"[CLEAN] Output rows: {len(df)}")
@@ -68,7 +69,7 @@ def clean(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def augment(df: pd.DataFrame, accel_pct: float, steer_pct: float, brake_reduction_pct: float) -> pd.DataFrame:
-    """Augment only action outputs, leave sensor inputs untouched."""
+    """Aumenta solo gli output azione, lasciando intatti gli input dei sensori."""
     df = df.copy()
 
     before = {
@@ -107,12 +108,12 @@ def main():
     print(f"[INFO] Raw shape: {df_raw.shape}")
     print(f"[INFO] Columns found: {list(df_raw.columns)}\n")
 
-    # Step 1: clean
+    # Passo 1: pulizia
     df_clean = clean(df_raw)
     df_clean.to_csv(args.output_clean, index=False)
     print(f"[OK] Clean CSV saved: {args.output_clean}  ({len(df_clean)} rows)")
 
-    # Step 2: augment outputs only
+    # Passo 2: aumenta solo gli output
     df_aug = augment(df_clean, args.accel_pct, args.steer_pct, args.brake_reduction_pct)
     df_aug.to_csv(args.output_augmented, index=False)
     print(f"[OK] Augmented CSV saved: {args.output_augmented}  ({len(df_aug)} rows)")

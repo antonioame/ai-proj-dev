@@ -1,10 +1,10 @@
-"""Autonomous launcher for recording: starts TORCS headless then runs record_agent.py.
+"""Launcher autonomo per la registrazione: avvia TORCS headless e poi esegue record_agent.py.
 
 Usage:
     python scripts/launch_record.py [--laps 3]
 
-Temporary helper script for retraining data collection — mirrors launch_race.py
-but calls record_agent.py instead of run_agent.py.
+Script di supporto temporaneo per la raccolta dati di riaddestramento —
+rispecchia launch_race.py ma chiama record_agent.py invece di run_agent.py.
 """
 
 from __future__ import annotations

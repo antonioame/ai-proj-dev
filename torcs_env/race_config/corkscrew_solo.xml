@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- TORCS Quick Race configuration: Corkscrew circuit, 1 lap, single SCR driver.
-     Launch with: torcs -r path/to/corkscrew_solo.xml
-     The SCR server plugin listens on UDP port 3001 for the Python client. -->
+<!-- Configurazione TORCS Quick Race: circuito Corkscrew, singolo driver SCR.
+     Il numero di giri effettivi è deciso lato client Python (flag "laps" degli
+     script); "laps" qui sotto è volutamente alto (999) per evitare che TORCS
+     termini la gara da solo prima che il client abbia finito.
+     Avvio: torcs -r path/to/corkscrew_solo.xml
+     Il plugin server SCR resta in ascolto sulla porta UDP 3001 per il client Python. -->
 <!DOCTYPE params SYSTEM "params.dtd">
 <params name="Quick Race">
   <section name="Header">
@@ -24,8 +27,8 @@
       <attstr name="type"     val="race"/>
       <attnum name="laps"     val="999"/>
       <attstr name="start"    val="standing"/>
-      <attnum name="fuel"     val="0"/>   <!-- 0 = no fuel consumption -->
-      <attnum name="damage"   val="0"/>   <!-- 0 = no damage model     -->
+      <attnum name="fuel"     val="0"/>   <!-- 0 = nessun consumo di carburante -->
+      <attnum name="damage"   val="0"/>   <!-- 0 = nessun modello di danno      -->
     </section>
   </section>
 
@@ -39,7 +42,7 @@
 
   <section name="Configuration">
     <section name="1">
-      <!-- QuickRace runs headless when invoked via -r flag -->
+      <!-- QuickRace gira headless quando invocato con il flag -r -->
       <attstr name="type" val="race"/>
     </section>
   </section>

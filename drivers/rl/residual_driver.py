@@ -1,10 +1,11 @@
-"""Residual RL driver — the working BC driver plus a trained bounded correction.
+"""Driver RL residual — il driver BC funzionante più una correzione appresa e limitata.
 
-Mirror of the training-time ResidualTorcsSacEnv for live driving: the base
-action comes from the full `_DRIVER.driver.BCDriver`, and the SAC policy adds a
-small residual (scaled by RESIDUAL_SCALE) on steer/accel/brake. Same step()
-interface as BCDriver/RLDriver, so scripts/evaluate_rl.py --residual and
-scripts/run_agent_rl.py can use it as a drop-in.
+Rispecchia per la guida dal vivo il ResidualTorcsSacEnv usato in fase di
+training: l'azione di base arriva dal `_DRIVER.driver.BCDriver` completo, e la
+policy SAC aggiunge un piccolo residuo (scalato da RESIDUAL_SCALE) su
+steer/accel/brake. Stessa interfaccia step() di BCDriver/RLDriver, quindi
+scripts/evaluate_rl.py --residual e scripts/run_agent_rl.py possono usarlo
+come sostituto diretto.
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ NORM_STATS_PATH = Path(__file__).resolve().parents[2] / "_DRIVER" / "models" / "
 
 
 class ResidualRLDriver:
-    """BC base driver + trained bounded SAC residual, deterministic at eval."""
+    """Driver base BC + residuo SAC addestrato e limitato, deterministico in eval."""
 
     def __init__(self, checkpoint_path: Path = DEFAULT_CHECKPOINT, residual_scale: float = RESIDUAL_SCALE):
         if not checkpoint_path.exists():
