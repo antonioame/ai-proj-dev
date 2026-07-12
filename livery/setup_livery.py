@@ -35,6 +35,11 @@ IBM_PNG = IBM_DIR / "original_IBM_livery.png"
 IBM_RGB = IBM_DIR / f"{CAR}.rgb"
 
 TORCS_TEXTURE_PATH = TORCS_ROOT / "cars" / CAR / f"{CAR}.rgb"
+# TORCS mantiene una seconda copia indipendente della stessa texture per ogni slot
+# driver scr_server. La race config (corkscrew_solo.xml) usa idx=0, ed è questa la
+# copia che il gioco carica davvero per l'auto in gara — aggiornare solo
+# TORCS_TEXTURE_PATH sopra non ha alcun effetto visibile in-game.
+SCR_SERVER_TEXTURE_PATH = TORCS_ROOT / "drivers" / "scr_server" / "0" / f"{CAR}.rgb"
 STATE_FILE = LIVERY_DIR / f".livery_state_{CAR}.json"
 
 
@@ -83,33 +88,43 @@ def _png_to_sgi_rgb(png_path: Path, rgb_path: Path, size: tuple[int, int] = TEXT
     logger.info(f"Successfully converted to SGI RGB: {rgb_path} ({width}x{height}, RGBA)")
 
 
+def _install_to(source_rgb: Path, target_path: Path) -> None:
+    """Copia source_rgb in un singolo slot texture TORCS, facendo prima il backup dell'originale."""
+    if not target_path.parent.exists():
+        logger.error(f"TORCS target directory not found: {target_path.parent}")
+        raise FileNotFoundError(f"Target directory missing: {target_path.parent}")
+
+    if target_path.exists():
+        backup_path = target_path.with_suffix(".rgb.backup")
+        if not backup_path.exists():
+            logger.info(f"Backing up original: {target_path} → {backup_path}")
+            shutil.copy2(target_path, backup_path)
+        else:
+            logger.info(f"Backup already exists: {backup_path}")
+
+    logger.info(f"Installing livery: {source_rgb} → {target_path}")
+    shutil.copy2(source_rgb, target_path)
+
+
 def _install(source_rgb: Path) -> None:
-    """Copia source_rgb nello slot texture car1-ow1 di TORCS, facendo prima il backup dell'originale."""
+    """Copia source_rgb in tutti gli slot texture car1-ow1 di TORCS (cars/ e lo
+    slot driver scr_server usato davvero in gara), facendo prima il backup degli originali."""
     if not source_rgb.exists():
         logger.error(f"Livery source not found: {source_rgb}")
         raise FileNotFoundError(f"Missing livery: {source_rgb}")
     if not TORCS_ROOT.exists():
         logger.error(f"TORCS root not found: {TORCS_ROOT}")
         raise FileNotFoundError(f"TORCS not found at {TORCS_ROOT}")
-    if not TORCS_TEXTURE_PATH.parent.exists():
-        logger.error(f"TORCS car directory not found: {TORCS_TEXTURE_PATH.parent}")
-        raise FileNotFoundError(f"Car directory missing: {TORCS_TEXTURE_PATH.parent}")
 
-    if TORCS_TEXTURE_PATH.exists():
-        backup_path = TORCS_TEXTURE_PATH.with_suffix(".rgb.backup")
-        if not backup_path.exists():
-            logger.info(f"Backing up original: {TORCS_TEXTURE_PATH} → {backup_path}")
-            shutil.copy2(TORCS_TEXTURE_PATH, backup_path)
-        else:
-            logger.info(f"Backup already exists: {backup_path}")
-
-    logger.info(f"Installing livery: {source_rgb} → {TORCS_TEXTURE_PATH}")
-    shutil.copy2(source_rgb, TORCS_TEXTURE_PATH)
+    for target_path in (TORCS_TEXTURE_PATH, SCR_SERVER_TEXTURE_PATH):
+        _install_to(source_rgb, target_path)
 
     state = {
         "installed": True,
         "backup_exists": TORCS_TEXTURE_PATH.with_suffix(".rgb.backup").exists(),
+        "scr_server_backup_exists": SCR_SERVER_TEXTURE_PATH.with_suffix(".rgb.backup").exists(),
         "torcs_path": str(TORCS_TEXTURE_PATH),
+        "scr_server_path": str(SCR_SERVER_TEXTURE_PATH),
         "source": str(source_rgb),
     }
     with open(STATE_FILE, "w") as f:
@@ -144,18 +159,26 @@ def reset_to_default() -> None:
 
 def rollback_livery() -> None:
     """Ripristina byte-per-byte qualunque texture TORCS fosse stata salvata in backup prima dell'ultima installazione."""
-    backup_path = TORCS_TEXTURE_PATH.with_suffix(".rgb.backup")
-    if not backup_path.exists():
-        logger.error(f"No backup found: {backup_path}")
-        raise FileNotFoundError("Cannot rollback: no backup exists")
+    any_restored = False
+    for target_path in (TORCS_TEXTURE_PATH, SCR_SERVER_TEXTURE_PATH):
+        backup_path = target_path.with_suffix(".rgb.backup")
+        if not backup_path.exists():
+            logger.warning(f"No backup found, skipping: {backup_path}")
+            continue
+        logger.info(f"Restoring from backup: {backup_path} → {target_path}")
+        shutil.copy2(backup_path, target_path)
+        any_restored = True
 
-    logger.info(f"Restoring from backup: {backup_path} → {TORCS_TEXTURE_PATH}")
-    shutil.copy2(backup_path, TORCS_TEXTURE_PATH)
+    if not any_restored:
+        logger.error("Cannot rollback: no backups exist")
+        raise FileNotFoundError("Cannot rollback: no backup exists")
 
     state = {
         "installed": False,
-        "backup_exists": True,
+        "backup_exists": TORCS_TEXTURE_PATH.with_suffix(".rgb.backup").exists(),
+        "scr_server_backup_exists": SCR_SERVER_TEXTURE_PATH.with_suffix(".rgb.backup").exists(),
         "torcs_path": str(TORCS_TEXTURE_PATH),
+        "scr_server_path": str(SCR_SERVER_TEXTURE_PATH),
     }
     with open(STATE_FILE, "w") as f:
         json.dump(state, f, indent=2)
@@ -164,17 +187,18 @@ def rollback_livery() -> None:
 
 def show_status() -> None:
     """Mostra lo stato attuale della livrea."""
-    backup_path = TORCS_TEXTURE_PATH.with_suffix(".rgb.backup")
-
     print(f"\n--- Livery Status ({CAR}) ---")
     print(f"Livery dir:       {LIVERY_DIR}")
     print(f"TORCS root:       {TORCS_ROOT}")
     print(f"Current livery:   {LIVERY_RGB} {'✓' if LIVERY_RGB.exists() else '✗'}")
     print(f"IBM default PNG:  {IBM_PNG} {'✓' if IBM_PNG.exists() else '✗'}")
-    print(f"Texture target:   {TORCS_TEXTURE_PATH}")
-    print(f"  Exists:         {'✓' if TORCS_TEXTURE_PATH.exists() else '✗'}")
-    print(f"Backup:           {backup_path}")
-    print(f"  Exists:         {'✓' if backup_path.exists() else '✗'}")
+
+    for target_path in (TORCS_TEXTURE_PATH, SCR_SERVER_TEXTURE_PATH):
+        backup_path = target_path.with_suffix(".rgb.backup")
+        print(f"Texture target:   {target_path}")
+        print(f"  Exists:         {'✓' if target_path.exists() else '✗'}")
+        print(f"  Backup:         {backup_path}")
+        print(f"    Exists:       {'✓' if backup_path.exists() else '✗'}")
     print()
 
     if STATE_FILE.exists():
