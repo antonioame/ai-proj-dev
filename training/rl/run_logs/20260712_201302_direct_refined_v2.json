@@ -1,0 +1,17 @@
+{
+  "run_id": "20260712_201302",
+  "git_sha": "ec22bce",
+  "algorithm": "SAC",
+  "mode": "direct",
+  "reward_version": "refined_v2",
+  "total_timesteps": 200000,
+  "gradient_steps_per_episode": 256,
+  "critic_warmup_steps": 3000,
+  "warm_started_from": "U:\\AI-Partition\\progetto_v2\\ai_private_proj\\_DRIVER\\models\\bc_from_olddriver_v1.pth",
+  "resumed_from": null,
+  "net_arch": [
+    128,
+    64
+  ],
+  "seed": null
+}

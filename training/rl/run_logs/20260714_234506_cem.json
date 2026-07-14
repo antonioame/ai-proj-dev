@@ -1,0 +1,119 @@
+{
+  "run_id": "20260714_234506",
+  "algorithm": "CEM",
+  "generations": 15,
+  "population": 8,
+  "elite": 3,
+  "initial_sigma": 0.02,
+  "sigma_decay": 0.95,
+  "reward_version": "safe_progress_v4",
+  "best_fitness": -117.146,
+  "save_path": "drivers\\rl\\models\\cem_v1.pth",
+  "history": [
+    {
+      "generation": 1,
+      "best_fitness_this_gen": -120.424,
+      "elite_mean_fitness": -121.60533333333332,
+      "best_fitness_overall": -120.424,
+      "sigma_mean": 0.019100000000000002
+    },
+    {
+      "generation": 2,
+      "best_fitness_this_gen": -121.784,
+      "elite_mean_fitness": -131.29216666666665,
+      "best_fitness_overall": -120.424,
+      "sigma_mean": 0.018245000000000004
+    },
+    {
+      "generation": 3,
+      "best_fitness_this_gen": -117.718,
+      "elite_mean_fitness": -137.5053333333333,
+      "best_fitness_overall": -117.718,
+      "sigma_mean": 0.017432749999999997
+    },
+    {
+      "generation": 4,
+      "best_fitness_this_gen": -120.138,
+      "elite_mean_fitness": -125.32316666666668,
+      "best_fitness_overall": -117.718,
+      "sigma_mean": 0.016661112499999995
+    },
+    {
+      "generation": 5,
+      "best_fitness_this_gen": -124.906,
+      "elite_mean_fitness": -145.31949999999998,
+      "best_fitness_overall": -117.718,
+      "sigma_mean": 0.015928056874999992
+    },
+    {
+      "generation": 6,
+      "best_fitness_this_gen": -120.934,
+      "elite_mean_fitness": -122.58666666666666,
+      "best_fitness_overall": -117.718,
+      "sigma_mean": 0.01523165403124999
+    },
+    {
+      "generation": 7,
+      "best_fitness_this_gen": -119.392,
+      "elite_mean_fitness": -120.77866666666667,
+      "best_fitness_overall": -117.718,
+      "sigma_mean": 0.014570071329687491
+    },
+    {
+      "generation": 8,
+      "best_fitness_this_gen": -121.128,
+      "elite_mean_fitness": -121.54133333333334,
+      "best_fitness_overall": -117.718,
+      "sigma_mean": 0.01394156776320312
+    },
+    {
+      "generation": 9,
+      "best_fitness_this_gen": -121.326,
+      "elite_mean_fitness": -121.594,
+      "best_fitness_overall": -117.718,
+      "sigma_mean": 0.013344489375042956
+    },
+    {
+      "generation": 10,
+      "best_fitness_this_gen": -120.678,
+      "elite_mean_fitness": -126.3455,
+      "best_fitness_overall": -117.718,
+      "sigma_mean": 0.012777264906290805
+    },
+    {
+      "generation": 11,
+      "best_fitness_this_gen": -121.746,
+      "elite_mean_fitness": -126.75366666666666,
+      "best_fitness_overall": -117.718,
+      "sigma_mean": 0.012238401660976266
+    },
+    {
+      "generation": 12,
+      "best_fitness_this_gen": -121.638,
+      "elite_mean_fitness": -122.17733333333332,
+      "best_fitness_overall": -117.718,
+      "sigma_mean": 0.011726481577927451
+    },
+    {
+      "generation": 13,
+      "best_fitness_this_gen": -120.222,
+      "elite_mean_fitness": -120.38933333333334,
+      "best_fitness_overall": -117.718,
+      "sigma_mean": 0.011240157499031074
+    },
+    {
+      "generation": 14,
+      "best_fitness_this_gen": -117.956,
+      "elite_mean_fitness": -119.07933333333334,
+      "best_fitness_overall": -117.718,
+      "sigma_mean": 0.010778149624079525
+    },
+    {
+      "generation": 15,
+      "best_fitness_this_gen": -117.146,
+      "elite_mean_fitness": -118.58600000000001,
+      "best_fitness_overall": -117.146,
+      "sigma_mean": 0.010339242142875547
+    }
+  ]
+}

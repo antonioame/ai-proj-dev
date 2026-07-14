@@ -93,8 +93,18 @@ def load_bc_backbone_into_actor(model: SAC, bc_checkpoint: Path = DEFAULT_BC_CHE
         # vicino alla policy BC deterministica (Sezione 4.2.4: preferire
         # cambiamenti che non disimparino il comportamento BC sicuro nelle
         # prime fasi del fine-tuning).
+        #
+        # -1.0 (std≈0.368) si è rivelato tutt'altro che "modesto": su
+        # accel/brake, il cui range valido è [0,1], un sigma di 0.368 copre
+        # oltre un terzo dell'intero spazio d'azione. In 8 run diretti
+        # indipendenti (reward diverse, entropia auto/fissa da 0.02 a 0.08,
+        # learning rate da 3e-4 a 5e-5) la policy degrada sistematicamente
+        # nello stesso identico modo appena l'attore inizia ad aggiornarsi —
+        # sempre a valle di questo stesso rumore iniziale enorme. -2.3
+        # (std≈0.100) è un ordine di grandezza più vicino a un vero rumore di
+        # rifinitura attorno a una policy già buona.
         actor.log_std.weight.zero_()
-        actor.log_std.bias.fill_(-1.0)
+        actor.log_std.bias.fill_(-2.3)
 
     logger.info("Warm-started SAC actor from BC checkpoint: %s", bc_checkpoint)
 

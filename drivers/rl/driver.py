@@ -34,6 +34,13 @@ _GEAR_UP_RPM = 12000.0
 _GEAR_DOWN_RPM = 6000.0
 _STARTUP_STEPS = 80
 
+# Stessi guadagni post-hoc di torcs_gym_env.py/BCDriver — devono combaciare
+# esattamente con quelli applicati in training, altrimenti l'inferenza non
+# rispecchia ciò su cui la policy è stata addestrata.
+_STEER_GAIN = 1.8
+_ACCEL_GAIN = 1.40
+_BRAKE_GAIN = 0.80
+
 
 class RLDriver:
     """Carica un checkpoint SAC addestrato e guida con azioni deterministiche."""
@@ -87,4 +94,9 @@ class RLDriver:
         elif state.rpm < _GEAR_DOWN_RPM and self.current_gear > 1:
             self.current_gear -= 1
 
-        return Action(steer=steer, accel=accel, brake=brake, gear=self.current_gear).clamp()
+        return Action(
+            steer=steer * _STEER_GAIN,
+            accel=accel * _ACCEL_GAIN,
+            brake=brake * _BRAKE_GAIN,
+            gear=self.current_gear,
+        ).clamp()

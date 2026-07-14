@@ -83,10 +83,20 @@ def _git_sha() -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Train the Phase 3 SAC driver")
     parser.add_argument("--total-timesteps", type=int, default=200_000)
-    parser.add_argument("--reward-version", choices=["baseline_v1", "refined_v2"], default="baseline_v1")
+    parser.add_argument("--reward-version", choices=["baseline_v1", "refined_v2", "safe_progress_v3", "safe_progress_v4"], default="baseline_v1")
     parser.add_argument("--host", default=None)
     parser.add_argument("--port", type=int, default=None)
     parser.add_argument("--critic-warmup-steps", type=int, default=3000)
+    parser.add_argument("--learning-rate", type=float, default=3e-4,
+                         help="SAC learning rate (actor+critic+ent_coef optimizer), SB3 default 3e-4. "
+                              "In every direct-mode run so far the actor degrades as soon as it starts "
+                              "updating, regardless of reward/entropy/warmup tuning — a much smaller "
+                              "value (e.g. 5e-5) fine-tunes a warm-started actor without destructive "
+                              "drift, mirroring what fixed the analogous BC fine-tuning collapse.")
+    parser.add_argument("--ent-coef", default=None,
+                        help="SAC entropy coefficient. Default: 0.02 for --residual, \"auto\" otherwise. "
+                             "Override to a small fixed value (e.g. 0.02) in direct mode to stop SB3's "
+                             "auto entropy tuning from drifting a warm-started actor away from BC.")
     parser.add_argument("--gradient-steps", type=int, default=512,
                         help="Gradient updates done between episodes (train_freq is per-episode; "
                              "see the SAC config comment on why per-step training corrupts driving).")
@@ -151,14 +161,14 @@ def main() -> None:
             "MlpPolicy",
             env,
             policy_kwargs=dict(net_arch=NET_ARCH),
-            learning_rate=3e-4,
+            learning_rate=args.learning_rate,
             buffer_size=1_000_000,
             batch_size=256,
             gamma=0.99,
             tau=0.005,
             train_freq=(1, "episode"),
             gradient_steps=args.gradient_steps,
-            ent_coef=0.02 if args.residual else "auto",
+            ent_coef=args.ent_coef if args.ent_coef is not None else (0.02 if args.residual else "auto"),
             critic_warmup_steps=args.critic_warmup_steps,
             seed=args.seed,
             verbose=1,
@@ -187,6 +197,8 @@ def main() -> None:
         "total_timesteps": args.total_timesteps,
         "gradient_steps_per_episode": args.gradient_steps,
         "critic_warmup_steps": args.critic_warmup_steps,
+        "learning_rate": args.learning_rate,
+        "ent_coef": args.ent_coef if args.ent_coef is not None else (0.02 if args.residual else "auto"),
         "warm_started_from": warm_started_from,
         "resumed_from": args.resume,
         "net_arch": NET_ARCH,

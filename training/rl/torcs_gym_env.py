@@ -43,6 +43,23 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 _GEAR_UP_RPM = 12000.0
 _GEAR_DOWN_RPM = 6000.0
 
+# Guadagni post-hoc identici a _DRIVER/driver.py.BCDriver (STEER_GAIN/ACCEL_GAIN/
+# BRAKE_GAIN). Scoperti mancanti dall'intera pipeline SAC diretta dopo 5 run
+# che non sono mai scesi sotto ~127-130s: sac_warmstart.load_bc_backbone_into_actor
+# copia solo i pesi grezzi della rete BC nell'attore SAC, MAI i guadagni
+# applicati a posteriori nell'output di BCDriver.step(). Di conseguenza
+# l'attore con warm-start, anche a zero step di training, guida come una BC
+# "non amplificata" — nel primissimo run diretto (critic_warmup_steps troppo
+# alto, attore mai aggiornato) il checkpoint congelato valutava 143,244s
+# contro i 121,978s della vera BC: ~21s persi SOLO per l'assenza di questi tre
+# moltiplicatori, prima ancora che qualunque fine-tuning RL entri in gioco.
+# Applicarli qui allinea il punto di partenza del warm-start al comportamento
+# BC reale, così il fine-tuning RL parte alla pari con la baseline da battere
+# invece che ~20s indietro.
+_STEER_GAIN = 1.8
+_ACCEL_GAIN = 1.40
+_BRAKE_GAIN = 0.80
+
 # Periodo di grazia all'avvio: applica pieno gas/sterzo zero per questo numero
 # di step prima di passare il controllo alla policy. Rispecchia
 # BCDriver.STARTUP_STEPS — evita che l'attore con warm-start veda mai lo stato
@@ -185,7 +202,12 @@ class TorcsSacEnv(gym.Env):
         self._ensure_started()
         steer, accel, brake = (float(a) for a in np.asarray(action, dtype=np.float32))
         self._update_gear(self._last_state.rpm)
-        cmd = Action(steer=steer, accel=accel, brake=brake, gear=self._current_gear)
+        cmd = Action(
+            steer=steer * _STEER_GAIN,
+            accel=accel * _ACCEL_GAIN,
+            brake=brake * _BRAKE_GAIN,
+            gear=self._current_gear,
+        )
         return self._send_and_observe(cmd)
 
     def _send_and_observe(self, cmd: Action):
@@ -228,6 +250,8 @@ class TorcsSacEnv(gym.Env):
             "trackPos": state.trackPos,
             "speed": state.speed,
             "termination_reason": reason,
+            "lastLapTime": state.lastLapTime,
+            "damage": state.damage,
         }
         return obs, reward, terminated, truncated, info
 

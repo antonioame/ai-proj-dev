@@ -256,6 +256,46 @@ valutazione della Sezione 1.
 - Disabilitare il rendering di TORCS durante il training (headless, come già fatto per Fase 1/2)
   — il corso nota che questo può velocizzare sensibilmente il training.
 
+### 6.4 Tentativo di usare il bot interno "Tita" come sorgente di dimostrazioni **[INGEGNERIA]**
+
+Il bot C++ interno di TORCS "Tita" gira su Corkscrew, con la stessa vettura dello scr_server,
+in ~75s — nettamente più veloce sia del BC (121.978s) sia del driver RL residual (127.07s).
+È stato tentato (2026-07-14) di estrarne dimostrazioni stato→azione per arricchire il dataset BC,
+prima di continuare il lavoro su SAC. Risultato: **abbandonato**, per due motivi indipendenti,
+entrambi verificati e non aggirabili senza un intervento fuori scope:
+
+- **Tentativo di ricompilare `tita.dll` con logging aggiunto (accesso ai sorgenti):** i sorgenti
+  di Tita esistono in un albero TORCS separato (`gym_torcs/vtorcs-RL-color/src/drivers/tita/`,
+  non nell'installazione realmente in uso da `launch_race.py`), con i comandi accessibili a
+  `car->_steerCmd`/`_accelCmd`/`_brakeCmd` (`tita.cpp:377-448`). MinGW-w64 è stato installato
+  senza problemi (via MSYS2/winget), ma il sistema di build del modulo non è un target isolato:
+  dipende da `Make-config` generato da un `./configure` autotools **per Linux/X11**, e la
+  dipendenza chiave `plib` (libreria scene-graph richiesta anche da `tita`) non è pacchettizzata
+  per Windows/MSYS2 — andrebbe compilata da sorgente, superando ampiamente la soglia di 45 minuti
+  fissata prima di tentare. Resta inoltre irrisolta l'incertezza sulla compatibilità ABI tra un
+  `tita.dll` ricompilato da quell'albero e l'installazione TORCS binaria realmente in uso (fork
+  potenzialmente diverso).
+- **Tentativo di usare il replay/telemetria nativa di TORCS come fallback (nessuna ricompilazione
+  richiesta):** verificato via codice sorgente che **non esiste alcun meccanismo di replay/log
+  utilizzabile in questa build**, indipendentemente dal tempo investito. Il modulo di telemetria
+  per-robot (`robottools/rttelem.cpp`, usato potenzialmente da ogni bot incluso Tita) è compilato
+  come stub vuoto (ogni funzione avvolta in `#if 0`/`#ifdef later`), con nota esplicita degli
+  autori originali *"The telemetry is only working with Linux"* — quindi resterebbe disattivato
+  su Windows anche a ricompilazione riuscita. Non esiste inoltre alcun modulo/DLL di replay
+  nell'installazione né codice di scrittura `.rpl` in `racemain.cpp`/`raceengine.cpp`.
+
+**Alternative scartate esplicitamente** (non da riconsiderare in futuro senza nuova autorizzazione
+esplicita): patch binaria/DLL proxy su `tita.dll` già compilato per intercettare i comandi
+(reverse engineering non autorizzato); ricostruzione della traiettoria di Tita dal sensore
+"opponents" di un'auto scr_server passiva nella stessa gara (qualità troppo bassa — sensore grezzo
+a 36 settori di sola distanza).
+
+**Esito pratico:** il dataset è stato arricchito invece con un ciclo DAgger reale
+(`scripts/record_dagger.py`, nuovo script separato) che usa il vecchio `RuleBasedDriver`
+(`old_versions_drivers/project_V2/driver.py`, ancora importabile e compatibile con
+`torcs_env.sensors.SensorState`/`torcs_env.actions.Action` correnti) come oracolo in ombra durante
+il rollout del BC driver reale — non Tita. Vedi il dataset in `data/dagger_bc_*.csv`.
+
 ---
 
 ## 7. Modalità di fallimento note e mitigazioni **[CORSO]**
