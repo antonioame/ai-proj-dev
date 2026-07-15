@@ -256,19 +256,42 @@ def main() -> None:
             for i, theta in enumerate(thetas):
                 set_flat_params(candidate, theta)
                 res = run_episode(env, candidate)
-                results.append((res.fitness, res, theta))
                 logger.info(
                     "gen %d/%d cand %d/%d: fitness=%.2f lap=%s dist=%.0f off_track=%.1f%% damage=%.1f",
                     gen, args.generations, i + 1, args.population,
                     res.fitness, f"{res.lap_time:.3f}s" if res.lap_time else "n/a",
                     res.dist_reached, res.off_track_pct, res.damage,
                 )
+
+                # Un candidato che sembra battere il record va riverificato con
+                # un secondo giro indipendente prima di fidarsene — osservato
+                # più volte: pesi che guidano un giro perfetto in training
+                # falliscono sistematicamente al reload (fino al 70% fuori
+                # pista), segno che un singolo giro può essere "fortunato" e
+                # non rappresentativo. Si usa il PEGGIORE dei due esiti, sia
+                # per il tracking del best sia per la selezione elite di
+                # questa generazione, così un candidato fragile non può più
+                # scavalcare uno robusto sulla base di un solo giro buono.
+                if res.fitness > best_fitness:
+                    set_flat_params(candidate, theta)
+                    res_verify = run_episode(env, candidate)
+                    logger.info(
+                        "  verification run: fitness=%.2f lap=%s off_track=%.1f%% damage=%.1f",
+                        res_verify.fitness,
+                        f"{res_verify.lap_time:.3f}s" if res_verify.lap_time else "n/a",
+                        res_verify.off_track_pct, res_verify.damage,
+                    )
+                    if res_verify.fitness < res.fitness:
+                        res = res_verify
+
+                results.append((res.fitness, res, theta))
+
                 if res.fitness > best_fitness:
                     best_fitness = res.fitness
                     best_theta = theta.copy()
                     set_flat_params(candidate, best_theta)
                     torch.save(candidate.state_dict(), CHECKPOINT_DIR / f"{run_id}_best_so_far.pth")
-                    logger.info("New best: fitness=%.2f (checkpoint saved)", best_fitness)
+                    logger.info("New best (verified): fitness=%.2f (checkpoint saved)", best_fitness)
 
             results.sort(key=lambda r: r[0], reverse=True)
             elite = results[: args.elite]
