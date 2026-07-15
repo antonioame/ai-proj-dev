@@ -71,3 +71,12 @@ htmlcov/
 # training history (every episode checkpoint + tensorboard log) stays in git.
 !training/rl/checkpoints/**/*.zip
 !drivers/rl/models/*.zip
+
+# Snapshot di consegna a IBM
+/0-Submit_to_IBM/
+
+# Modelli/checkpoint rigettati o intermedi (vedi laptime_ledger.csv per gli
+# esiti) — tenuti sul disco per riferimento ma esclusi dalla consegna
+training/rl/checkpoints_rejected/
+training/rl/checkpoints_cem/
+drivers/rl/models_rejected/
