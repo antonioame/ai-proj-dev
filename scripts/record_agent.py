@@ -17,8 +17,10 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from _DRIVER.driver import BCDriver
+from telemetry_row import TRACK_COLS, build_row
 from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
@@ -29,7 +31,7 @@ DRIVER_NAME = "bc"
 
 FIELDNAMES = [
     "timestamp", "angle", "speed", "speedY", "speedZ", "trackPos",
-    *[f"track_{i}" for i in range(19)],
+    *TRACK_COLS,
     "rpm", "gear", "distFromStart", "distRaced", "curLapTime",
     "steer", "accel", "brake", "gear_cmd",
 ]
@@ -77,24 +79,7 @@ def record(
                 client.send(action)
                 step += 1
 
-                rows.append({
-                    "timestamp": time.time(),
-                    "angle": state.angle,
-                    "speed": state.speed,
-                    "speedY": state.speedY,
-                    "speedZ": state.speedZ,
-                    "trackPos": state.trackPos,
-                    **{f"track_{i}": state.track[i] for i in range(min(19, len(state.track)))},
-                    "rpm": state.rpm,
-                    "gear": state.gear,
-                    "distFromStart": state.distFromStart,
-                    "distRaced": state.distRaced,
-                    "curLapTime": state.curLapTime,
-                    "steer": action.steer,
-                    "accel": action.accel,
-                    "brake": action.brake,
-                    "gear_cmd": action.gear,
-                })
+                rows.append(build_row(time.time(), state, action, include_dist_from_start=True))
 
                 if len(rows) % 50 == 0:
                     logger.info(

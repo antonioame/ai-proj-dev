@@ -19,6 +19,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import numpy as np
 from stable_baselines3 import SAC
 
+from drivers.bc_common import STARTUP_STEPS as _STARTUP_STEPS
+from drivers.bc_common import shift_gear, startup_gear
 from torcs_env.actions import Action
 from torcs_env.sensors import SensorState
 from training.rl.features import build_feature_vector
@@ -26,13 +28,6 @@ from training.rl.features import build_feature_vector
 MODELS_DIR = Path(__file__).resolve().parent / "models"
 DEFAULT_CHECKPOINT = MODELS_DIR / "sac_corkscrew_v1.zip"
 NORM_STATS_PATH = Path(__file__).resolve().parents[2] / "_DRIVER" / "models" / "bc_from_olddriver_v1.npz"
-
-# Rispecchia _DRIVER/driver.py.BCDriver in modo che il comportamento di
-# avvio/marce del driver RL corrisponda a ciò su cui la policy è stata
-# effettivamente addestrata (training/rl/torcs_gym_env.py).
-_GEAR_UP_RPM = 12000.0
-_GEAR_DOWN_RPM = 6000.0
-_STARTUP_STEPS = 80
 
 # Stessi guadagni post-hoc di torcs_gym_env.py/BCDriver — devono combaciare
 # esattamente con quelli applicati in training, altrimenti l'inferenza non
@@ -68,18 +63,11 @@ class RLDriver:
         self.current_gear = 1
         self._step_count = 0
 
-    def _startup_gear(self, speed: float) -> int:
-        if speed < 15.0:
-            return 1
-        if speed < 45.0:
-            return 2
-        return 3
-
     def step(self, state: SensorState) -> Action:
         self._step_count += 1
 
         if self._step_count <= _STARTUP_STEPS:
-            gear = self._startup_gear(state.speed)
+            gear = startup_gear(state.speed)
             self.current_gear = gear
             return Action(steer=0.0, accel=1.0, brake=0.0, gear=gear).clamp()
 
@@ -89,10 +77,7 @@ class RLDriver:
         action, _ = self._model.predict(obs, deterministic=True)
         steer, accel, brake = (float(a) for a in action)
 
-        if state.rpm > _GEAR_UP_RPM and self.current_gear < 6:
-            self.current_gear += 1
-        elif state.rpm < _GEAR_DOWN_RPM and self.current_gear > 1:
-            self.current_gear -= 1
+        self.current_gear = shift_gear(state.rpm, self.current_gear)
 
         return Action(
             steer=steer * _STEER_GAIN,

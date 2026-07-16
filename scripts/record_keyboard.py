@@ -35,8 +35,10 @@ from pathlib import Path
 from threading import Lock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from pynput import keyboard
+from telemetry_row import TRACK_COLS, build_row
 from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 from torcs_env.actions import Action
 
@@ -44,13 +46,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 
-def _track_cols() -> list[str]:
-    return [f"track_{i}" for i in range(19)]
-
-
 FIELDNAMES = [
     "timestamp", "angle", "speed", "speedY", "speedZ", "trackPos",
-    *_track_cols(),
+    *TRACK_COLS,
     "rpm", "gear", "distRaced", "curLapTime",
     "steer", "accel", "brake", "gear_cmd",
 ]
@@ -200,24 +198,7 @@ def record(host: str | None = None, port: int | None = None) -> Path:
                 if lap_start is None:
                     lap_start = now
 
-                row = {
-                    "timestamp": now,
-                    "angle": state.angle,
-                    "speed": state.speed,
-                    "speedY": state.speedY,
-                    "speedZ": state.speedZ,
-                    "trackPos": state.trackPos,
-                    **{f"track_{i}": state.track[i] for i in range(min(19, len(state.track)))},
-                    "rpm": state.rpm,
-                    "gear": state.gear,
-                    "distRaced": state.distRaced,
-                    "curLapTime": state.curLapTime,
-                    "steer": action.steer,
-                    "accel": action.accel,
-                    "brake": action.brake,
-                    "gear_cmd": action.gear,
-                }
-                rows.append(row)
+                rows.append(build_row(now, state, action))
 
                 # Stato live ogni 20 step (~0.4s a 50 step/s)
                 if len(rows) % 20 == 0:
