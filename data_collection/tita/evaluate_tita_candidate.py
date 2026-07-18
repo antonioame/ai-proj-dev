@@ -54,6 +54,10 @@ def evaluate(
     total_steps = 0
     total_damage = 0.0
     lap_count = 0
+    # Giro (state.lap) all'ultima registrazione: rileva un nuovo giro anche se
+    # due giri consecutivi hanno tempo identico (simulazione deterministica) —
+    # stesso doppio criterio di scripts/evaluate_common.py.
+    lap_at_last_record = 0
 
     with TORCSClient(host=host, port=port) as client:
         logger.info("Evaluating '%s' for %d lap(s).", driver_name, laps)
@@ -65,6 +69,11 @@ def evaluate(
                 break
             if result == RESTART:
                 driver.on_restart()
+                # La gara è ripartita da zero: i giri registrati prima del
+                # restart non valgono più (stesso reset di evaluate_common).
+                lap_count = 0
+                lap_times = []
+                lap_at_last_record = 0
                 continue
 
             state = result
@@ -79,10 +88,13 @@ def evaluate(
                 off_track_steps += 1
 
             if state.lastLapTime > 0 and (
-                not lap_times or state.lastLapTime != lap_times[-1]
+                not lap_times
+                or state.lastLapTime != lap_times[-1]
+                or state.lap > lap_at_last_record
             ):
                 lap_times.append(state.lastLapTime)
                 lap_count += 1
+                lap_at_last_record = state.lap
                 logger.info("Lap %d: %.3f s", lap_count, state.lastLapTime)
                 if lap_count >= laps:
                     break

@@ -34,7 +34,14 @@ def run_driver(
     rows: list[dict] = []
     lap_times: list[float] = []
     lap_count = 0
+    # Giro (state.lap) al momento dell'ultima registrazione in lap_times: usato
+    # come guard anti-doppio-conteggio e per rilevare un nuovo giro anche
+    # quando lastLapTime è identico al giro precedente (simulazione
+    # deterministica a parità di codice: due giri consecutivi possono avere
+    # lo stesso tempo al millesimo, e il solo confronto sul tempo non lo vedrebbe).
+    lap_at_last_record = 0
     max_speed = 0.0
+    max_damage = 0.0
     off_track_steps = 0
     total_steps = 0
 
@@ -51,6 +58,8 @@ def run_driver(
                 logger.info("Server restart signal.")
                 driver.on_restart()
                 lap_count = 0
+                lap_times = []
+                lap_at_last_record = 0
                 continue
 
             state = result
@@ -59,6 +68,7 @@ def run_driver(
 
             total_steps += 1
             max_speed = max(max_speed, state.speed)
+            max_damage = max(max_damage, state.damage)
             on_track = abs(state.trackPos) <= 1.0
             if not on_track:
                 off_track_steps += 1
@@ -93,9 +103,14 @@ def run_driver(
                     "brake": action.brake,
                 })
 
-            if state.lastLapTime > 0 and (not lap_times or state.lastLapTime != lap_times[-1]):
+            if state.lastLapTime > 0 and (
+                not lap_times
+                or state.lastLapTime != lap_times[-1]
+                or state.lap > lap_at_last_record
+            ):
                 lap_times.append(state.lastLapTime)
                 lap_count += 1
+                lap_at_last_record = state.lap
                 logger.info("Lap %d completed in %.3f s", lap_count, state.lastLapTime)
                 if lap_count >= laps:
                     # NON forzare uno shutdown meta=2 — interromperebbe la
@@ -126,6 +141,7 @@ def run_driver(
         "best_lap": min(lap_times) if lap_times else None,
         "max_speed_kmh": round(max_speed, 2),
         "off_track_pct": round(off_track_pct, 2),
+        "damage": round(max_damage, 2),
         "total_steps": total_steps,
         "telemetry_csv": str(telemetry_path) if telemetry_path else None,
     }

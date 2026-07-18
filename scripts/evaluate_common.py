@@ -35,8 +35,14 @@ def run_eval_loop(
     speed_samples: list[float] = []
     off_track_steps = 0
     total_steps = 0
-    total_damage = 0.0
+    max_damage = 0.0
     lap_count = 0
+    # Giro (state.lap) al momento dell'ultima registrazione in lap_times: usato
+    # come guard anti-doppio-conteggio e per rilevare un nuovo giro anche
+    # quando lastLapTime è identico al giro precedente (simulazione
+    # deterministica a parità di codice: due giri consecutivi possono avere
+    # lo stesso tempo al millesimo, e il solo confronto sul tempo non lo vedrebbe).
+    lap_at_last_record = 0
     aborted_no_lap = False
 
     with TORCSClient(host=host, port=port) as client:
@@ -49,6 +55,11 @@ def run_eval_loop(
                 break
             if result == RESTART:
                 driver.on_restart()
+                # La gara è ripartita da zero: i giri registrati prima del
+                # restart non valgono più (stesso reset di run_agent_common).
+                lap_count = 0
+                lap_times = []
+                lap_at_last_record = 0
                 continue
 
             state = result
@@ -57,17 +68,24 @@ def run_eval_loop(
 
             total_steps += 1
             speed_samples.append(state.speed)
-            total_damage = max(total_damage, state.damage)
+            max_damage = max(max_damage, state.damage)
 
             if abs(state.trackPos) > 1.0:
                 off_track_steps += 1
 
-            # Rileva un nuovo tempo sul giro
+            # Rileva un nuovo giro completato. Non basta confrontare lastLapTime:
+            # la simulazione è deterministica a parità di codice, quindi due giri
+            # consecutivi possono avere lo stesso tempo al millesimo — in quel
+            # caso serve il contatore state.lap (derivato dai reset di distRaced)
+            # per accorgersi comunque che è iniziato un nuovo giro.
             if state.lastLapTime > 0 and (
-                not lap_times or state.lastLapTime != lap_times[-1]
+                not lap_times
+                or state.lastLapTime != lap_times[-1]
+                or state.lap > lap_at_last_record
             ):
                 lap_times.append(state.lastLapTime)
                 lap_count += 1
+                lap_at_last_record = state.lap
                 logger.info("Lap %d: %.3f s", lap_count, state.lastLapTime)
                 if lap_count >= laps:
                     break
@@ -99,7 +117,7 @@ def run_eval_loop(
         "max_speed_kmh": round(max_speed, 2),
         "avg_speed_kmh": round(avg_speed, 2),
         "off_track_pct": round(off_track_pct, 2),
-        "damage": round(total_damage, 2),
+        "damage": round(max_damage, 2),
         "total_steps": total_steps,
     }
     if max_steps is not None:

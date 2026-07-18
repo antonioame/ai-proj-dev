@@ -26,7 +26,6 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger(__name__)
 
 STATUS_EVERY = 50  # una riga di stato per ogni secondo simulato (~50 step/s)
-DRIVER_NAME = "bc_tita_v1"
 
 
 def run(
@@ -43,6 +42,10 @@ def run(
 
     lap_times: list[float] = []
     lap_count = 0
+    # Giro (state.lap) all'ultima registrazione: rileva un nuovo giro anche se
+    # due giri consecutivi hanno tempo identico (simulazione deterministica) —
+    # stesso doppio criterio di scripts/evaluate_common.py.
+    lap_at_last_record = 0
     max_speed = 0.0
     off_track_steps = 0
     total_steps = 0
@@ -60,6 +63,8 @@ def run(
                 logger.info("Server restart signal.")
                 driver.on_restart()
                 lap_count = 0
+                lap_times = []
+                lap_at_last_record = 0
                 continue
 
             state = result
@@ -81,9 +86,14 @@ def run(
                     action.steer, action.accel, action.brake,
                 )
 
-            if state.lastLapTime > 0 and (not lap_times or state.lastLapTime != lap_times[-1]):
+            if state.lastLapTime > 0 and (
+                not lap_times
+                or state.lastLapTime != lap_times[-1]
+                or state.lap > lap_at_last_record
+            ):
                 lap_times.append(state.lastLapTime)
                 lap_count += 1
+                lap_at_last_record = state.lap
                 logger.info("Lap %d completed in %.3f s", lap_count, state.lastLapTime)
                 if lap_count >= laps:
                     logger.info("Target laps reached — releasing control to TORCS.")
@@ -91,7 +101,7 @@ def run(
 
     off_track_pct = (off_track_steps / max(total_steps, 1)) * 100.0
     results = {
-        "driver": DRIVER_NAME,
+        "driver": checkpoint_name,
         "laps_completed": lap_count,
         "lap_times": lap_times,
         "best_lap": min(lap_times) if lap_times else None,

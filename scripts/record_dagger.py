@@ -25,7 +25,6 @@ import argparse
 import csv
 import logging
 import sys
-import time
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
@@ -73,6 +72,10 @@ def run(
     rows: list[dict] = []
     lap_times: list[float] = []
     lap_count = 0
+    # Giro (state.lap) all'ultima registrazione: rileva un nuovo giro anche se
+    # due giri consecutivi hanno tempo identico (simulazione deterministica) —
+    # stesso doppio criterio di scripts/evaluate_common.py.
+    lap_at_last_record = 0
     total_steps = 0
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -105,6 +108,8 @@ def run(
                     policy.on_restart()
                     oracle.on_restart()
                     lap_count = 0
+                    lap_times = []
+                    lap_at_last_record = 0
                     continue
 
                 state = result
@@ -137,9 +142,14 @@ def run(
                         oracle_action.steer, oracle_action.accel, oracle_action.brake,
                     )
 
-                if state.lastLapTime > 0 and (not lap_times or state.lastLapTime != lap_times[-1]):
+                if state.lastLapTime > 0 and (
+                    not lap_times
+                    or state.lastLapTime != lap_times[-1]
+                    or state.lap > lap_at_last_record
+                ):
                     lap_times.append(state.lastLapTime)
                     lap_count += 1
+                    lap_at_last_record = state.lap
                     logger.info("Lap %d completed in %.3f s", lap_count, state.lastLapTime)
                     if lap_count >= laps:
                         logger.info("Target laps reached — releasing control to TORCS.")

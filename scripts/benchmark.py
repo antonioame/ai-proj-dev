@@ -11,6 +11,7 @@ import json
 import statistics
 import subprocess
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -40,13 +41,22 @@ def _run_race(laps: int) -> dict:
         str(PROJECT_ROOT / "scripts" / "launch_race.py"),
         "--laps", str(laps),
     ]
-    subprocess.run(cmd, cwd=PROJECT_ROOT)
-    # trova il risultato JSON più recente per il driver BC
+    race_start = time.time()
+    result = subprocess.run(cmd, cwd=PROJECT_ROOT)
+    if result.returncode != 0:
+        raise RuntimeError(f"launch_race.py exited with code {result.returncode}")
+    # trova il risultato JSON per il driver BC scritto DOPO l'avvio di questa gara
+    # (altrimenti una gara fallita leggerebbe silenziosamente un JSON stale)
     results_dir = PROJECT_ROOT / "results"
-    candidates = sorted(results_dir.glob("bc_*.json"), key=lambda p: p.stat().st_mtime)
+    candidates = [
+        p for p in results_dir.glob("bc_*.json") if p.stat().st_mtime >= race_start
+    ]
     if not candidates:
-        raise RuntimeError(f"No results JSON found in {results_dir} after race")
-    return json.loads(candidates[-1].read_text())
+        raise RuntimeError(
+            f"No results JSON newer than race start found in {results_dir} — race may have failed silently"
+        )
+    newest = max(candidates, key=lambda p: p.stat().st_mtime)
+    return json.loads(newest.read_text())
 
 
 def _append_ledger(row: dict) -> None:
@@ -89,6 +99,9 @@ def main() -> None:
         all_lap_times.extend(lap_times)
         max_speed = max(max_speed, r.get("max_speed_kmh", 0.0))
         off_track_pct = max(off_track_pct, r.get("off_track_pct", 0.0))
+        if "damage" not in r:
+            print("  Warning: 'damage' not present in results JSON — assuming 0.0")
+        damage_total = max(damage_total, r.get("damage", 0.0))
 
     valid_times = [t for t in all_lap_times if t > 0]
     best = min(valid_times) if valid_times else None

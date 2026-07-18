@@ -54,6 +54,11 @@ def record(
     laps_done = 0
     lap_complete_step = -1
     step = 0
+    # Tempo/numero giro registrati all'ultimo incremento di laps_done: servono a
+    # distinguere un nuovo giro davvero completato dal semplice permanere di
+    # state.lastLapTime > 0 dopo che lap_complete_step è stato riazzerato.
+    last_recorded_lap_time = 0.0
+    last_recorded_lap = 0
 
     try:
         with TORCSClient(host=host, port=port) as client:
@@ -71,7 +76,9 @@ def record(
                     laps_done = 0
                     lap_complete_step = -1
                     step = 0
-                    driver.reset()
+                    last_recorded_lap_time = 0.0
+                    last_recorded_lap = 0
+                    driver.on_restart()
                     continue
 
                 state = result
@@ -88,8 +95,17 @@ def record(
                         action.steer, action.accel, action.brake,
                     )
 
-                if state.lastLapTime > 0 and lap_complete_step < 0:
+                # Doppio criterio per un giro davvero nuovo: lastLapTime non aggiorna
+                # più dopo il primo giro (resta > 0 per sempre), quindi confrontarlo
+                # da solo non basta a rilevare il secondo giro se il tempo è identico
+                # (possibile in simulazione deterministica) — state.lap (derivato dai
+                # reset di distRaced nel client) copre quel caso.
+                if state.lastLapTime > 0 and lap_complete_step < 0 and (
+                    state.lastLapTime != last_recorded_lap_time or state.lap != last_recorded_lap
+                ):
                     laps_done += 1
+                    last_recorded_lap_time = state.lastLapTime
+                    last_recorded_lap = state.lap
                     logger.info("Lap %d done in %.1f s", laps_done, state.lastLapTime)
                     lap_complete_step = step
 
@@ -102,7 +118,7 @@ def record(
     except Exception as exc:
         logger.warning("Connection lost: %s", exc)
     finally:
-        driver.reset()
+        driver.on_restart()
 
     with out_path.open("w", newline="") as fh:
         writer = csv.DictWriter(fh, fieldnames=FIELDNAMES)

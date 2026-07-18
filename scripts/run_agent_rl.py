@@ -50,7 +50,7 @@ def run(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run the Phase 3 RL driver agent")
-    parser.add_argument("--laps", type=int, default=10)
+    parser.add_argument("--laps", type=int, default=1)
     parser.add_argument("--host", default=None)
     parser.add_argument("--port", type=int, default=None)
     parser.add_argument("--telemetry", action="store_true",

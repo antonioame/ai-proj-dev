@@ -19,6 +19,17 @@ Non tocca _DRIVER/, drivers/, scripts/, training/: legge bc solo in lettura
 (BCDriver di _DRIVER.driver, mai modificato) e scrive in
 data_collection/tita/dagger_recovery/.
 
+NOTA sulle unita' delle label (rilevata in audit 2026-07-17): le azioni
+registrate qui sono quelle di bc DOPO i gain post-hoc e il clamp
+(safety_action = output finale di BCDriver.step), mentre i CSV di tita
+convertiti contengono azioni raw del bot. All'inferenza il driver candidato
+riapplica i propri gain (ACCEL x1.40, BRAKE x0.80) a TUTTO l'output del
+modello -> per i campioni di recovery il gain risulta di fatto applicato due
+volte. Empiricamente tollerato (bc_tita_v20, addestrato anche su questi
+campioni, completa il giro pulito a 111.986s), ma da normalizzare (dividere
+le label bc per i gain, o registrare l'output pre-gain) PRIMA di eventuali
+futuri round di raccolta.
+
 Prerequisito: TORCS avviato con torcs_env/race_config/corkscrew_solo.xml
 (client SCR, stesso schema di scripts/run_agent.py).
 
@@ -73,6 +84,10 @@ def run(
     recovery_rows: list[dict] = []
     lap_times: list[float] = []
     lap_count = 0
+    # Giro (state.lap) all'ultima registrazione: rileva un nuovo giro anche se
+    # due giri consecutivi hanno tempo identico (simulazione deterministica) —
+    # stesso doppio criterio di scripts/evaluate_common.py.
+    lap_at_last_record = 0
     total_steps = 0
     safety_steps = 0
     off_track_steps = 0
@@ -95,6 +110,8 @@ def run(
                     mode = "candidate"
                     resume_counter = 0
                     lap_count = 0
+                    lap_times = []
+                    lap_at_last_record = 0
                     continue
 
                 state = result
@@ -151,9 +168,14 @@ def run(
                         state.lap, state.distFromStart, state.speed, state.trackPos, mode,
                     )
 
-                if state.lastLapTime > 0 and (not lap_times or state.lastLapTime != lap_times[-1]):
+                if state.lastLapTime > 0 and (
+                    not lap_times
+                    or state.lastLapTime != lap_times[-1]
+                    or state.lap > lap_at_last_record
+                ):
                     lap_times.append(state.lastLapTime)
                     lap_count += 1
+                    lap_at_last_record = state.lap
                     logger.info("Lap %d completed in %.3f s (safety-net active for %d/%d ticks so far)",
                                 lap_count, state.lastLapTime, safety_steps, total_steps)
                     if lap_count >= laps:
