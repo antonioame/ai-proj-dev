@@ -13,7 +13,15 @@ dal driver funzionante, e l'esplorazione per entropia di SAC erodeva anche
 quello fino a un'auto che si blocca (0 giri completati).
 
 Il residual RL risolve entrambi i problemi:
-  azione_finale = BCDriver.step(state)  +  RESIDUAL_SCALE * rl_residual
+  azione_finale = base_bc.step(state)  +  RESIDUAL_SCALE * rl_residual
+
+dove `base_bc` è il blend BC legacy (LegacyBlendBCDriver, 121.978s) — la
+pipeline completa su cui il checkpoint consegnato è stato addestrato. Nota
+(2026-07-17): la base NON è più importata da `_DRIVER.driver.BCDriver`,
+perché quel modulo dal 2026-07-15 contiene bc_tita_v20 (modello singolo,
+gain diversi): il residuo sommato a una base diversa da quella di training
+non è mai stato validato. La base legacy è congelata in
+drivers/rl/legacy_bc_blend.py apposta per questo.
 con `rl_residual` in [-1, 1]^3 e l'attore SAC azzerato all'init (vedi
 zero_residual_actor), così all'inizio del training l'agente guida
 *esattamente* come il driver BC da 121.978s e completa i giri da subito. L'RL
@@ -38,7 +46,12 @@ from gymnasium import spaces
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from _DRIVER.driver import BCDriver
+# Base = blend BC legacy, NON il BCDriver di produzione: il checkpoint
+# residual consegnato è stato addestrato quando _DRIVER.driver.BCDriver era
+# ancora il blend a due reti (pre-promozione bc_tita_v20 del 2026-07-15).
+# Usare la base nuova invaliderebbe checkpoint esistente ed eventuali resume.
+# Vedi il docstring di drivers/rl/legacy_bc_blend.py.
+from drivers.rl.legacy_bc_blend import LegacyBlendBCDriver
 from torcs_env.actions import Action
 from torcs_env.sensors import SensorState
 from training.rl.torcs_gym_env import TorcsSacEnv
@@ -80,7 +93,7 @@ class ResidualTorcsSacEnv(TorcsSacEnv):
     def __init__(self, *args, residual_scale: float = RESIDUAL_SCALE, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self._res_scale = residual_scale
-        self._bc = BCDriver()
+        self._bc = LegacyBlendBCDriver()
         # L'attore SAC lavora in uno spazio di residuo normalizzato [-1, 1]^3;
         # la scala fisica viene applicata qui. La matematica standard della
         # target-entropy di SAC richiede [-1, 1].

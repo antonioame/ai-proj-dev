@@ -1,11 +1,28 @@
-"""Driver RL residual — il driver BC funzionante più una correzione appresa e limitata.
+"""Driver RL residual — il driver BC legacy funzionante più una correzione
+appresa e limitata.
 
 Rispecchia per la guida dal vivo il ResidualTorcsSacEnv usato in fase di
-training: l'azione di base arriva dal `_DRIVER.driver.BCDriver` completo, e la
-policy SAC aggiunge un piccolo residuo (scalato da RESIDUAL_SCALE) su
-steer/accel/brake. Stessa interfaccia step() di BCDriver/RLDriver, quindi
-scripts/evaluate_rl.py --residual e scripts/run_agent_rl.py possono usarlo
-come sostituto diretto.
+training: l'azione di base arriva da `LegacyBlendBCDriver` (blend legacy
+rettilineo/curva, 121.978s), e la policy SAC aggiunge un piccolo residuo
+(scalato da RESIDUAL_SCALE) su steer/accel/brake. Stessa interfaccia step()
+di BCDriver/RLDriver, quindi scripts/evaluate_rl.py --residual e
+scripts/run_agent_rl.py possono usarlo come sostituto diretto.
+
+Nota sulla base: il checkpoint `sac_corkscrew_residual.zip` è stato
+addestrato quando `_DRIVER.driver.BCDriver` era ancora il blend a due reti
+qui sopra descritto. Il 2026-07-15 `_DRIVER.driver.BCDriver` è stato
+sostituito dal modello singolo `bc_tita_v20` (111.986s, driver di
+produzione attuale) — usarlo come base qui invaliderebbe il checkpoint
+esistente, perché il residuo è stato appreso sopra al comportamento del
+blend legacy, non su quello di bc_tita_v20. Per questo la base resta
+`LegacyBlendBCDriver` (vedi drivers/rl/legacy_bc_blend.py) e non il
+`BCDriver` di produzione. Le statistiche di normalizzazione dell'osservazione
+SAC (`bc_from_olddriver_v1.npz`) e RESIDUAL_SCALE/RESIDUAL_L2_COEF restano
+invariati rispetto al training originale.
+
+La ri-valutazione in pista (`scripts/evaluate_rl.py --residual`) resta da
+fare per riconfermare i 127.07s/0% off-track documentati con questa base
+corretta — non eseguibile in questa sessione (nessun TORCS in esecuzione).
 """
 
 from __future__ import annotations
@@ -18,7 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 import numpy as np
 from stable_baselines3 import SAC
 
-from _DRIVER.driver import BCDriver
+from drivers.rl.legacy_bc_blend import LegacyBlendBCDriver
 from torcs_env.actions import Action
 from torcs_env.sensors import SensorState
 from training.rl.features import build_feature_vector
@@ -38,7 +55,7 @@ class ResidualRLDriver:
                 f"Residual RL checkpoint not found: {checkpoint_path}. "
                 "Train one with training/rl/train_sac.py --residual."
             )
-        self._bc = BCDriver()
+        self._bc = LegacyBlendBCDriver()
         self._model = SAC.load(str(checkpoint_path), device="cpu")
         self._res_scale = residual_scale
 
