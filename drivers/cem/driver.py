@@ -3,8 +3,10 @@
 Stessa interfaccia step()/on_restart() degli altri driver — sostituibile in
 scripts/evaluate_cem.py senza toccare scripts/evaluate.py.
 
-Struttura IDENTICA a _DRIVER/driver.py.BCDriver: due sotto-reti (rettilineo +
-curva) fuse in base a track[9], non un singolo modello. Scoperto necessario
+Struttura IDENTICA al vecchio BCDriver blend (quello in _DRIVER/driver.py
+PRIMA della promozione di bc_tita_v20 del 2026-07-15; il BCDriver attuale è
+un modello singolo — il blend sopravvive qui e in drivers/rl/legacy_bc_blend.py):
+due sotto-reti (rettilineo + curva) fuse in base a track[9]. Scoperto necessario
 dopo che una CemPolicy a singola rete (solo pesi bc_from_olddriver_v1) è
 risultata bloccata a 142,87s — 21s peggio della vera BC (121,978s) — proprio
 perché le manca la specializzazione rettilineo/curva che il blend fornisce.
@@ -28,6 +30,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+from drivers.bc_common import shift_gear, startup_gear
 from torcs_env.actions import Action
 from torcs_env.sensors import SensorState
 
@@ -40,8 +43,6 @@ _STEER_GAIN = 1.8
 _ACCEL_GAIN = 1.40
 _BRAKE_GAIN = 0.80
 _STARTUP_STEPS = 80
-_GEAR_UP_RPM = 12000.0
-_GEAR_DOWN_RPM = 6000.0
 
 _STRAIGHT_THRESHOLD = 44.0
 _CORNER_THRESHOLD = 22.0
@@ -78,7 +79,8 @@ class SubPolicy(nn.Module):
 
 
 class HybridCemPolicy(nn.Module):
-    """Due SubPolicy (straight/corner) fuse esattamente come BCDriver._blend_weight."""
+    """Due SubPolicy (straight/corner) fuse esattamente come il _blend_weight
+    del vecchio BCDriver blend (pre-2026-07-15)."""
 
     def __init__(self):
         super().__init__()
@@ -125,18 +127,11 @@ class CemDriver:
         self.current_gear = 1
         self._step_count = 0
 
-    def _startup_gear(self, speed: float) -> int:
-        if speed < 15.0:
-            return 1
-        if speed < 45.0:
-            return 2
-        return 3
-
     def step(self, state: SensorState) -> Action:
         self._step_count += 1
 
         if self._step_count <= _STARTUP_STEPS:
-            gear = self._startup_gear(state.speed)
+            gear = startup_gear(state.speed)
             self.current_gear = gear
             return Action(steer=0.0, accel=1.0, brake=0.0, gear=gear).clamp()
 
@@ -148,10 +143,7 @@ class CemDriver:
             out = self._model(torch.from_numpy(raw), front_dist).numpy()
         steer, accel, brake = out.tolist()
 
-        if state.rpm > _GEAR_UP_RPM and self.current_gear < 6:
-            self.current_gear += 1
-        elif state.rpm < _GEAR_DOWN_RPM and self.current_gear > 1:
-            self.current_gear -= 1
+        self.current_gear = shift_gear(state.rpm, self.current_gear)
 
         return Action(
             steer=steer * _STEER_GAIN,

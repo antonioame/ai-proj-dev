@@ -24,6 +24,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -32,33 +33,12 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+from drivers.bc_common import BCPolicy
+
 FEAT_COLS = [f"feat_{i}" for i in range(26)]
 MODELS_DIR = Path(__file__).resolve().parent.parent / "_DRIVER" / "models"
-
-
-class BCPolicy(nn.Module):
-    def __init__(self, input_dim: int = 26, hidden_dims: list | None = None):
-        super().__init__()
-        hidden_dims = hidden_dims or [128, 64]
-        layers = []
-        prev_dim = input_dim
-        for hidden_dim in hidden_dims:
-            layers += [nn.Linear(prev_dim, hidden_dim), nn.ReLU()]
-            prev_dim = hidden_dim
-        self.backbone = nn.Sequential(*layers)
-        self.head_steer = nn.Linear(prev_dim, 1)
-        self.head_accel = nn.Linear(prev_dim, 1)
-        self.head_brake = nn.Linear(prev_dim, 1)
-        self.head_gear = nn.Linear(prev_dim, 1)
-
-    def forward(self, x):
-        features = self.backbone(x)
-        return {
-            "steer": torch.tanh(self.head_steer(features)),
-            "accel": torch.sigmoid(self.head_accel(features)),
-            "brake": torch.sigmoid(self.head_brake(features)),
-            "gear": self.head_gear(features),
-        }
 
 
 def main() -> None:
@@ -70,6 +50,11 @@ def main() -> None:
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--lr", type=float, default=5e-5)
     args = parser.parse_args()
+
+    # Riproducibilità: senza questi seed lo shuffle del DataLoader rende ogni run diverso
+    # (l'init dei pesi qui non conta: si parte dai pesi caricati del modello base).
+    torch.manual_seed(42)
+    np.random.seed(42)
 
     base_model_path = MODELS_DIR / f"{args.base_name}.pth"
     base_stats_path = MODELS_DIR / f"{args.base_name}.npz"
@@ -99,6 +84,10 @@ def main() -> None:
     dataset = TensorDataset(X_tensor, Y_tensor)
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
+    # NOTA (audit 2026-07-17): split casuale su telemetria sequenziale a 50 Hz —
+    # frame adiacenti quasi identici finiscono uno in train e uno in val, quindi la
+    # val_loss è ottimistica (leakage temporale). Uno split per giro/sessione sarebbe
+    # più rigoroso; la validazione decisiva resta comunque quella in pista.
     train_dataset, val_dataset = torch.utils.data.random_split(
         dataset, [train_size, val_size], generator=torch.Generator().manual_seed(42)
     )

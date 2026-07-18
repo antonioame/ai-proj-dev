@@ -8,6 +8,9 @@ Usage:
     conda run -n ai_env python _DRIVER/bc_source_driver/run_attempt_model.py
 
     # Secondo: aumentare i dati per una guida più aggressiva
+    # NOTA: lo script scripts/augment_speed.py citato qui storicamente non esiste
+    # più in questo repo (rimosso). L'equivalente attuale per preparare/aumentare
+    # dati di training è scripts/prepare_training_data.py.
     conda run -n ai_env python scripts/augment_speed.py \\
         --input data/attempt_model_20260629_*.csv \\
         --output data/attempt_model_augmented_20260629_*.csv
@@ -29,37 +32,9 @@ from torch.utils.data import DataLoader, TensorDataset
 from pathlib import Path
 import glob
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-class BCPolicy(nn.Module):
-    """Behavioral Cloning MLP for TORCS driving."""
-    def __init__(self, input_dim: int = 26, hidden_dims: list = None):
-        super().__init__()
-        if hidden_dims is None:
-            hidden_dims = [128, 64]
-
-        layers = []
-        prev_dim = input_dim
-        for hidden_dim in hidden_dims:
-            layers.append(nn.Linear(prev_dim, hidden_dim))
-            layers.append(nn.ReLU())
-            prev_dim = hidden_dim
-
-        self.backbone = nn.Sequential(*layers)
-
-        # Teste di output
-        self.head_steer = nn.Linear(prev_dim, 1)  # tanh(angolo di sterzo)
-        self.head_accel = nn.Linear(prev_dim, 1)  # sigmoid(accelerazione)
-        self.head_brake = nn.Linear(prev_dim, 1)  # sigmoid(freno)
-        self.head_gear = nn.Linear(prev_dim, 1)   # selezione marcia (regressione)
-
-    def forward(self, x):
-        features = self.backbone(x)
-        return {
-            "steer": torch.tanh(self.head_steer(features)),
-            "accel": torch.sigmoid(self.head_accel(features)),
-            "brake": torch.sigmoid(self.head_brake(features)),
-            "gear": self.head_gear(features),
-        }
+from drivers.bc_common import BCPolicy
 
 
 def load_csv_files(pattern: str):
@@ -120,16 +95,24 @@ def main():
     parser.add_argument("--lr", type=float, default=1e-3)
     args = parser.parse_args()
 
+    # Riproducibilità: senza questi seed l'init dei pesi e lo shuffle rendono ogni run diverso.
+    torch.manual_seed(42)
+    np.random.seed(42)
+
     print("[INFO] Loading datasets...")
     df_original = load_csv_files(args.original)
     df_augmented = load_csv_files(args.augmented)
 
-    # Combina i dataset (80% originale, 20% aumentato per un'augmentation delicata)
+    # Combina i dataset: l'80% campionato dal dataset originale e il 20%
+    # campionato dal dataset aumentato (frazioni prese DA CIASCUN dataset
+    # separatamente, non proporzioni della miscela finale — es. con dataset
+    # di pari dimensione il risultato è ~80% righe originali e ~20% righe
+    # aumentate, ma non è garantito in generale).
     df_combined = pd.concat([
         df_original.sample(frac=0.8, random_state=42),
         df_augmented.sample(frac=0.2, random_state=42),
     ], ignore_index=True)
-    print(f"[INFO] Combined dataset: {len(df_combined)} samples (80% original, 20% augmented)")
+    print(f"[INFO] Combined dataset: {len(df_combined)} samples (80% of original + 20% of augmented)")
 
     # Costruisce il dataset
     input_cols = (
@@ -159,6 +142,10 @@ def main():
     dataset = TensorDataset(X_tensor, Y_tensor)
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
+    # NOTA (audit 2026-07-17): split casuale su telemetria sequenziale a 50 Hz —
+    # frame adiacenti quasi identici finiscono uno in train e uno in val, quindi la
+    # val_loss è ottimistica (leakage temporale). Uno split per giro/sessione sarebbe
+    # più rigoroso; la validazione decisiva resta comunque quella in pista.
     train_dataset, val_dataset = torch.utils.data.random_split(
         dataset, [train_size, val_size], generator=torch.Generator().manual_seed(42)
     )
@@ -230,6 +217,9 @@ def main():
 
     model_path = output_dir / f"{args.output_name}.pth"
     stats_path = output_dir / f"{args.output_name}.npz"
+
+    if model_path.exists() or stats_path.exists():
+        raise FileExistsError(f"Refusing to overwrite existing checkpoint: {model_path}")
 
     torch.save(model.state_dict(), model_path)
     np.savez(stats_path, mean=X_mean, std=X_std, input_cols=input_cols)
