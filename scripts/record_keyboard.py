@@ -61,6 +61,7 @@ class KeyboardController:
         self.pressed_keys: set = set()
         self.lock = Lock()
         self.current_gear = 1
+        self.listener = None  # creato in start_listening(); evita AttributeError in stop_listening()
         self.auto_gear = auto_gear  # Disabilitato di default (solo manuale)
 
         # Sterzo: quanto sterzare per ogni pressione tasto
@@ -164,7 +165,6 @@ def record(host: str | None = None, port: int | None = None) -> Path:
     out_path = out_dir / f"keyboard_{timestamp_str}.csv"
 
     rows: list[dict] = []
-    lap_start: float | None = None
     lap_completed = False
     lap_complete_step = -1
     step = 0
@@ -184,7 +184,6 @@ def record(host: str | None = None, port: int | None = None) -> Path:
                 if result == RESTART:
                     logger.info("Race restarted.")
                     rows.clear()
-                    lap_start = None
                     lap_complete_step = -1
                     step = 0
                     continue
@@ -194,11 +193,7 @@ def record(host: str | None = None, port: int | None = None) -> Path:
                 client.send(action)
                 step += 1
 
-                now = time.time()
-                if lap_start is None:
-                    lap_start = now
-
-                rows.append(build_row(now, state, action))
+                rows.append(build_row(time.time(), state, action))
 
                 # Stato live ogni 20 step (~0.4s a 50 step/s)
                 if len(rows) % 20 == 0:

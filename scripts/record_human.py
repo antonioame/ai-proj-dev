@@ -61,7 +61,6 @@ def record(host: str | None = None, port: int | None = None) -> Path:
     out_path = out_dir / f"human_{timestamp_str}.csv"
 
     rows: list[dict] = []
-    lap_start: float | None = None
     lap_completed = False
 
     with TORCSClient(host=host, port=port) as client:
@@ -76,18 +75,13 @@ def record(host: str | None = None, port: int | None = None) -> Path:
             if result == RESTART:
                 driver.on_restart()
                 rows.clear()
-                lap_start = None
                 continue
 
             state = result
             action = driver.step(state)
             client.send(action)
 
-            now = time.time()
-            if lap_start is None:
-                lap_start = now
-
-            rows.append(build_row(now, state, action))
+            rows.append(build_row(time.time(), state, action))
 
             # Rileva il completamento del giro
             if state.lastLapTime > 0 and rows:

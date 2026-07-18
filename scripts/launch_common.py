@@ -6,6 +6,7 @@ script Python a valle come sottoprocesso.
 from __future__ import annotations
 
 import logging
+import os
 import socket
 import subprocess
 import sys
@@ -15,7 +16,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-TORCS_EXE = Path(r"U:\AI-Partition\torcs\torcs\wtorcs.exe")
+TORCS_EXE = Path(os.environ.get("TORCS_EXE", r"U:\AI-Partition\torcs\torcs\wtorcs.exe"))
 RACE_XML = PROJECT_ROOT / "torcs_env" / "race_config" / "corkscrew_solo.xml"
 TORCS_PORT = 3001
 TORCS_READY_TIMEOUT = 30   # secondi di attesa per l'apertura della porta da parte di TORCS
