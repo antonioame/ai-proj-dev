@@ -133,6 +133,56 @@ def test_context_manager_closes_on_exit(mock_socket_cls):
 
 
 @patch("torcs_env.client.socket.socket")
+def test_receive_returns_restart_sentinel_with_null_terminators(mock_socket_cls):
+    """receive() riconosce ***restart*** anche coi null terminator aggiunti dal server SCR."""
+    mock_sock = MagicMock()
+    mock_socket_cls.return_value = mock_sock
+    mock_sock.recvfrom.side_effect = [
+        (_SENSOR, ("127.0.0.1", 3001)),                    # handshake
+        (b"***restart***\x00\x00", ("127.0.0.1", 3001)),   # segnale di restart con null
+    ]
+
+    client = TORCSClient()
+    client.connect()
+    result = client.receive()
+    assert result == RESTART
+
+
+@patch("torcs_env.client.socket.socket")
+def test_receive_returns_shutdown_sentinel_with_null_terminators(mock_socket_cls):
+    """receive() riconosce ***shutdown*** anche coi null terminator aggiunti dal server SCR."""
+    mock_sock = MagicMock()
+    mock_socket_cls.return_value = mock_sock
+    mock_sock.recvfrom.side_effect = [
+        (_SENSOR, ("127.0.0.1", 3001)),
+        (b"***shutdown***\x00\x00", ("127.0.0.1", 3001)),
+    ]
+
+    client = TORCSClient()
+    client.connect()
+    result = client.receive()
+    assert result == SHUTDOWN
+
+
+@patch("torcs_env.client.time.sleep")
+@patch("torcs_env.client.socket.socket")
+def test_handshake_retries_on_connection_reset_error(mock_socket_cls, mock_sleep):
+    """_handshake() ritenta se recvfrom solleva ConnectionResetError (WinError 10054 su Windows)."""
+    mock_sock = MagicMock()
+    mock_socket_cls.return_value = mock_sock
+    mock_sock.recvfrom.side_effect = [
+        ConnectionResetError(),
+        (b"***identified***", ("127.0.0.1", 3001)),
+    ]
+
+    client = TORCSClient()
+    client.connect()  # non deve sollevare: il secondo tentativo riesce
+
+    assert mock_sock.recvfrom.call_count == 2
+    mock_sleep.assert_called_once()
+
+
+@patch("torcs_env.client.socket.socket")
 def test_lap_counter_increments_on_dist_raced_reset(mock_socket_cls):
     """Il contatore giri si incrementa quando distRaced cala (reset del server)."""
     mock_sock = MagicMock()

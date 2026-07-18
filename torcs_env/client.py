@@ -47,13 +47,14 @@ class TORCSClient:
         self,
         host: Optional[str] = None,
         port: Optional[int] = None,
-        sensor_angles: list[int] = _DEFAULT_ANGLES,
+        sensor_angles: Optional[list[int]] = None,
         timeout: float = 30.0,
         max_reconnect_attempts: int = 10,
     ) -> None:
         self.host = host or os.environ.get("TORCS_HOST", "localhost")
         self.port = int(port or os.environ.get("TORCS_PORT", "3001"))
-        self.sensor_angles = sensor_angles
+        # Evita il default mutabile condiviso fra istanze: copia sempre una nuova lista
+        self.sensor_angles = list(sensor_angles) if sensor_angles is not None else list(_DEFAULT_ANGLES)
         self.timeout = timeout
         self.max_reconnect_attempts = max_reconnect_attempts
 
@@ -97,7 +98,10 @@ class TORCSClient:
                     return
                 logger.info("Handshake successful.")
                 return
-            except socket.timeout:
+            except (socket.timeout, ConnectionResetError):
+                # Su Windows recvfrom() può sollevare ConnectionResetError (WinError 10054,
+                # ICMP port unreachable) se TORCS non ha ancora aperto la porta SCR quando
+                # arriva il primo pacchetto: va trattato come un normale timeout da ritentare.
                 wait = 2 ** attempt
                 logger.warning("Handshake timeout. Retrying in %d s…", wait)
                 time.sleep(wait)
@@ -152,14 +156,15 @@ class TORCSClient:
                 logger.warning("Receive timeout (attempt %d). Retrying in %d s…", attempt, wait)
                 time.sleep(wait)
 
-        if data == _MSG_RESTART:
+        clean = data.rstrip(b'\x00')
+        if clean == _MSG_RESTART:
             self._lap = 1
             self._prev_dist_raced = 0.0
             return RESTART
-        if data == _MSG_SHUTDOWN:
+        if clean == _MSG_SHUTDOWN:
             return SHUTDOWN
 
-        sensor_str = data.decode(errors="replace")
+        sensor_str = clean.decode(errors="replace")
         state = SensorState.from_string(sensor_str)
         state.lap = self._update_lap(state.distRaced)
         return state
