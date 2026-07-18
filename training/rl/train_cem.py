@@ -152,6 +152,13 @@ def run_episode(env: TorcsSacEnv, policy: HybridCemPolicy) -> EpisodeResult:
         step_count += 1
 
         if step_count <= _STARTUP_STEPS:
+            # NOTA (audit 2026-07-17): l'env ha GIÀ eseguito il proprio burst di
+            # avvio da 80 step in _run_startup durante _ensure_started, quindi in
+            # training l'auto riceve ~160 step di pieno gas contro gli 80 di
+            # evaluate_cem.py — lieve differenza di profilo di lancio fra fitness
+            # di training ed eval. Lasciata INVARIATA di proposito: tutti i
+            # checkpoint cem_v1..v5 sono stati selezionati sotto questo profilo,
+            # cambiarlo ora renderebbe i fitness storici non confrontabili.
             gear = _startup_gear(state.speed)
             current_gear = gear
             cmd = Action(steer=0.0, accel=1.0, brake=0.0, gear=gear)
@@ -311,6 +318,11 @@ def main() -> None:
     finally:
         env.close()
         save_path = Path(args.save_path)
+        if save_path.exists():
+            # Non sovrascrivere mai un checkpoint promosso/consegnato già presente
+            # (es. il default cem_v1.pth) — salva a fianco con il run_id.
+            save_path = save_path.parent / f"{save_path.stem}_{run_id}{save_path.suffix}"
+            logger.warning("Existing checkpoint preserved, saved to %s instead", save_path)
         save_path.parent.mkdir(parents=True, exist_ok=True)
         set_flat_params(candidate, best_theta)
         torch.save(candidate.state_dict(), save_path)

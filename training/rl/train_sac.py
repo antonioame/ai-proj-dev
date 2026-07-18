@@ -225,6 +225,11 @@ def main() -> None:
         )
     finally:
         save_path = Path(args.save_path)
+        if save_path.exists():
+            # Non sovrascrivere mai un checkpoint consegnato/tracciato già presente
+            # (es. il default sac_corkscrew_v1.zip) — salva a fianco con il run_id.
+            save_path = save_path.parent / f"{save_path.stem}_{run_id}{save_path.suffix}"
+            logger.warning("Existing checkpoint preserved, saved to %s instead", save_path)
         save_path.parent.mkdir(parents=True, exist_ok=True)
         model.save(str(save_path))
         logger.info("Final model saved: %s", save_path)
