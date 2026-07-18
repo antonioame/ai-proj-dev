@@ -1,14 +1,16 @@
 """Driver BC a modello singolo per valutare il checkpoint bc_dagger_v1.
 
-A differenza di _DRIVER.driver.BCDriver (blend rettilineo/curva di due reti),
-questo carica un unico modello BCPolicy addestrato su dataset originale +
-DAgger filtrato (scripts/train_bc_dagger.py). Stessa interfaccia step()/
+Carica un unico modello BCPolicy addestrato su dataset originale + DAgger
+filtrato (scripts/train_bc_dagger.py). Stessa interfaccia step()/
 on_restart() degli altri driver, così scripts/evaluate_bc_dagger.py può
 sostituirlo direttamente senza toccare scripts/evaluate.py.
 
-Guadagni post-hoc e logica di avvio/cambio marcia identici a BCDriver (stessi
-valori STEER_GAIN/ACCEL_GAIN/BRAKE_GAIN/STARTUP_STEPS), per un confronto equo
-tra checkpoint a parità di tutto il resto della pipeline di controllo.
+Guadagni post-hoc e logica di avvio/cambio marcia identici al BCDriver
+dell'epoca in cui bc_dagger_v1 è stato addestrato (il blend pre-2026-07-15:
+STEER_GAIN=1.8/ACCEL=1.40/BRAKE=0.80/STARTUP_STEPS=80), per un confronto equo
+a parità di pipeline di controllo. Nota: il BCDriver di produzione attuale
+(bc_tita_v20, anch'esso a modello singolo) usa STEER_GAIN=1.0 — i valori qui
+NON vanno allineati a quello, sono legati a questo checkpoint.
 """
 
 from __future__ import annotations

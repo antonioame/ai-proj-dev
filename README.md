@@ -2,8 +2,11 @@
 
 Agente AI che completa un giro del circuito Corkscrew in TORCS il più velocemente
 possibile da una partenza da fermo, senza schiantarsi. Il driver principale
-(candidato alla consegna finale) è un modello di **behavioral cloning**: **121.978 s**,
-199.6 km/h di punta.
+(candidato alla consegna finale) è un modello di **behavioral cloning** a modello
+singolo, clonato dallo stile di guida del bot nativo "tita" (`bc_tita_v20`):
+**111.986 s**, 208.1 km/h di punta, 0% fuori pista, 0 danni. Il record assoluto
+del progetto è di un driver separato non promosso, ottimizzato con **CEM**
+(`drivers/rl/models/cem_v5.pth`): **105.812 s**.
 
 ---
 
@@ -71,7 +74,7 @@ conda run -n ai_env python old_versions_drivers/project_V2/run_rule_based.py --l
 ## Livrea auto
 
 Il progetto include una livrea personalizzata per `car1-ow1`. Tutti i comandi e i
-dettagli sono in `CLAUDE.md` → "Configurazione livrea auto"; in breve:
+dettagli sono qui sotto; in breve:
 
 ```bash
 conda run -n ai_env python livery/setup_livery.py                  # installa livery/car1-ow1.rgb
@@ -85,19 +88,23 @@ conda run -n ai_env python livery/setup_livery.py --reset          # ripristina 
 
 ```
 _DRIVER/            Driver in primo piano — candidato alla consegna
-  driver.py             BCDriver, blend di due modelli
-  models/               Modelli allenati (.pth/.npz)
+  driver.py             BCDriver, modello singolo bc_tita_v20 (clone di tita)
+  models/               Modelli allenati (.pth/.npz; incl. il vecchio blend, per rollback)
   bc_source_driver/      Driver sorgente per rigenerare i dati di training
+drivers/            Driver aggiuntivi non promossi (bc_dagger, cem, rl residual) + bc_common.py
+training/rl/        Fase 3 — infrastruttura RL/CEM (env Gymnasium, reward, training)
+data_collection/tita/  Pipeline di clonazione del bot tita (conversione CSV, DAgger-style)
 old_versions_drivers/project_V2/  Driver isolato, di solo riferimento (~148 s)
 livery/               Risorse della livrea auto (car1-ow1)
 torcs_env/            Protocollo SCR (client UDP, sensori, azioni, config gara)
 scripts/              Entry point CLI (run_agent, evaluate, record_agent, ...)
 tests/                Unit test (pytest, nessun server TORCS richiesto)
-data/, results/       CSV telemetria e JSON di valutazione (git-ignored)
+data/                 CSV telemetria (i dataset di training BC sono git-tracked)
+results/              JSON di valutazione (git-ignored)
 ```
 
 Per lo stato dettagliato di tutti i driver (attivi, isolati, rimossi) e le
-decisioni progettuali, vedi `CLAUDE.md`.
+decisioni progettuali, vedi lo storico dei commit del repository.
 
 ---
 

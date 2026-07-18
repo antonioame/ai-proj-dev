@@ -1,10 +1,17 @@
 """Utility di warm-start BC -> SAC (REINFORCEMENT_LEARNING.md Sezione 6.1).
 
-La "rete addestrata con BC" della Fase 2 è, in questo repo, in realtà una
-fusione ibrida di due modelli addestrati separatamente (_DRIVER/driver.py:
-BCDriver fonde bc_from_attempt1_v1 per i rettilinei con bc_from_olddriver_v1
+NOTA STORICA: la descrizione che segue si riferisce al BCDriver dell'epoca in
+cui questo warm-start è stato progettato (pre-promozione del 2026-07-15) — il
+BCDriver di produzione attuale è un modello singolo (bc_tita_v20), ma il
+warm-start e i checkpoint SAC che ne derivano restano legati ai modelli del
+blend storico, quindi la descrizione resta quella corretta per questo modulo.
+
+La "rete addestrata con BC" della Fase 2 era, all'epoca, in realtà una
+fusione ibrida di due modelli addestrati separatamente (il BCDriver di allora
+fondeva bc_from_attempt1_v1 per i rettilinei con bc_from_olddriver_v1
 per le curve, più moltiplicatori di guadagno applicati a posteriori e cambio
-marcia manuale basato su RPM esterno a entrambe le reti). Non esiste un'unica
+marcia manuale basato su RPM esterno a entrambe le reti; oggi quel blend è
+replicato in drivers/rl/legacy_bc_blend.py). Non esisteva un'unica
 rete da cui trapiantare i pesi come assume la Sezione 6.1.
 
 Decisione (confermata con l'utente il 2026-07-08): fare il warm-start

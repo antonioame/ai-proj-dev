@@ -59,6 +59,12 @@ class BCDriver:
         print("[BCDriver] Loaded checkpoint: bc_tita_v20 (clone dello stile di guida di tita)")
 
     def reset(self) -> None:
+        # No-op mantenuto per compatibilità di interfaccia con gli script che
+        # lo chiamano: il vero reset dello stato interno (marcia, contatore
+        # step/fase di avvio) è on_restart() — chiamare reset() dopo un
+        # restart NON riattiva la fase di avvio (bug già capitato in
+        # record_agent.py, corretto il 2026-07-18). Stesso pattern in tutti i
+        # driver del progetto.
         pass
 
     def on_restart(self) -> None:

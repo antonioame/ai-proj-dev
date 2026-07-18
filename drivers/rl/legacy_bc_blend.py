@@ -21,7 +21,7 @@ e non va evoluta: è congelata di proposito, esiste solo per rendere
 riproducibile il checkpoint residual esistente.
 
 I pesi (`_DRIVER/models/bc_from_attempt1_v1.*`, `bc_from_olddriver_v1.*`) sono
-tenuti nel repo apposta per questo rollback (vedi CLAUDE.md).
+tenuti nel repo apposta per questo rollback.
 """
 
 from __future__ import annotations

@@ -38,13 +38,18 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-# Soglie del cambio marcia automatico, rispecchiate da _DRIVER/driver.py.BCDriver
-# così la policy RL e l'eventuale RLDriver vedono lo stesso comportamento marce.
+# Soglie del cambio marcia automatico — le stesse usate da tutti i driver BC
+# del progetto (oggi centralizzate in drivers/bc_common.py), così la policy RL
+# e l'eventuale RLDriver vedono lo stesso comportamento marce.
 _GEAR_UP_RPM = 12000.0
 _GEAR_DOWN_RPM = 6000.0
 
-# Guadagni post-hoc identici a _DRIVER/driver.py.BCDriver (STEER_GAIN/ACCEL_GAIN/
-# BRAKE_GAIN). Scoperti mancanti dall'intera pipeline SAC diretta dopo 5 run
+# Guadagni post-hoc del BC blend STORICO (il BCDriver pre-2026-07-15,
+# bc_from_attempt1_v1+bc_from_olddriver_v1, STEER_GAIN=1.8) — NON quelli del
+# BCDriver di produzione attuale (bc_tita_v20, STEER_GAIN=1.0): tutti i
+# checkpoint SAC diretti e il warm-start sono stati costruiti su questi valori,
+# aggiornarli al driver nuovo invaliderebbe i checkpoint esistenti.
+# Scoperti mancanti dall'intera pipeline SAC diretta dopo 5 run
 # che non sono mai scesi sotto ~127-130s: sac_warmstart.load_bc_backbone_into_actor
 # copia solo i pesi grezzi della rete BC nell'attore SAC, MAI i guadagni
 # applicati a posteriori nell'output di BCDriver.step(). Di conseguenza
@@ -62,7 +67,7 @@ _BRAKE_GAIN = 0.80
 
 # Periodo di grazia all'avvio: applica pieno gas/sterzo zero per questo numero
 # di step prima di passare il controllo alla policy. Rispecchia
-# BCDriver.STARTUP_STEPS — evita che l'attore con warm-start veda mai lo stato
+# STARTUP_STEPS dei driver BC (drivers/bc_common.py) — evita che l'attore con warm-start veda mai lo stato
 # di lancio fuori distribuzione (OOD: velocità≈0, marcia=0) che non ha mai
 # visto durante il training BC.
 _STARTUP_STEPS = 80
@@ -71,7 +76,7 @@ _STARTUP_STEPS = 80
 _OFF_TRACK_STEPS_LIMIT = 25  # ~0.5s a 50 step/s — "terminazione aggressiva" per la Sezione 8
 _STANDING_STILL_KMH = 5.0
 _STANDING_STILL_STEPS_LIMIT = 150  # ~3s
-_MAX_EPISODE_STEPS = 20000  # un giro Corkscrew è ~5.800 step a 50 step/s (vedi CLAUDE.md, Fase 3) — ampio margine
+_MAX_EPISODE_STEPS = 20000  # un giro Corkscrew è ~5.800 step a 50 step/s (Fase 3) — ampio margine
 _EPISODE_START_RETRIES = 4
 
 # Gestione del processo TORCS. Ogni episodio ottiene un processo TORCS NUOVO
@@ -308,6 +313,13 @@ class TorcsSacEnv(gym.Env):
     # ------------------------------------------------------------------
 
     def _await_fresh_state(self) -> SensorState:
+        # NOTA sul nome: attende il PROSSIMO pacchetto sensori (saltando le
+        # sentinelle RESTART), ma NON drena il buffer UDP fino all'ultimo
+        # pacchetto — se il client resta indietro, i pacchetti si accodano e
+        # questo restituisce stato stale. È esattamente il meccanismo del bug
+        # di latenza per-step documentato in train_sac.py; la mitigazione è
+        # tenere basso il tempo per-step (training per-episodio), non questa
+        # funzione.
         while True:
             result = self._client.receive()
             if result == RESTART:

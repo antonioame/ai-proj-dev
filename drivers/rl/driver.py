@@ -5,7 +5,7 @@ in scripts/run_agent_rl.py / scripts/evaluate_rl.py. Non è il driver
 attivo/di default: SAC puro (senza base BC) sfrutta tutta l'autorità sul
 reward di velocità e va in reward-hacking — con i checkpoint disponibili
 (sac_corkscrew_v1, sac_corkscrew_refined_v2) la policy si blocca (0 giri
-completati, velocità media <1 km/h — vedi la sezione Fase 3 di CLAUDE.md).
+completati, velocità media <1 km/h).
 Il driver RL funzionante è drivers/rl/residual_driver.py (ResidualRLDriver).
 """
 
@@ -29,9 +29,11 @@ MODELS_DIR = Path(__file__).resolve().parent / "models"
 DEFAULT_CHECKPOINT = MODELS_DIR / "sac_corkscrew_v1.zip"
 NORM_STATS_PATH = Path(__file__).resolve().parents[2] / "_DRIVER" / "models" / "bc_from_olddriver_v1.npz"
 
-# Stessi guadagni post-hoc di torcs_gym_env.py/BCDriver — devono combaciare
-# esattamente con quelli applicati in training, altrimenti l'inferenza non
-# rispecchia ciò su cui la policy è stata addestrata.
+# Stessi guadagni post-hoc di torcs_gym_env.py, cioè quelli del BC blend
+# STORICO su cui questi checkpoint SAC sono stati addestrati (il BCDriver di
+# produzione attuale, bc_tita_v20, usa STEER_GAIN=1.0 — NON va imitato qui) —
+# devono combaciare esattamente con quelli applicati in training, altrimenti
+# l'inferenza non rispecchia ciò su cui la policy è stata addestrata.
 _STEER_GAIN = 1.8
 _ACCEL_GAIN = 1.40
 _BRAKE_GAIN = 0.80

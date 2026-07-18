@@ -8,7 +8,7 @@
 Questo progetto ha attualmente **Fase 1 (baseline rule-based)** e **Fase 2 (Behavioral Cloning)**
 implementate, addestrate e integrate. Entrambe producono già un agente di guida che completa il
 giro del Corkscrew (giro singolo, partenza da fermo, in solitaria, senza avversari, senza
-schianti, escursioni fuori pista minime — vedi i vincoli di progetto in `CLAUDE.md`).
+schianti, escursioni fuori pista minime).
 
 Questo documento fornisce a chi implementa la **Fase 3 (fine-tuning con Reinforcement Learning)**
 le conoscenze concettuali e pratiche necessarie per farlo correttamente, usando la tecnica RL
@@ -39,9 +39,11 @@ Concretamente:
   checkpoint sostituisce il driver attivo a meno che non eguagli BC in sicurezza (nessuno schianto,
   frazione fuori pista comparabile o migliore) **e** non sia peggiore sul tempo giro.
 - Se il training RL si destabilizza (diverge, produce una policy peggiore o non sicura),
-  l'implementazione deve poter tornare al driver BC senza modifiche di codice altrove (selezione
-  del driver tramite un flag/argomento, come già fatto per `rule_based` vs `bc_model` in
-  `run_agent.py`).
+  l'implementazione deve poter tornare al driver BC senza modifiche di codice altrove.
+  (Nota di implementazione: la selezione tramite flag `--driver` citata in origine non esiste
+  più — la registry è stata rimossa intenzionalmente; il ritorno al BC è garantito da entry
+  point dedicati e paralleli, `scripts/run_agent_rl.py`/`scripts/evaluate_rl.py`, che lasciano
+  `run_agent.py`/`evaluate.py` intatti sul driver BC. Deviazione confermata il 2026-07-08.)
 
 ---
 
@@ -98,7 +100,9 @@ Corrispondono a ciò che `torcs_env/sensors.py` e `torcs_env/actions.py` già in
 **Stato (osservazioni disponibili):**
 - `trackPos` (−1 bordo sinistro … +1 bordo destro), `angle` (direzione auto rispetto alla tangente
   di pista)
-- `track[19]` — raggi rangefinder, 0°–180°
+- `track[19]` — raggi rangefinder (in questo progetto il client li inizializza su −45°…+45°,
+  più fitti vicino a 0° — vedi `_DEFAULT_ANGLES` in `torcs_env/client.py`; lo 0°–180° delle
+  slide si riferisce alla configurazione SCR di default)
 - `speedX`, `speedY`, `speedZ`
 - `rpm`, `gear`, `wheelSpinVel[4]`
 - opzionali: `focus[5]`, `opponents[36]` (non necessari — gara in solitaria)
@@ -161,7 +165,7 @@ adottato alla lettera. Raffinamenti concreti che l'implementazione dovrebbe test
    comparabili, coerenti con la normalizzazione di input già usata per BC ([−1,1] o [0,1] secondo
    il consiglio pratico dello stesso corso, Sezione 6).
 
-Registrare la versione della formula reward usata per ogni run di training (in `CLAUDE.md` o in un
+Registrare la versione della formula reward usata per ogni run di training (in un
 file di configurazione del run) così i risultati sono attribuibili a un design di reward
 specifico, non solo a un generico "training RL".
 
@@ -342,7 +346,7 @@ modalità di fallimento.
 - [ ] `scripts/evaluate.py` eseguito sul driver RL, confrontato fianco a fianco con le metriche del
       driver BC esistente (tempo giro, frazione fuori pista, numero di schianti) — l'RL viene
       promosso a default solo se eguaglia o supera BC in sicurezza e non è peggiore sul tempo giro.
-- [ ] `CLAUDE.md` aggiornato: stato Fase 3, algoritmo usato, versione del reward, miglior tempo
+- [ ] Documentazione aggiornata con: stato Fase 3, algoritmo usato, versione del reward, miglior tempo
       giro, e conferma esplicita che i driver Fase 1/2 restano non modificati e funzionanti.
 
 ---

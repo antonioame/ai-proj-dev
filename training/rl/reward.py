@@ -68,7 +68,7 @@ def _refined_step(prev_state: SensorState, state: SensorState) -> float:
 # refined_v2 il termine dominante è v*cos(angle) — sostanzialmente la velocità
 # istantanea sommata per ogni singolo tick — mentre la penalità di uscita
 # pista è un valore FISSO applicato una sola volta a fine episodio. Su un giro
-# pulito (~6800 step) quella somma di velocità arriva a ~5*10^5; la penalità
+# pulito (~5.800 step) quella somma di velocità arriva a ~5*10^5; la penalità
 # di -200 vale lo 0,04% del reward totale dell'episodio — un deterrente
 # trascurabile. La policy impara semplicemente "vai più forte ovunque",
 # indipendentemente da quanto sia rischioso in quel punto della pista, perché
