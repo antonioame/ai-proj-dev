@@ -1,7 +1,7 @@
 """Valuta il driver bc_dagger_v1 (drivers/bc_dagger/) e salva un JSON di
 risultati strutturato.
 
-Entry point dedicato — rispecchia esattamente scripts/evaluate.py ma
+Entry point dedicato — rispecchia esattamente scripts/eval/evaluate.py ma
 codifica BCDaggerDriver invece di BCDriver, così evaluate.py stesso resta
 intatto e la baseline BC che valuta rimane il fallback a rischio zero.
 Produce lo stesso schema JSON di evaluate.py/evaluate_rl.py (tempo giro,
@@ -9,7 +9,7 @@ frazione fuori pista, danni) così i risultati sono direttamente
 confrontabili fianco a fianco.
 
 Usage:
-    python scripts/evaluate_bc_dagger.py [--laps 1] [--output results/eval_bc_dagger.json]
+    python scripts/eval/evaluate_bc_dagger.py [--laps 1] [--output results/eval_bc_dagger.json]
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ import logging
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from drivers.bc_dagger.driver import BCDaggerDriver
@@ -36,7 +36,7 @@ def evaluate(
     checkpoint_name: str = "bc_dagger_v1",
 ) -> dict:
     driver_name = checkpoint_name
-    models_dir = Path(__file__).resolve().parent.parent / "_DRIVER" / "models"
+    models_dir = Path(__file__).resolve().parent.parent.parent / "_DRIVER" / "models"
     driver = BCDaggerDriver(
         checkpoint_path=models_dir / f"{checkpoint_name}.pth",
         stats_path=models_dir / f"{checkpoint_name}.npz",

@@ -31,7 +31,7 @@ le label bc per i gain, o registrare l'output pre-gain) PRIMA di eventuali
 futuri round di raccolta.
 
 Prerequisito: TORCS avviato con torcs_env/race_config/corkscrew_solo.xml
-(client SCR, stesso schema di scripts/run_agent.py).
+(client SCR, stesso schema di scripts/run/run_agent.py).
 
 Usage:
     python data_collection/tita/dagger_augment.py --laps 5
@@ -86,7 +86,7 @@ def run(
     lap_count = 0
     # Giro (state.lap) all'ultima registrazione: rileva un nuovo giro anche se
     # due giri consecutivi hanno tempo identico (simulazione deterministica) —
-    # stesso doppio criterio di scripts/evaluate_common.py.
+    # stesso doppio criterio di scripts/eval/evaluate_common.py.
     lap_at_last_record = 0
     total_steps = 0
     safety_steps = 0

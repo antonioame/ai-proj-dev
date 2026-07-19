@@ -13,7 +13,7 @@ Strategia di augmentation (orientata alla performance):
   - brake:  -10% limitato a [0, 1]   — punto di frenata più tardivo
 
 Usage:
-    conda run -n ai_env python scripts/prepare_training_data.py \
+    conda run -n ai_env python scripts/train/prepare_training_data.py \
         --input data/old_driver_20260629_170825.csv \
         --output-clean data/old_driver_clean.csv \
         --output-augmented data/old_driver_augmented.csv
@@ -118,7 +118,7 @@ def main():
     print(f"[OK] Augmented CSV saved: {args.output_augmented}  ({len(df_aug)} rows)")
 
     print("\n[NEXT] Train BC with:")
-    print("  conda run -n ai_env python scripts/train_bc_from_attempt1.py \\")
+    print("  conda run -n ai_env python scripts/train/train_bc_from_attempt1.py \\")
     print(f"    --original {args.output_clean} \\")
     print(f"    --augmented {args.output_augmented} \\")
     print("    --output-name bc_from_olddriver_v1")

@@ -120,7 +120,7 @@ I componenti principali sono:
 
 ### 2.2 Driver basato su regole — isolato, di solo riferimento (old_versions_drivers/project_V2/)
 
-Questo driver rappresenta il baseline fisico-ottimizzato della Fase 1, affinato mediante tuning manuale. È oggi **isolato**: non più collegato agli script principali (`scripts/run_agent.py`, `scripts/evaluate.py`), superato in performance dal driver BC ibrido e conservato solo come riferimento storico.
+Questo driver rappresenta il baseline fisico-ottimizzato della Fase 1, affinato mediante tuning manuale. È oggi **isolato**: non più collegato agli script principali (`scripts/run/run_agent.py`, `scripts/eval/evaluate.py`), superato in performance dal driver BC ibrido e conservato solo come riferimento storico.
 
 **Logica di sterzo:** stima della curvatura tramite asimmetria dei sensori rangefinder, ricerca dell'apice con distorsione del target verso l'interno della curva, controllo proporzionale sull'errore di heading e sull'errore di posizione in pista.
 
@@ -148,7 +148,7 @@ Il driver in primo piano oggi è un **unico modello BCPolicy** che gestisce l'in
 - **Auto-correzione DAgger-style:** un modello addestrato solo su giri "perfetti" non sa recuperare da una traiettoria imprecisa (lo stesso limite emerso nel fallimento della self-distillation, §3.3). Sono stati quindi eseguiti **8 round di raccolta-recupero**: il candidato guida, e quando esce troppo dalla linea (|trackPos| > 0,55) il controllo passa al driver bc precedente come rete di sicurezza, registrando le sue azioni di recupero come esempi di correzione. Round dopo round il candidato è passato da non completare il giro a un giro pulito riproducibile.
 - **Differenze architetturali dal blend precedente:** un solo `BCPolicy` (26→128→64) invece di due reti fuse; `STEER_GAIN` abbassato da 1,8 a 1,0 (con questo modello un gain più alto causava oscillazioni e uscite di pista — verificato empiricamente).
 
-**Performance:** **111,986 s**, 208,05 km/h di punta, 0% fuori pista, 0 danni (verificato su 3 giri consecutivi con `scripts/evaluate.py`) — batte il precedente driver di produzione (il blend, rimisurato a 124,296 s a parità di condizioni) di 12,3 secondi. Dettagli completi in `data_collection/tita/README.md` e `laptime_ledger.csv` (voce `bc_tita_v20_promoted_to_production`).
+**Performance:** **111,986 s**, 208,05 km/h di punta, 0% fuori pista, 0 danni (verificato su 3 giri consecutivi con `scripts/eval/evaluate.py`) — batte il precedente driver di produzione (il blend, rimisurato a 124,296 s a parità di condizioni) di 12,3 secondi. Dettagli completi in `data_collection/tita/README.md` e `laptime_ledger.csv` (voce `bc_tita_v20_promoted_to_production`).
 
 #### Prima generazione: blend ibrido di due reti (superata, tenuta per rollback)
 
@@ -196,7 +196,7 @@ Il **CEM (Cross-Entropy Method)** aggira il problema alla radice: niente critic,
 1. **Architettura ibrida completa** (`HybridCemPolicy`): replicare esattamente il blend rettilineo/curva del BC dell'epoca, con la normalizzazione propria di ciascuna sotto-rete — una versione a rete singola restava bloccata 21 s sotto il ceiling del BC.
 2. **Doppia verifica dei candidati record:** un candidato che sembra battere il record viene riverificato con un secondo giro indipendente e si usa il peggiore dei due esiti — osservato più volte che un singolo giro "fortunato" non è rappresentativo (candidati fragili fallivano al reload fino al 70% fuori pista).
 
-**Risultato (5 round progressivi, cem_v1→cem_v5):** **105,812 s, 0% fuori pista, 0 danni — record assoluto del progetto**, 16,2 s meglio del blend BC di partenza e 6,2 s meglio del driver di produzione bc_tita_v20. Il CEM resta un driver separato con script dedicati (`scripts/evaluate_cem.py`), **non promosso** a `_DRIVER/`: la promozione è stata assegnata a bc_tita_v20 come compromesso tra tempo giro e solidità. Cronologia completa (inclusi i tentativi rigettati per fragilità) in `laptime_ledger.csv`.
+**Risultato (5 round progressivi, cem_v1→cem_v5):** **105,812 s, 0% fuori pista, 0 danni — record assoluto del progetto**, 16,2 s meglio del blend BC di partenza e 6,2 s meglio del driver di produzione bc_tita_v20. Il CEM resta un driver separato con script dedicati (`scripts/eval/evaluate_cem.py`), **non promosso** a `_DRIVER/`: la promozione è stata assegnata a bc_tita_v20 come compromesso tra tempo giro e solidità. Cronologia completa (inclusi i tentativi rigettati per fragilità) in `laptime_ledger.csv`.
 
 ---
 

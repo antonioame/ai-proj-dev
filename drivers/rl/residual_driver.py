@@ -5,8 +5,8 @@ Rispecchia per la guida dal vivo il ResidualTorcsSacEnv usato in fase di
 training: l'azione di base arriva da `LegacyBlendBCDriver` (blend legacy
 rettilineo/curva, 121.978s), e la policy SAC aggiunge un piccolo residuo
 (scalato da RESIDUAL_SCALE) su steer/accel/brake. Stessa interfaccia step()
-di BCDriver/RLDriver, quindi scripts/evaluate_rl.py --residual e
-scripts/run_agent_rl.py possono usarlo come sostituto diretto.
+di BCDriver/RLDriver, quindi scripts/eval/evaluate_rl.py --residual e
+scripts/run/run_agent_rl.py possono usarlo come sostituto diretto.
 
 Nota sulla base: il checkpoint `sac_corkscrew_residual.zip` è stato
 addestrato quando `_DRIVER.driver.BCDriver` era ancora il blend a due reti
@@ -20,7 +20,7 @@ blend legacy, non su quello di bc_tita_v20. Per questo la base resta
 SAC (`bc_from_olddriver_v1.npz`) e RESIDUAL_SCALE/RESIDUAL_L2_COEF restano
 invariati rispetto al training originale.
 
-La ri-valutazione in pista (`scripts/evaluate_rl.py --residual`) resta da
+La ri-valutazione in pista (`scripts/eval/evaluate_rl.py --residual`) resta da
 fare per riconfermare i 127.07s/0% off-track documentati con questa base
 corretta — non eseguibile in questa sessione (nessun TORCS in esecuzione).
 """

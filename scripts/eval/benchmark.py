@@ -1,7 +1,7 @@
 """Fa il benchmark di un driver su K giri e aggiunge le metriche a laptime_ledger.csv.
 
 Usage:
-    python scripts/benchmark.py [--laps 3] [--config-id my_config] [--compare baseline_rule_based] [--notes "ABS added"]
+    python scripts/eval/benchmark.py [--laps 3] [--config-id my_config] [--compare baseline_rule_based] [--notes "ABS added"]
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 LEDGER_PATH = PROJECT_ROOT / "laptime_ledger.csv"
 LEDGER_FIELDS = [
     "config_id", "git_sha",
@@ -38,7 +38,7 @@ def _git_sha() -> str:
 def _run_race(laps: int) -> dict:
     cmd = [
         sys.executable,
-        str(PROJECT_ROOT / "scripts" / "launch_race.py"),
+        str(PROJECT_ROOT / "scripts" / "launch" / "launch_race.py"),
         "--laps", str(laps),
     ]
     race_start = time.time()

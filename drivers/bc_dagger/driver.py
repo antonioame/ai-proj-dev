@@ -1,9 +1,9 @@
 """Driver BC a modello singolo per valutare il checkpoint bc_dagger_v1.
 
 Carica un unico modello BCPolicy addestrato su dataset originale + DAgger
-filtrato (scripts/train_bc_dagger.py). Stessa interfaccia step()/
-on_restart() degli altri driver, così scripts/evaluate_bc_dagger.py può
-sostituirlo direttamente senza toccare scripts/evaluate.py.
+filtrato (scripts/train/train_bc_dagger.py). Stessa interfaccia step()/
+on_restart() degli altri driver, così scripts/eval/evaluate_bc_dagger.py può
+sostituirlo direttamente senza toccare scripts/eval/evaluate.py.
 
 Guadagni post-hoc e logica di avvio/cambio marcia identici al BCDriver
 dell'epoca in cui bc_dagger_v1 è stato addestrato (il blend pre-2026-07-15:
@@ -44,7 +44,7 @@ class BCDaggerDriver:
         if not checkpoint_path.exists() or not stats_path.exists():
             raise FileNotFoundError(
                 f"bc_dagger checkpoint not found: {checkpoint_path} / {stats_path}. "
-                "Train one with scripts/train_bc_dagger.py."
+                "Train one with scripts/train/train_bc_dagger.py."
             )
         self._device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.current_gear = 1

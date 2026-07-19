@@ -1,13 +1,13 @@
 """Valuta il driver RL di Fase 3 (drivers/rl/) e salva un JSON di risultati strutturato.
 
-Entry point dedicato — rispecchia esattamente scripts/evaluate.py ma
+Entry point dedicato — rispecchia esattamente scripts/eval/evaluate.py ma
 codifica RLDriver invece di BCDriver, così evaluate.py stesso resta intatto
 e la baseline BC che valuta rimane il fallback a rischio zero. Produce lo
 stesso schema JSON di evaluate.py (tempo giro, frazione fuori pista, danni)
 così i risultati sono direttamente confrontabili fianco a fianco.
 
 Usage:
-    python scripts/evaluate_rl.py [--laps 1] [--output results/eval_rl.json]
+    python scripts/eval/evaluate_rl.py [--laps 1] [--output results/eval_rl.json]
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ import logging
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from drivers.rl.driver import RLDriver

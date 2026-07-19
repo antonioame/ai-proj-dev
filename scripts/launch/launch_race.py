@@ -1,7 +1,7 @@
 """Launcher autonomo: avvia TORCS headless e poi esegue l'agente Python.
 
 Usage:
-    python scripts/launch_race.py [--laps 1] [--telemetry]
+    python scripts/launch/launch_race.py [--laps 1] [--telemetry]
 
 Lo script individua l'installazione di TORCS sotto U:\\AI-Partition\\torcs\\torcs,
 avvia wtorcs.exe con -r (modalità gara), attende che il server apra la sua
@@ -43,7 +43,7 @@ def main() -> None:
         extra_args = ["--laps", str(args.laps)]
         if args.telemetry:
             extra_args.append("--telemetry")
-        exit_code = run_downstream_script("run_agent.py", *extra_args)
+        exit_code = run_downstream_script("run/run_agent.py", *extra_args)
         logger.info("Agent finished with exit code %d.", exit_code)
 
     finally:

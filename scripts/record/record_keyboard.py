@@ -34,7 +34,7 @@ from datetime import datetime
 from pathlib import Path
 from threading import Lock
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from pynput import keyboard
@@ -159,7 +159,7 @@ def record(host: str | None = None, port: int | None = None) -> Path:
     controller = KeyboardController()
     controller.start_listening()
 
-    out_dir = Path(__file__).resolve().parent.parent / "data"
+    out_dir = Path(__file__).resolve().parent.parent.parent / "data"
     out_dir.mkdir(exist_ok=True)
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     out_path = out_dir / f"keyboard_{timestamp_str}.csv"

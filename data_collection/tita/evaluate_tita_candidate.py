@@ -1,5 +1,5 @@
 """Valuta il driver candidato bc_tita_v1 (data_collection/tita/driver_candidate.py)
-e salva un JSON di risultati strutturato, stesso schema di scripts/evaluate.py /
+e salva un JSON di risultati strutturato, stesso schema di scripts/eval/evaluate.py /
 evaluate_bc_dagger.py / evaluate_rl.py, cosi' il confronto con bc (121.978 s)
 e' diretto.
 
@@ -56,7 +56,7 @@ def evaluate(
     lap_count = 0
     # Giro (state.lap) all'ultima registrazione: rileva un nuovo giro anche se
     # due giri consecutivi hanno tempo identico (simulazione deterministica) —
-    # stesso doppio criterio di scripts/evaluate_common.py.
+    # stesso doppio criterio di scripts/eval/evaluate_common.py.
     lap_at_last_record = 0
 
     with TORCSClient(host=host, port=port) as client:

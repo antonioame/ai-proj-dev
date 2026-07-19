@@ -1,7 +1,7 @@
 """Driver RL Fase 3 — SAC fine-tuned a partire dal modello BC per le curve.
 
 Stessa interfaccia step() di _DRIVER.driver.BCDriver, quindi è intercambiabile
-in scripts/run_agent_rl.py / scripts/evaluate_rl.py. Non è il driver
+in scripts/run/run_agent_rl.py / scripts/eval/evaluate_rl.py. Non è il driver
 attivo/di default: SAC puro (senza base BC) sfrutta tutta l'autorità sul
 reward di velocità e va in reward-hacking — con i checkpoint disponibili
 (sac_corkscrew_v1, sac_corkscrew_refined_v2) la policy si blocca (0 giri

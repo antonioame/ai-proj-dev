@@ -10,13 +10,13 @@ Usage:
     # Secondo: aumentare i dati per una guida più aggressiva
     # NOTA: lo script scripts/augment_speed.py citato qui storicamente non esiste
     # più in questo repo (rimosso). L'equivalente attuale per preparare/aumentare
-    # dati di training è scripts/prepare_training_data.py.
+    # dati di training è scripts/train/prepare_training_data.py.
     conda run -n ai_env python scripts/augment_speed.py \\
         --input data/attempt_model_20260629_*.csv \\
         --output data/attempt_model_augmented_20260629_*.csv
 
     # Terzo: addestrare il modello BC su entrambi i dataset
-    conda run -n ai_env python scripts/train_bc_from_attempt1.py \\
+    conda run -n ai_env python scripts/train/train_bc_from_attempt1.py \\
         --original data/attempt_model_20260629_*.csv \\
         --augmented data/attempt_model_augmented_20260629_*.csv \\
         --output-name bc_from_attempt1_v2
@@ -32,7 +32,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from pathlib import Path
 import glob
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from drivers.bc_common import BCPolicy
 
@@ -212,7 +212,7 @@ def main():
             print(f"Epoch {epoch:3d}/{args.epochs} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}{marker}")
 
     # Salva il modello
-    output_dir = Path(__file__).resolve().parent.parent / "_DRIVER" / "models"
+    output_dir = Path(__file__).resolve().parent.parent.parent / "_DRIVER" / "models"
     output_dir.mkdir(exist_ok=True)
 
     model_path = output_dir / f"{args.output_name}.pth"
@@ -231,7 +231,7 @@ def main():
     # Mostra le istruzioni
     print("\n[NEXT] To use this model:")
     print(f"  1. Update _DRIVER/driver.py to load: _DRIVER/models/{args.output_name}.pth")
-    print("  2. Run: conda run -n ai_env python scripts/run_agent.py --laps 1")
+    print("  2. Run: conda run -n ai_env python scripts/run/run_agent.py --laps 1")
 
 
 if __name__ == "__main__":

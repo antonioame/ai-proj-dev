@@ -1,7 +1,7 @@
 """Esegue il driver BC (_DRIVER/) contro un server TORCS.
 
 Usage:
-    python scripts/run_agent.py [--laps 1] [--host HOST] [--port PORT] [--telemetry]
+    python scripts/run/run_agent.py [--laps 1] [--host HOST] [--port PORT] [--telemetry]
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from _DRIVER.driver import BCDriver

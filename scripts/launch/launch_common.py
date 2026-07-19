@@ -1,4 +1,4 @@
-"""Componenti condivisi da scripts/launch_race.py e scripts/launch_record.py:
+"""Componenti condivisi da scripts/launch/launch_race.py e scripts/launch/launch_record.py:
 avvio di TORCS headless, attesa dell'apertura della porta UDP, e lancio dello
 script Python a valle come sottoprocesso.
 """
@@ -15,7 +15,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 TORCS_EXE = Path(os.environ.get("TORCS_EXE", r"U:\AI-Partition\torcs\torcs\wtorcs.exe"))
 RACE_XML = PROJECT_ROOT / "torcs_env" / "race_config" / "corkscrew_solo.xml"
 TORCS_PORT = 3001

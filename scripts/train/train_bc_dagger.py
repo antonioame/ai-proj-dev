@@ -1,6 +1,6 @@
 """Addestra un nuovo checkpoint BC (bc_dagger_v1) unendo il dataset originale
 di telemetria (data/driver_*.csv, driver rule-based) con il dataset DAgger
-filtrato (scripts/filter_dagger_dataset.py), che usa lo stesso RuleBasedDriver
+filtrato (scripts/train/filter_dagger_dataset.py), che usa lo stesso RuleBasedDriver
 come oracolo durante il rollout del BC driver reale.
 
 Diversamente dal driver in produzione dell'epoca (il blend di due reti
@@ -18,7 +18,7 @@ un segnale costante (zero) su quei due canali, un'approssimazione dichiarata,
 non i valori reali.
 
 Usage:
-    python scripts/train_bc_dagger.py --dagger data/dagger_bc_filtered.csv --output-name bc_dagger_v1
+    python scripts/train/train_bc_dagger.py --dagger data/dagger_bc_filtered.csv --output-name bc_dagger_v1
 """
 
 from __future__ import annotations
@@ -34,7 +34,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from drivers.bc_common import BCPolicy
 
@@ -170,7 +170,7 @@ def main() -> None:
         if epoch % 5 == 0 or epoch == 1:
             print(f"Epoch {epoch:3d}/{args.epochs} | Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f}{marker}")
 
-    output_dir = Path(__file__).resolve().parent.parent / "_DRIVER" / "models"
+    output_dir = Path(__file__).resolve().parent.parent.parent / "_DRIVER" / "models"
     output_dir.mkdir(exist_ok=True)
     model_path = output_dir / f"{args.output_name}.pth"
     stats_path = output_dir / f"{args.output_name}.npz"

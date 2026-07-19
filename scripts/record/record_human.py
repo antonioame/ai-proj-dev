@@ -5,7 +5,7 @@ Dato che SCR non ha una vera modalità osservatore, questo script guida in
 di sensori. Il workflow previsto:
 
   Windows: avvia TORCS headless con corkscrew_solo.xml
-  Mac:     python scripts/record_human.py
+  Mac:     python scripts/record/record_human.py
 
 Il CSV viene salvato come data/human_YYYYMMDD_HHMMSS.csv.
 Una riga = uno step di simulazione (~20 ms, 50 step/s).
@@ -25,7 +25,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from telemetry_row import TRACK_COLS, build_row
@@ -55,7 +55,7 @@ class NeutralDriver:
 def record(host: str | None = None, port: int | None = None) -> Path:
     driver_name = "neutral"
     driver = NeutralDriver()
-    out_dir = Path(__file__).resolve().parent.parent / "data"
+    out_dir = Path(__file__).resolve().parent.parent.parent / "data"
     out_dir.mkdir(exist_ok=True)
     timestamp_str = datetime.now().strftime("%Y%m%d_%H%M%S")
     out_path = out_dir / f"human_{timestamp_str}.csv"

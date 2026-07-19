@@ -1,7 +1,7 @@
 """Registra un giro con il driver BC (_DRIVER/) e salva la telemetria in CSV.
 
 Usage:
-    python scripts/record_agent.py [--laps 1] [--host HOST] [--port PORT]
+    python scripts/record/record_agent.py [--laps 1] [--host HOST] [--port PORT]
 
 Output: data/recorded_bc_<timestamp>.csv
 """
@@ -16,7 +16,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from _DRIVER.driver import BCDriver
@@ -26,7 +26,7 @@ from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DRIVER_NAME = "bc"
 
 FIELDNAMES = [

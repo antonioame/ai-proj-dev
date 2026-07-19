@@ -1,4 +1,4 @@
-"""Filtra e deduplica il dataset DAgger grezzo (scripts/record_dagger.py) prima
+"""Filtra e deduplica il dataset DAgger grezzo (scripts/record/record_dagger.py) prima
 del training BC.
 
 Due passi:
@@ -17,7 +17,7 @@ oracle_steer/accel/brake + rollout_* + lap/distFromStart).
 Output: un unico CSV filtrato, più un riepilogo stampato a schermo.
 
 Usage:
-    python scripts/filter_dagger_dataset.py data/dagger_bc_20260714_152520.csv data/dagger_bc_run2.csv --out data/dagger_bc_filtered.csv
+    python scripts/train/filter_dagger_dataset.py data/dagger_bc_20260714_152520.csv data/dagger_bc_run2.csv --out data/dagger_bc_filtered.csv
 """
 
 from __future__ import annotations

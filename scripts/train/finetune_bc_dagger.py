@@ -2,7 +2,7 @@
 dataset DAgger filtrato (data/dagger_bc_filtered.csv) come dati di
 correzione — non un retraining da zero.
 
-Diversamente da scripts/train_bc_dagger.py (retraining completo su dataset
+Diversamente da scripts/train/train_bc_dagger.py (retraining completo su dataset
 originale + DAgger, invalidato: il dataset "originale" disponibile nel repo
 non è quello che ha prodotto bc_from_olddriver_v1), qui si parte dai pesi
 ESISTENTI di bc_from_olddriver_v1.pth e si applicano poche epoche a learning
@@ -17,7 +17,7 @@ Non tocca né sovrascrive bc_from_olddriver_v1.{pth,npz} né alcun altro file
 esistente: nuovo checkpoint in _DRIVER/models/bc_finetune_dagger_v1.{pth,npz}.
 
 Usage:
-    python scripts/finetune_bc_dagger.py --dagger data/dagger_bc_filtered.csv \
+    python scripts/train/finetune_bc_dagger.py --dagger data/dagger_bc_filtered.csv \
         --epochs 8 --lr 5e-5 --output-name bc_finetune_dagger_v1
 """
 
@@ -33,12 +33,12 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from drivers.bc_common import BCPolicy
 
 FEAT_COLS = [f"feat_{i}" for i in range(26)]
-MODELS_DIR = Path(__file__).resolve().parent.parent / "_DRIVER" / "models"
+MODELS_DIR = Path(__file__).resolve().parent.parent.parent / "_DRIVER" / "models"
 
 
 def main() -> None:

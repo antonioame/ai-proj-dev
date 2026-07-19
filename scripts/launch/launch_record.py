@@ -1,7 +1,7 @@
 """Launcher autonomo per la registrazione: avvia TORCS headless e poi esegue record_agent.py.
 
 Usage:
-    python scripts/launch_record.py [--laps 3]
+    python scripts/launch/launch_record.py [--laps 3]
 
 Script di supporto temporaneo per la raccolta dati di riaddestramento —
 rispecchia launch_race.py ma chiama record_agent.py invece di run_agent.py.
@@ -35,7 +35,7 @@ def main() -> None:
             torcs_proc.terminate()
             sys.exit(1)
         logger.info("TORCS is ready.")
-        exit_code = run_downstream_script("record_agent.py", "--laps", str(args.laps))
+        exit_code = run_downstream_script("record/record_agent.py", "--laps", str(args.laps))
         logger.info("Recorder finished with exit code %d.", exit_code)
     finally:
         stop_torcs(torcs_proc)

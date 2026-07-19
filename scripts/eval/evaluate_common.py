@@ -126,7 +126,7 @@ def run_eval_loop(
     logger.info("Results: %s", json.dumps(results, indent=2))
 
     if output_path is None:
-        results_dir = Path(__file__).resolve().parent.parent / "results"
+        results_dir = Path(__file__).resolve().parent.parent.parent / "results"
         results_dir.mkdir(exist_ok=True)
         date_str = datetime.now().strftime("%Y%m%d_%H%M%S")
         output_path = results_dir / f"eval_{driver_name}_{date_str}.json"

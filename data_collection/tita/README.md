@@ -37,7 +37,7 @@ In `old_versions_drivers/project_V1/torcs/gym_torcs/vtorcs-RL-color/src/drivers/
   per tick con lo schema del dataset BC esistente:
   `angle,speed,speedY,speedZ,trackPos,track_0..track_18,rpm,gear,steer,accel,brake,gear_cmd`
   (stesso ordine/nomi di `data/driver_*.csv` e di `INPUT_COLS` in
-  `scripts/train_bc_dagger.py`). Nota: la colonna `gear_cmd` non e' allineata
+  `scripts/train/train_bc_dagger.py`). Nota: la colonna `gear_cmd` non e' allineata
   correttamente (valori spazzatura) per una struct non ancora del tutto
   risolta — **non e' usata dal training** (`train_bc_dagger.py` usa solo
   `steer,accel,brake` come target), quindi non inquina il dataset. Tutte le
@@ -172,9 +172,9 @@ python data_collection/tita/convert_tita_csv.py --input "bc_logs/tita_bc_*.csv"
 ```
 
 Valida le colonne, applica la stessa pulizia usata da
-`scripts/train_bc_dagger.py` (`|trackPos| < 0.95`, `|speed| > 1.0`) e scrive
+`scripts/train/train_bc_dagger.py` (`|trackPos| < 0.95`, `|speed| > 1.0`) e scrive
 un file per sessione in `data_collection/tita/converted/`, senza toccare
 `data/` ne' i CSV originali. L'unione al dataset esistente resta manuale, a
 tua discrezione (copia in `data/` oppure passa
 `--original "data_collection/tita/converted/*.csv"` a
-`scripts/train_bc_dagger.py`).
+`scripts/train/train_bc_dagger.py`).

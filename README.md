@@ -42,7 +42,7 @@ scaler/modelli in `_DRIVER/bc_source_driver/`) — installare se un import falli
 wtorcs.exe -r torcs_env\race_config\corkscrew_solo.xml
 
 # 2. In un altro terminale, esegui il driver bc
-conda run -n ai_env python scripts/run_agent.py --laps 1
+conda run -n ai_env python scripts/run/run_agent.py --laps 1
 ```
 
 L'agente si connette, guida il giro richiesto, stampa il tempo e salva un JSON
@@ -51,7 +51,7 @@ strutturato in `results/`.
 **Opzioni utili:**
 
 ```bash
-python scripts/run_agent.py --laps 3 --host localhost --port 3001 --telemetry
+python scripts/run/run_agent.py --laps 3 --host localhost --port 3001 --telemetry
 ```
 
 `--telemetry` salva anche il CSV completo dei sensori in `data/`.
@@ -59,7 +59,7 @@ python scripts/run_agent.py --laps 3 --host localhost --port 3001 --telemetry
 **Solo valutazione** (stesse metriche, output più compatto in `results/eval_*.json`):
 
 ```bash
-conda run -n ai_env python scripts/evaluate.py --laps 1
+conda run -n ai_env python scripts/eval/evaluate.py --laps 1
 ```
 
 **Driver di riferimento isolato** (baseline basata su regole, ~148 s, non collegata

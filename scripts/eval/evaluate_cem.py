@@ -1,8 +1,8 @@
 """Valuta un checkpoint CEM (drivers/cem/) e salva un JSON di risultati
-strutturato, stesso schema di scripts/evaluate.py/evaluate_rl.py.
+strutturato, stesso schema di scripts/eval/evaluate.py/evaluate_rl.py.
 
 Usage:
-    python scripts/evaluate_cem.py [--laps 1] [--checkpoint drivers/rl/models/cem_v1.pth]
+    python scripts/eval/evaluate_cem.py [--laps 1] [--checkpoint drivers/rl/models/cem_v1.pth]
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ import logging
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from drivers.cem.driver import CemDriver

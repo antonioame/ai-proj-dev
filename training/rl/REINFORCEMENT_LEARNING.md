@@ -34,7 +34,7 @@ Concretamente:
 - Il modello addestrato con BC resta la **baseline di fallback/riferimento**. Il suo attuale
   comportamento di completamento giro e il suo tempo sul giro sono l'asticella che la Fase 3 deve
   eguagliare o superare prima di essere mai promossa a "driver primario".
-- Ogni checkpoint RL deve essere valutato con lo `scripts/evaluate.py` esistente, sulle stesse
+- Ogni checkpoint RL deve essere valutato con lo `scripts/eval/evaluate.py` esistente, sulle stesse
   metriche già usate per il modello BC (tempo giro, frazione fuori pista, danni/schianti). Nessun
   checkpoint sostituisce il driver attivo a meno che non eguagli BC in sicurezza (nessuno schianto,
   frazione fuori pista comparabile o migliore) **e** non sia peggiore sul tempo giro.
@@ -42,7 +42,7 @@ Concretamente:
   l'implementazione deve poter tornare al driver BC senza modifiche di codice altrove.
   (Nota di implementazione: la selezione tramite flag `--driver` citata in origine non esiste
   più — la registry è stata rimossa intenzionalmente; il ritorno al BC è garantito da entry
-  point dedicati e paralleli, `scripts/run_agent_rl.py`/`scripts/evaluate_rl.py`, che lasciano
+  point dedicati e paralleli, `scripts/run/run_agent_rl.py`/`scripts/eval/evaluate_rl.py`, che lasciano
   `run_agent.py`/`evaluate.py` intatti sul driver BC. Deviazione confermata il 2026-07-08.)
 
 ---
@@ -295,7 +295,7 @@ esplicita): patch binaria/DLL proxy su `tita.dll` già compilato per intercettar
 a 36 settori di sola distanza).
 
 **Esito pratico:** il dataset è stato arricchito invece con un ciclo DAgger reale
-(`scripts/record_dagger.py`, nuovo script separato) che usa il vecchio `RuleBasedDriver`
+(`scripts/record/record_dagger.py`, nuovo script separato) che usa il vecchio `RuleBasedDriver`
 (`old_versions_drivers/project_V2/driver.py`, ancora importabile e compatibile con
 `torcs_env.sensors.SensorState`/`torcs_env.actions.Action` correnti) come oracolo in ombra durante
 il rollout del BC driver reale — non Tita. Vedi il dataset in `data/dagger_bc_*.csv`.
@@ -343,7 +343,7 @@ modalità di fallimento.
 - [ ] `drivers/rl/driver.py` — nuova classe driver che implementa la stessa interfaccia dei driver
       `rule_based`/`bc_model`, caricabile via `run_agent.py --driver rl_model`.
 - [ ] Funzione reward versionata e registrata per ogni run di training.
-- [ ] `scripts/evaluate.py` eseguito sul driver RL, confrontato fianco a fianco con le metriche del
+- [ ] `scripts/eval/evaluate.py` eseguito sul driver RL, confrontato fianco a fianco con le metriche del
       driver BC esistente (tempo giro, frazione fuori pista, numero di schianti) — l'RL viene
       promosso a default solo se eguaglia o supera BC in sicurezza e non è peggiore sul tempo giro.
 - [ ] Documentazione aggiornata con: stato Fase 3, algoritmo usato, versione del reward, miglior tempo

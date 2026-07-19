@@ -1,4 +1,4 @@
-"""Loop condiviso da scripts/run_agent.py e scripts/run_agent_rl.py.
+"""Loop condiviso da scripts/run/run_agent.py e scripts/run/run_agent_rl.py.
 
 receive/step/send, logging di stato periodico, telemetria opzionale su CSV,
 e salvataggio del JSON di risultati — logica identica prima duplicata nei
@@ -19,7 +19,7 @@ from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 STATUS_EVERY = 50  # una riga di stato per ogni secondo simulato (~50 step/s)
 
 

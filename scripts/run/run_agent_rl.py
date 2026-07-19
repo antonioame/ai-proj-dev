@@ -1,13 +1,13 @@
 """Esegue il driver RL di Fase 3 (drivers/rl/) contro un server TORCS.
 
-Entry point dedicato — rispecchia esattamente scripts/run_agent.py ma
+Entry point dedicato — rispecchia esattamente scripts/run/run_agent.py ma
 codifica RLDriver invece di BCDriver, allo stesso modo in cui
 old_versions_drivers/project_V2/run_rule_based.py è un entry point dedicato
 per il driver rule_based. run_agent.py stesso resta intatto, così BC rimane
 il fallback a rischio zero.
 
 Usage:
-    python scripts/run_agent_rl.py [--laps 1] [--host HOST] [--port PORT] [--telemetry]
+    python scripts/run/run_agent_rl.py [--laps 1] [--host HOST] [--port PORT] [--telemetry]
 """
 
 from __future__ import annotations
@@ -18,7 +18,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from drivers.rl.driver import RLDriver

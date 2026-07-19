@@ -1,6 +1,6 @@
 """Esegue il driver candidato bc_tita_v1 (data_collection/tita/driver_candidate.py)
 contro un server TORCS gia' avviato, con log di stato per riga come
-scripts/run_agent.py. Utile per osservare la guida dal vivo (GUI) prima/oltre
+scripts/run/run_agent.py. Utile per osservare la guida dal vivo (GUI) prima/oltre
 alla valutazione JSON di evaluate_tita_candidate.py.
 
 Non tocca _DRIVER/, drivers/, scripts/.
@@ -44,7 +44,7 @@ def run(
     lap_count = 0
     # Giro (state.lap) all'ultima registrazione: rileva un nuovo giro anche se
     # due giri consecutivi hanno tempo identico (simulazione deterministica) —
-    # stesso doppio criterio di scripts/evaluate_common.py.
+    # stesso doppio criterio di scripts/eval/evaluate_common.py.
     lap_at_last_record = 0
     max_speed = 0.0
     off_track_steps = 0

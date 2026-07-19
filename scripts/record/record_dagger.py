@@ -15,8 +15,8 @@ Vincoli: script nuovo e separato, non tocca _DRIVER/driver.py né i file di
 Fase 1/2/3 esistenti.
 
 Usage:
-    python scripts/record_dagger.py --policy bc --laps 5
-    python scripts/record_dagger.py --policy residual --laps 5 --out data/dagger_residual.csv
+    python scripts/record/record_dagger.py --policy bc --laps 5
+    python scripts/record/record_dagger.py --policy residual --laps 5 --out data/dagger_residual.csv
 """
 
 from __future__ import annotations
@@ -29,7 +29,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from old_versions_drivers.project_V2 import RuleBasedDriver
 from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
@@ -38,7 +38,7 @@ from training.rl.features import FEATURE_DIM, build_feature_vector
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 STATUS_EVERY = 50
 
 
@@ -74,7 +74,7 @@ def run(
     lap_count = 0
     # Giro (state.lap) all'ultima registrazione: rileva un nuovo giro anche se
     # due giri consecutivi hanno tempo identico (simulazione deterministica) —
-    # stesso doppio criterio di scripts/evaluate_common.py.
+    # stesso doppio criterio di scripts/eval/evaluate_common.py.
     lap_at_last_record = 0
     total_steps = 0
 

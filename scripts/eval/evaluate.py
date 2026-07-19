@@ -1,7 +1,7 @@
 """Valuta il driver BC (_DRIVER/) e salva un JSON di risultati strutturato.
 
 Usage:
-    python scripts/evaluate.py [--laps 1] [--output results/eval.json]
+    python scripts/eval/evaluate.py [--laps 1] [--output results/eval.json]
 """
 
 from __future__ import annotations
@@ -11,7 +11,7 @@ import logging
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from _DRIVER.driver import BCDriver

@@ -1,7 +1,7 @@
 """Driver per valutare un checkpoint ottimizzato con CEM (training/rl/train_cem.py).
 
 Stessa interfaccia step()/on_restart() degli altri driver — sostituibile in
-scripts/evaluate_cem.py senza toccare scripts/evaluate.py.
+scripts/eval/evaluate_cem.py senza toccare scripts/eval/evaluate.py.
 
 Struttura IDENTICA al vecchio BCDriver blend (quello in _DRIVER/driver.py
 PRIMA della promozione di bc_tita_v20 del 2026-07-15; il BCDriver attuale è

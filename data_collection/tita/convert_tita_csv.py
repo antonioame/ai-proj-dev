@@ -3,7 +3,7 @@ nel formato del dataset BC esistente (stesse colonne di data/driver_*.csv).
 
 Il logger C++ scrive gia' le colonne nell'ordine e nomenclatura corretti
 (vedi bc_logger.cpp), quindi qui si valida lo schema, si scartano le righe
-non utilizzabili (stessa pulizia applicata da scripts/train_bc_dagger.py:
+non utilizzabili (stessa pulizia applicata da scripts/train/train_bc_dagger.py:
 |trackPos| >= 0.95, |speed| <= 1.0) e si scrive un nuovo file per sessione
 in data_collection/tita/converted/, senza toccare data/ ne' i CSV originali.
 
@@ -64,7 +64,7 @@ def main() -> None:
 
     print(
         f"\n[INFO] Conversione completata. Per usare questi dati in train_bc_dagger.py:\n"
-        f'  python scripts/train_bc_dagger.py --original "{OUTPUT_DIR}/*.csv" --dagger data/dagger_bc_filtered.csv\n'
+        f'  python scripts/train/train_bc_dagger.py --original "{OUTPUT_DIR}/*.csv" --dagger data/dagger_bc_filtered.csv\n'
         f"oppure copia manualmente i file in data/ per unirli al dataset originale."
     )
 
