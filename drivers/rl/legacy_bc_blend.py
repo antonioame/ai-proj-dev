@@ -16,9 +16,10 @@ addestrato — mai validato.
 Questa classe replica esattamente il vecchio `BCDriver` così com'era
 nell'ultimo commit prima della promozione (`git show 62fe930:_DRIVER/driver.py`),
 per ridare al residual la base su cui è stato effettivamente addestrato. NON è
-il driver di produzione (quello resta `_DRIVER.driver.BCDriver` = bc_tita_v20)
-e non va evoluta: è congelata di proposito, esiste solo per rendere
-riproducibile il checkpoint residual esistente.
+il driver di produzione (quello, dal 2026-07-19, è `_DRIVER.driver.BCDriver` =
+cem_v5, dopo bc_tita_v20 dal 2026-07-15 al 2026-07-19) e non va evoluta: è
+congelata di proposito, esiste solo per rendere riproducibile il checkpoint
+residual esistente.
 
 I pesi (`_DRIVER/models/bc_from_attempt1_v1.*`, `bc_from_olddriver_v1.*`) sono
 tenuti nel repo apposta per questo rollback.

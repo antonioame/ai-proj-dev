@@ -2,11 +2,13 @@
 
 Agente AI che completa un giro del circuito Corkscrew in TORCS il più velocemente
 possibile da una partenza da fermo, senza schiantarsi. Il driver principale
-(candidato alla consegna finale) è un modello di **behavioral cloning** a modello
-singolo, clonato dallo stile di guida del bot nativo "tita" (`bc_tita_v20`):
-**111.986 s**, 208.1 km/h di punta, 0% fuori pista, 0 danni. Il record assoluto
-del progetto è di un driver separato non promosso, ottimizzato con **CEM**
-(`drivers/rl/models/cem_v5.pth`): **105.812 s**.
+(candidato alla consegna finale) è un checkpoint ottimizzato con **CEM**
+(cross-entropy method, black-box a partire dai pesi bc), `cem_v5`:
+**105.812 s**, 187.1 km/h di punta, 0% fuori pista, 0 danni — record assoluto
+del progetto, promosso il 2026-07-19 al posto del precedente driver di
+produzione, un modello di **behavioral cloning** a modello singolo clonato
+dallo stile di guida del bot nativo "tita" (`bc_tita_v20`, 111.986 s, ancora
+disponibile in `_DRIVER/models/` per rollback).
 
 ---
 
@@ -88,10 +90,10 @@ conda run -n ai_env python livery/setup_livery.py --reset          # ripristina 
 
 ```
 _DRIVER/            Driver in primo piano — candidato alla consegna
-  driver.py             BCDriver, modello singolo bc_tita_v20 (clone di tita)
-  models/               Modelli allenati (.pth/.npz; incl. il vecchio blend, per rollback)
+  driver.py             BCDriver, wrapper su drivers/cem/driver.py:CemDriver (cem_v5)
+  models/               Modelli allenati (.pth/.npz; incl. bc_tita_v20 e il vecchio blend, per rollback)
   bc_source_driver/      Driver sorgente per rigenerare i dati di training
-drivers/            Driver aggiuntivi non promossi (bc_dagger, cem, rl residual) + bc_common.py
+drivers/            Driver aggiuntivi (cem/ è la sorgente del driver principale; bc_dagger, rl residual non promossi) + bc_common.py
 training/rl/        Fase 3 — infrastruttura RL/CEM (env Gymnasium, reward, training)
 data_collection/tita/  Pipeline di clonazione del bot tita (conversione CSV, DAgger-style)
 old_versions_drivers/project_V2/  Driver isolato, di solo riferimento (~148 s)

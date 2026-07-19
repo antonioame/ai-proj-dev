@@ -2,9 +2,10 @@
 
 NOTA STORICA: la descrizione che segue si riferisce al BCDriver dell'epoca in
 cui questo warm-start è stato progettato (pre-promozione del 2026-07-15) — il
-BCDriver di produzione attuale è un modello singolo (bc_tita_v20), ma il
-warm-start e i checkpoint SAC che ne derivano restano legati ai modelli del
-blend storico, quindi la descrizione resta quella corretta per questo modulo.
+BCDriver di produzione è cambiato due volte da allora (bc_tita_v20, modello
+singolo, dal 2026-07-15; cem_v5 dal 2026-07-19), ma il warm-start e i
+checkpoint SAC che ne derivano restano legati ai modelli del blend storico,
+quindi la descrizione resta quella corretta per questo modulo.
 
 La "rete addestrata con BC" della Fase 2 era, all'epoca, in realtà una
 fusione ibrida di due modelli addestrati separatamente (il BCDriver di allora

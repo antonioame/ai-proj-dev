@@ -25,16 +25,16 @@ Il sistema adotta un approccio **multi-fase evolutivo** fondato su tre pilastri 
 
 2. **Fase 2 — Behavioral Cloning** (evoluta in due generazioni)
    - *Prima generazione (blend ibrido, superata):* apprendimento per imitazione da **due sorgenti distinte**, fuse dinamicamente in base al contesto di pista — un sotto-modello per i rettilinei (dalla telemetria di un precedente tentativo di driving-net) e uno per le curve (dalla telemetria di un vecchio driver personale ibrido). 121,978 s.
-   - *Seconda generazione (driver di produzione attuale, promosso il 2026-07-15):* **modello singolo clonato dallo stile di guida del bot nativo TORCS "tita"** (`bc_tita_v20`) — 13 giri puliti di telemetria raccolti tramite un DLL proxy, più 8 round di auto-correzione in stile DAgger con il driver precedente come rete di sicurezza. **111,986 s, 0% fuori pista, 0 danni.**
+   - *Seconda generazione (driver di produzione dal 2026-07-15 al 2026-07-19, poi superata):* **modello singolo clonato dallo stile di guida del bot nativo TORCS "tita"** (`bc_tita_v20`) — 13 giri puliti di telemetria raccolti tramite un DLL proxy, più 8 round di auto-correzione in stile DAgger con il driver precedente come rete di sicurezza. **111,986 s, 0% fuori pista, 0 danni.** Ancora disponibile in `_DRIVER/models/` per rollback.
    - Rete neurale MLP con quattro teste di output (sterzo, accelerazione, freno, marcia), normalizzazione z-score, guadagni post-hoc e cambio marcia basato su RPM applicati fuori dalla rete
-   - **Driver candidato alla consegna finale**
 
 3. **Fase 3 — Reinforcement Learning con warm-start BC, più ottimizzazione black-box (CEM)**
    - Algoritmo **SAC (Soft Actor-Critic)**, Stable-Baselines3
    - Inizializzazione dei pesi dell'attore dal solo sotto-modello BC per le curve (all'epoca non esisteva un'unica rete BC da cui partire, essendo il BC di produzione un blend di due reti)
    - Due varianti testate: SAC diretto (sostituisce interamente il controllo) e **residual** (correzione limitata sopra il driver BC blend completo)
    - Solo la variante residual completa il giro in sicurezza; non promossa a driver primario perché più lenta di BC
-   - Dopo il fallimento sistematico di 9 varianti di SAC diretto, è stato aggiunto il **CEM (Cross-Entropy Method)**: ottimizzazione black-box dei pesi con fitness = tempo giro reale su TORCS — **record assoluto del progetto: 105,812 s** (`cem_v5`, driver separato, non promosso a `_DRIVER/`)
+   - Dopo il fallimento sistematico di 9 varianti di SAC diretto, è stato aggiunto il **CEM (Cross-Entropy Method)**: ottimizzazione black-box dei pesi con fitness = tempo giro reale su TORCS — **record assoluto del progetto: 105,812 s** (`cem_v5`)
+   - **Driver di produzione attuale e candidato alla consegna finale, promosso il 2026-07-19** al posto di bc_tita_v20 (confronto diretto: 105,812 s vs 114,02–114,030 s, entrambi puliti). Affidabilità nota inferiore al blend BC: su 4 valutazioni consecutive osservate durante la promozione, 3 pulite e 1 con uscita di pista — vedi `laptime_ledger.csv`
 
 ### 1.3 Architettura del sistema
 
@@ -61,22 +61,22 @@ Il sistema adotta un approccio **multi-fase evolutivo** fondato su tre pilastri 
 │  └─ actions.py: codifica dei comandi    │
 │                                         │
 │  Driver in primo piano (_DRIVER/)       │
-│  └─ driver.py: BCDriver, modello singolo│
-│     bc_tita_v20 (clone di tita) + gain  │
+│  └─ driver.py: BCDriver, wrapper su     │
+│     drivers/cem/driver.py:CemDriver     │
+│     (cem_v5, 105,812 s); bc_tita_v20    │
+│     resta in models/ per rollback       │
 │                                         │
 │  Driver isolato di riferimento          │
 │  └─ old_versions_drivers/project_V2/:   │
 │     rule_based (~148 s, non collegato   │
 │     agli script principali)             │
 │                                         │
-│  Driver RL/CEM — Fase 3 (drivers/)      │
+│  Driver RL — Fase 3 (drivers/)          │
 │  ├─ rl/driver.py: RLDriver (SAC diretto,│
 │  │  non funzionante da solo)            │
-│  ├─ rl/residual_driver.py:              │
-│  │  ResidualRLDriver (base BC blend     │
-│  │  legacy + correzione SAC, funziona)  │
-│  └─ cem/driver.py: CemDriver (record    │
-│     del progetto, 105,812 s, separato)  │
+│  └─ rl/residual_driver.py:              │
+│     ResidualRLDriver (base BC blend     │
+│     legacy + correzione SAC, funziona)  │
 │                                         │
 │  Pipeline clonazione tita               │
 │  (data_collection/tita/): conversione   │
@@ -138,17 +138,17 @@ Questa formula garantisce che la distanza di frenata, e non una tabella statica,
 
 **Performance:** 148,4 s per giro, 0 incidenti, 0% di uscite di pista
 
-### 2.3 Driver Behavioral Cloning — candidato alla consegna (_DRIVER/)
+### 2.3 Driver Behavioral Cloning — driver di produzione dal 2026-07-15 al 2026-07-19, poi superato dal driver CEM (§2.6) (_DRIVER/)
 
-#### Driver di produzione attuale: modello singolo clonato da tita (bc_tita_v20, promosso il 2026-07-15)
+#### Modello singolo clonato da tita (bc_tita_v20, promosso il 2026-07-15, superato il 2026-07-19)
 
-Il driver in primo piano oggi è un **unico modello BCPolicy** che gestisce l'intero giro, clonato dallo stile di guida del bot nativo TORCS **"tita"** (car1-ow1):
+Il driver in primo piano dal 2026-07-15 al 2026-07-19 è stato un **unico modello BCPolicy** che gestisce l'intero giro, clonato dallo stile di guida del bot nativo TORCS **"tita"** (car1-ow1). Rimane disponibile in `_DRIVER/models/` per un rollback rapido:
 
 - **Raccolta dati:** la telemetria di tita è stata registrata tramite un **DLL proxy** installato nella cartella driver di TORCS — inoltra tutte le callback dell'interfaccia robot al binario originale (`tita_real.dll`), quindi la guida registrata è al 100% quella autentica del bot, e logga sensori+azioni in coda. Durante la raccolta è stato diagnosticato e corretto (per scansione empirica della memoria) un bug di offset nella struct `tCarCtrl`, che corrompeva le azioni registrate. Dataset base: 13 giri puliti, 43.788 righe.
 - **Auto-correzione DAgger-style:** un modello addestrato solo su giri "perfetti" non sa recuperare da una traiettoria imprecisa (lo stesso limite emerso nel fallimento della self-distillation, §3.3). Sono stati quindi eseguiti **8 round di raccolta-recupero**: il candidato guida, e quando esce troppo dalla linea (|trackPos| > 0,55) il controllo passa al driver bc precedente come rete di sicurezza, registrando le sue azioni di recupero come esempi di correzione. Round dopo round il candidato è passato da non completare il giro a un giro pulito riproducibile.
 - **Differenze architetturali dal blend precedente:** un solo `BCPolicy` (26→128→64) invece di due reti fuse; `STEER_GAIN` abbassato da 1,8 a 1,0 (con questo modello un gain più alto causava oscillazioni e uscite di pista — verificato empiricamente).
 
-**Performance:** **111,986 s**, 208,05 km/h di punta, 0% fuori pista, 0 danni (verificato su 3 giri consecutivi con `scripts/eval/evaluate.py`) — batte il precedente driver di produzione (il blend, rimisurato a 124,296 s a parità di condizioni) di 12,3 secondi. Dettagli completi in `data_collection/tita/README.md` e `laptime_ledger.csv` (voce `bc_tita_v20_promoted_to_production`).
+**Performance:** **111,986 s**, 208,05 km/h di punta, 0% fuori pista, 0 danni (verificato su 3 giri consecutivi con `scripts/eval/evaluate.py`) — batteva il precedente driver di produzione (il blend, rimisurato a 124,296 s a parità di condizioni) di 12,3 secondi. Superato a sua volta il 2026-07-19 dal driver CEM (§2.6), più veloce di ~8s. Dettagli completi in `data_collection/tita/README.md` e `laptime_ledger.csv` (voce `bc_tita_v20_promoted_to_production`).
 
 #### Prima generazione: blend ibrido di due reti (superata, tenuta per rollback)
 
@@ -187,7 +187,7 @@ Il reward per-step (formula base del corso: `v·cos(angle) − v·|sin(angle)| �
 
 Un ulteriore approccio, basato su una traiettoria precalcolata a partire dalla telemetria del driver rule-based (segmenti di pista da cinque metri, ciascuno con un profilo di velocità ottimale derivato da un'analisi retroattiva dei vincoli in curva), è stato implementato e successivamente **rimosso** perché non funzionante in pista. Il principio di analisi retroattiva (backward-pass) resta documentato come scelta progettuale esplorata (vedi §5.4) ma non è presente in nessuno dei driver attualmente attivi.
 
-### 2.6 Driver CEM — ottimizzazione black-box, record del progetto (drivers/cem/, training/rl/train_cem.py)
+### 2.6 Driver CEM — driver di produzione attuale e record del progetto (drivers/cem/, training/rl/train_cem.py, promosso in _DRIVER/ il 2026-07-19)
 
 Dopo che **9 run indipendenti di SAC diretto** (reward diverse, entropia auto/fissa, learning rate e rumore di esplorazione variati, 200k–500k step) hanno mostrato tutti lo stesso pattern — policy stabile finché l'attore è congelato, degradazione sistematica appena iniziano gli update del gradiente TD — la diagnosi è stata che il problema non fosse di taratura ma **strutturale**: il bootstrap del critic propaga il proprio errore negli update dell'attore, instabile in questo ambiente per una piccola rete con warm-start.
 
@@ -196,7 +196,7 @@ Il **CEM (Cross-Entropy Method)** aggira il problema alla radice: niente critic,
 1. **Architettura ibrida completa** (`HybridCemPolicy`): replicare esattamente il blend rettilineo/curva del BC dell'epoca, con la normalizzazione propria di ciascuna sotto-rete — una versione a rete singola restava bloccata 21 s sotto il ceiling del BC.
 2. **Doppia verifica dei candidati record:** un candidato che sembra battere il record viene riverificato con un secondo giro indipendente e si usa il peggiore dei due esiti — osservato più volte che un singolo giro "fortunato" non è rappresentativo (candidati fragili fallivano al reload fino al 70% fuori pista).
 
-**Risultato (5 round progressivi, cem_v1→cem_v5):** **105,812 s, 0% fuori pista, 0 danni — record assoluto del progetto**, 16,2 s meglio del blend BC di partenza e 6,2 s meglio del driver di produzione bc_tita_v20. Il CEM resta un driver separato con script dedicati (`scripts/eval/evaluate_cem.py`), **non promosso** a `_DRIVER/`: la promozione è stata assegnata a bc_tita_v20 come compromesso tra tempo giro e solidità. Cronologia completa (inclusi i tentativi rigettati per fragilità) in `laptime_ledger.csv`.
+**Risultato (5 round progressivi, cem_v1→cem_v5):** **105,812 s, 0% fuori pista, 0 danni — record assoluto del progetto**, 16,2 s meglio del blend BC di partenza e 6,2 s meglio del precedente driver di produzione bc_tita_v20. Il CEM (`cem_v5`) resta disponibile anche con lo script dedicato `scripts/eval/evaluate_cem.py`, ma dal **2026-07-19 è anche il driver di produzione**: `_DRIVER/driver.py:BCDriver` è un wrapper sottile su `drivers/cem/driver.py:CemDriver` pinnato su questo checkpoint. Affidabilità nota inferiore al blend BC (candidati di questa famiglia hanno mostrato più volte un margine di stabilità più stretto — vedi i tentativi rigettati sotto e in `laptime_ledger.csv`); la promozione è stata comunque autorizzata a fronte del vantaggio di tempo, con `bc_tita_v20` tenuto in `_DRIVER/models/` per un rollback rapido.
 
 ---
 
@@ -215,8 +215,9 @@ Il **CEM (Cross-Entropy Method)** aggira il problema alla radice: niente critic,
 | Fase 3 RL diretto | SAC warm-start puro, senza base BC | Reward hacking — auto bloccata, 0 giri |
 | Fase 3 RL residual | Base BC blend + correzione SAC limitata | 127,07 s, 0% fuori pista — funzionante ma non promosso |
 | Fase 3 SAC diretto esteso | 9 varianti (reward/entropia/lr/rumore) | Tutte fallite — instabilità strutturale del TD-learning |
-| Fase CEM (5 round) | Ottimizzazione black-box dei pesi, fitness = tempo giro reale | **105,812 s (cem_v5) — record assoluto, driver separato non promosso** |
-| Fase tita (2026-07-15) | Clone BC del bot tita + 8 round DAgger-style | **111,986 s — driver di produzione promosso (candidato alla consegna)** |
+| Fase CEM (5 round) | Ottimizzazione black-box dei pesi, fitness = tempo giro reale | **105,812 s (cem_v5) — record assoluto** |
+| Fase tita (2026-07-15) | Clone BC del bot tita + 8 round DAgger-style | 111,986 s — driver di produzione dal 2026-07-15 al 2026-07-19 |
+| Promozione CEM (2026-07-19) | cem_v5 promosso a `_DRIVER/driver.py` al posto di bc_tita_v20 | **105,812 s — driver di produzione attuale (candidato alla consegna)** |
 
 ### 3.2 Sfide affrontate e soluzioni adottate
 
@@ -289,8 +290,9 @@ Il **CEM (Cross-Entropy Method)** aggira il problema alla radice: niente critic,
 | — | RL diretto (SAC warm-start, senza base BC) | — | — | Reward hacking, 0 giri completati |
 | 2026-07-10 | RL residual (base BC blend + correzione SAC) | 127,070 | 0 | Driver RL funzionante, ~4% più lento del blend — non promosso |
 | 2026-07-14 | SAC diretto, 9 varianti | — | — | Tutte fallite (migliore: 129,684) — abbandonato per CEM |
-| 2026-07-15 | CEM round 1–5 (cem_v1→cem_v5) | **105,812** | 0 | **Record assoluto del progetto — driver separato, non promosso** |
-| 1628a05 | BC clone di tita + DAgger-style (bc_tita_v20) | **111,986** | 0 | **Driver di produzione — candidato alla consegna** |
+| 2026-07-15 | CEM round 1–5 (cem_v1→cem_v5) | **105,812** | 0 | **Record assoluto del progetto** |
+| 1628a05 | BC clone di tita + DAgger-style (bc_tita_v20) | 111,986 | 0 | Driver di produzione dal 2026-07-15 al 2026-07-19 |
+| f960be7 (2026-07-19) | Promozione cem_v5 a `_DRIVER/driver.py` | **105,812** | 0 | **Driver di produzione attuale — candidato alla consegna** |
 
 ### 4.2 Metriche telemetria (driver rule-based, isolato di riferimento)
 
@@ -344,8 +346,8 @@ Il principio prevede di calcolare il profilo di velocità lungo il tracciato par
 L'approccio multi-fase garantisce una progressione strutturata verso l'ottimizzazione:
 
 - **Fase 1 (basato su regole):** prototipazione rapida, baseline stabile a 148,4 s, fondamento per generare i dati di training della Fase 2
-- **Fase 2 (Behavioral Cloning):** apprendimento dei pattern impliciti di guida, in due generazioni — prima il blend di due sorgenti distinte (121,978 s), poi il clone a modello singolo del bot tita con auto-correzione DAgger-style (**111,986 s — driver candidato alla consegna**)
-- **Fase 3 (Reinforcement Learning + CEM):** warm-start dalla rete BC per convergenza accelerata; l'approccio residual mantiene la sicurezza del driver BC aggiungendo una correzione appresa, senza superarne il tempo; l'ottimizzazione black-box CEM, partendo dagli stessi pesi BC, ha invece stabilito il record del progetto (105,812 s) pur restando un driver separato non promosso
+- **Fase 2 (Behavioral Cloning):** apprendimento dei pattern impliciti di guida, in due generazioni — prima il blend di due sorgenti distinte (121,978 s), poi il clone a modello singolo del bot tita con auto-correzione DAgger-style (111,986 s — driver di produzione dal 2026-07-15 al 2026-07-19)
+- **Fase 3 (Reinforcement Learning + CEM):** warm-start dalla rete BC per convergenza accelerata; l'approccio residual mantiene la sicurezza del driver BC aggiungendo una correzione appresa, senza superarne il tempo; l'ottimizzazione black-box CEM, partendo dagli stessi pesi BC, ha invece stabilito il record del progetto (**105,812 s — driver candidato alla consegna, promosso il 2026-07-19**)
 
 Un salto diretto al reinforcement learning senza un driver di base già funzionante avrebbe causato un reward sparso difficile da ottimizzare e tempi di convergenza proibitivi. Questa previsione si è confermata empiricamente: il tentativo di SAC diretto, senza la base BC a mantenere l'auto in pista, è caduto in reward hacking e non ha mai completato un giro.
 
@@ -355,13 +357,13 @@ Un salto diretto al reinforcement learning senza un driver di base già funziona
 
 ### 7.1 Componenti completati
 
-- **Driver basato su regole:** stabile, 148,4 s, 0 incidenti — oggi isolato, sostituito dal driver BC come consegna primaria
+- **Driver basato su regole:** stabile, 148,4 s, 0 incidenti — oggi isolato, sostituito dal driver BC e poi dal driver CEM come consegna primaria
 - **Infrastruttura client/server:** handshake UDP, contatore giri, telemetria strutturata
 - **Sistemi di sicurezza del driver rule-based:** ABS, TCS, EBD, recupero da bloccaggio
-- **Behavioral cloning (clone di tita, bc_tita_v20):** **111,986 s, 208,1 km/h, 0% fuori pista — driver candidato alla consegna finale** (il blend ibrido precedente, 121,978 s, resta disponibile per rollback)
+- **Behavioral cloning (clone di tita, bc_tita_v20):** 111,986 s, 208,1 km/h, 0% fuori pista — driver di produzione dal 2026-07-15 al 2026-07-19, poi superato dal driver CEM; resta disponibile per rollback (il blend ibrido precedente, 121,978 s, resta anch'esso disponibile)
 - **Infrastruttura RL:** ambiente Gymnasium, algoritmo SAC (diretto e residual), vettore di feature condiviso con BC
 - **Driver RL residual:** 127,07 s, 0% fuori pista, 0 danni — funzionante ma non promosso (più lento del BC)
-- **Driver CEM:** **105,812 s, 0% fuori pista, 0 danni — record assoluto del progetto**, driver separato non promosso
+- **Driver CEM:** **105,812 s, 0% fuori pista, 0 danni — record assoluto del progetto e driver candidato alla consegna finale**, promosso a `_DRIVER/driver.py` il 2026-07-19
 - **Pipeline di clonazione tita:** DLL proxy per la telemetria autentica del bot, correzione di un bug di offset di memoria, 8 round di auto-correzione DAgger-style
 - **Suite di test:** 59 test unitari, tutti superati
 
@@ -394,6 +396,6 @@ Il progetto TORCS-AI dimostra un approccio **multi-fase sistematico** all'ottimi
 - **Machine learning applicato alla simulazione:** la coerenza della normalizzazione e delle feature tra fasi è critica; il warm-start è essenziale per la convergenza, ma non sufficiente da solo a garantire un training RL stabile senza affrontare anche la latenza del loop di training
 - **Metodologia ingegneristica:** iterare con rapidità, revertire con decisione, promuovere un driver solo quando eguaglia o supera quello attuale su sicurezza e tempo
 
-**Miglior performance del driver di produzione:** **111,986 secondi** sul giro (behavioral cloning, clone di tita — bc_tita_v20), 208,1 km/h di punta, 0% di uscite di pista, 0 danni — candidato alla consegna finale. **Record assoluto del progetto:** **105,812 secondi** (driver CEM cem_v5, separato e non promosso). Il driver Reinforcement Learning residual (127,07 s) dimostra un approccio RL genuinamente funzionante e sicuro, ma non competitivo sul tempo giro.
+**Miglior performance del driver di produzione:** **105,812 secondi** sul giro (driver CEM, `cem_v5`), 187,1 km/h di punta, 0% di uscite di pista, 0 danni — record assoluto del progetto e candidato alla consegna finale, promosso il 2026-07-19 al posto del precedente driver di produzione (behavioral cloning, clone di tita — bc_tita_v20, 111,986 s, ancora disponibile per rollback). Il driver Reinforcement Learning residual (127,07 s) dimostra un approccio RL genuinamente funzionante e sicuro, ma non competitivo sul tempo giro.
 
-**Stato del progetto:** driver BC (clone di tita) stabile e pronto alla consegna; driver CEM come record dimostrativo separato; driver RL residual funzionante come dimostrazione, non promosso.
+**Stato del progetto:** driver CEM (`cem_v5`) promosso a driver di produzione, record assoluto del progetto; driver BC (clone di tita) tenuto per rollback rapido; driver RL residual funzionante come dimostrazione, non promosso. Nota di affidabilità: la famiglia di checkpoint CEM ha un margine di stabilità più stretto del blend BC (osservato anche durante la promozione, 1 uscita di pista su 4 valutazioni consecutive) — vedi `laptime_ledger.csv` per la cronologia completa.

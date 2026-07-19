@@ -18,9 +18,10 @@ Il residual RL risolve entrambi i problemi:
 dove `base_bc` è il blend BC legacy (LegacyBlendBCDriver, 121.978s) — la
 pipeline completa su cui il checkpoint consegnato è stato addestrato. Nota
 (2026-07-17): la base NON è più importata da `_DRIVER.driver.BCDriver`,
-perché quel modulo dal 2026-07-15 contiene bc_tita_v20 (modello singolo,
-gain diversi): il residuo sommato a una base diversa da quella di training
-non è mai stato validato. La base legacy è congelata in
+perché quel modulo è cambiato due volte da allora (bc_tita_v20 dal
+2026-07-15, poi cem_v5 dal 2026-07-19, entrambi modello/architettura diversi
+dal blend e con gain diversi): il residuo sommato a una base diversa da
+quella di training non è mai stato validato. La base legacy è congelata in
 drivers/rl/legacy_bc_blend.py apposta per questo.
 con `rl_residual` in [-1, 1]^3 e l'attore SAC azzerato all'init (vedi
 zero_residual_actor), così all'inizio del training l'agente guida

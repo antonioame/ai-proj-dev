@@ -30,10 +30,11 @@ DEFAULT_CHECKPOINT = MODELS_DIR / "sac_corkscrew_v1.zip"
 NORM_STATS_PATH = Path(__file__).resolve().parents[2] / "_DRIVER" / "models" / "bc_from_olddriver_v1.npz"
 
 # Stessi guadagni post-hoc di torcs_gym_env.py, cioè quelli del BC blend
-# STORICO su cui questi checkpoint SAC sono stati addestrati (il BCDriver di
-# produzione attuale, bc_tita_v20, usa STEER_GAIN=1.0 — NON va imitato qui) —
-# devono combaciare esattamente con quelli applicati in training, altrimenti
-# l'inferenza non rispecchia ciò su cui la policy è stata addestrata.
+# STORICO su cui questi checkpoint SAC sono stati addestrati (i BCDriver di
+# produzione successivi, bc_tita_v20 poi cem_v5, usano guadagni diversi — NON
+# vanno imitati qui) — devono combaciare esattamente con quelli applicati in
+# training, altrimenti l'inferenza non rispecchia ciò su cui la policy è
+# stata addestrata.
 _STEER_GAIN = 1.8
 _ACCEL_GAIN = 1.40
 _BRAKE_GAIN = 0.80

@@ -8,9 +8,10 @@ sostituirlo direttamente senza toccare scripts/eval/evaluate.py.
 Guadagni post-hoc e logica di avvio/cambio marcia identici al BCDriver
 dell'epoca in cui bc_dagger_v1 è stato addestrato (il blend pre-2026-07-15:
 STEER_GAIN=1.8/ACCEL=1.40/BRAKE=0.80/STARTUP_STEPS=80), per un confronto equo
-a parità di pipeline di controllo. Nota: il BCDriver di produzione attuale
-(bc_tita_v20, anch'esso a modello singolo) usa STEER_GAIN=1.0 — i valori qui
-NON vanno allineati a quello, sono legati a questo checkpoint.
+a parità di pipeline di controllo. Nota: il BCDriver di produzione è cambiato
+due volte da allora (bc_tita_v20, modello singolo STEER_GAIN=1.0, dal
+2026-07-15; poi cem_v5, dal 2026-07-19) — i valori qui NON vanno allineati a
+nessuno dei due, sono legati a questo checkpoint.
 """
 
 from __future__ import annotations

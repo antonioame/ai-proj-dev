@@ -45,10 +45,11 @@ _GEAR_UP_RPM = 12000.0
 _GEAR_DOWN_RPM = 6000.0
 
 # Guadagni post-hoc del BC blend STORICO (il BCDriver pre-2026-07-15,
-# bc_from_attempt1_v1+bc_from_olddriver_v1, STEER_GAIN=1.8) — NON quelli del
-# BCDriver di produzione attuale (bc_tita_v20, STEER_GAIN=1.0): tutti i
-# checkpoint SAC diretti e il warm-start sono stati costruiti su questi valori,
-# aggiornarli al driver nuovo invaliderebbe i checkpoint esistenti.
+# bc_from_attempt1_v1+bc_from_olddriver_v1, STEER_GAIN=1.8) — NON quelli dei
+# BCDriver di produzione successivi (bc_tita_v20 dal 2026-07-15, STEER_GAIN=1.0;
+# cem_v5 dal 2026-07-19): tutti i checkpoint SAC diretti e il warm-start sono
+# stati costruiti su questi valori, aggiornarli ai driver più recenti
+# invaliderebbe i checkpoint esistenti.
 # Scoperti mancanti dall'intera pipeline SAC diretta dopo 5 run
 # che non sono mai scesi sotto ~127-130s: sac_warmstart.load_bc_backbone_into_actor
 # copia solo i pesi grezzi della rete BC nell'attore SAC, MAI i guadagni

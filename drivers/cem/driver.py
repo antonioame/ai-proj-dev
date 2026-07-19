@@ -3,9 +3,15 @@
 Stessa interfaccia step()/on_restart() degli altri driver — sostituibile in
 scripts/eval/evaluate_cem.py senza toccare scripts/eval/evaluate.py.
 
+Dal 2026-07-19 questa è anche la classe di cui `_DRIVER.driver.BCDriver`
+(il driver di produzione) è un wrapper sottile, pinnato su `cem_v5.pth`
+(105.812s) — vedi `_DRIVER/driver.py`. Prima di allora era usata solo per
+`scripts/eval/evaluate_cem.py`, non collegata alla pipeline di produzione.
+
 Struttura IDENTICA al vecchio BCDriver blend (quello in _DRIVER/driver.py
-PRIMA della promozione di bc_tita_v20 del 2026-07-15; il BCDriver attuale è
-un modello singolo — il blend sopravvive qui e in drivers/rl/legacy_bc_blend.py):
+PRIMA della promozione di bc_tita_v20 del 2026-07-15, poi a sua volta
+sostituito da questo checkpoint CEM il 2026-07-19; il blend sopravvive qui
+e in drivers/rl/legacy_bc_blend.py):
 due sotto-reti (rettilineo + curva) fuse in base a track[9]. Scoperto necessario
 dopo che una CemPolicy a singola rete (solo pesi bc_from_olddriver_v1) è
 risultata bloccata a 142,87s — 21s peggio della vera BC (121,978s) — proprio
