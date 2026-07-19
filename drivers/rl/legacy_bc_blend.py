@@ -1,28 +1,19 @@
-"""Blend BC legacy (rettilineo/curva) — base congelata su cui è stato addestrato
+"""Blend BC legacy (rettilineo/curva): base congelata su cui è stato addestrato
 il checkpoint residual consegnato.
 
-Perché esiste
--------------
-`drivers/rl/models/sac_corkscrew_residual.zip` (run 20260710_025418, eval
-documentata 127.07s / 0% off-track) è stato addestrato quando
-`_DRIVER.driver.BCDriver` era ANCORA il blend a due reti (bc_from_attempt1_v1
-rettilineo + bc_from_olddriver_v1 curva, STEER_GAIN=1.8/ACCEL=1.40/BRAKE=0.80,
-soglie 44/22 m su track[9], 121.978s — commit `62fe930`). Il 2026-07-15
-(commit `0d3c7b8`) `_DRIVER.driver.BCDriver` è stato sostituito dal modello
-singolo `bc_tita_v20` (111.986s, STEER_GAIN=1.0): il residual, se sommato a
-quella base nuova, corregge un comportamento diverso da quello su cui è stato
-addestrato — mai validato.
+`drivers/rl/models/sac_corkscrew_residual.zip` (127.07s/0% off-track) è stato
+addestrato quando `_DRIVER.driver.BCDriver` era ancora questo blend a due reti
+(bc_from_attempt1_v1 rettilineo + bc_from_olddriver_v1 curva, STEER_GAIN=1.8/
+ACCEL=1.40/BRAKE=0.80, soglie 44/22 m su track[9], 121.978s, commit `62fe930`).
+BCDriver è poi diventato `bc_tita_v20` e oggi `cem_v5`: sommare il residuo a
+uno di quei modelli correggerebbe un comportamento mai validato.
 
-Questa classe replica esattamente il vecchio `BCDriver` così com'era
-nell'ultimo commit prima della promozione (`git show 62fe930:_DRIVER/driver.py`),
-per ridare al residual la base su cui è stato effettivamente addestrato. NON è
-il driver di produzione (quello, dal 2026-07-19, è `_DRIVER.driver.BCDriver` =
-cem_v5, dopo bc_tita_v20 dal 2026-07-15 al 2026-07-19) e non va evoluta: è
-congelata di proposito, esiste solo per rendere riproducibile il checkpoint
-residual esistente.
-
-I pesi (`_DRIVER/models/bc_from_attempt1_v1.*`, `bc_from_olddriver_v1.*`) sono
-tenuti nel repo apposta per questo rollback.
+Questa classe replica esattamente `git show 62fe930:_DRIVER/driver.py`, per
+ridare al residual la base su cui è stato davvero addestrato. Non è il driver
+principale e non va evoluta: è congelata apposta, serve solo a rendere
+riproducibile il checkpoint residual esistente. I pesi
+(`_DRIVER/models/bc_from_attempt1_v1.*`, `bc_from_olddriver_v1.*`) restano nel
+repo per questo.
 """
 
 from __future__ import annotations
@@ -42,8 +33,8 @@ from torcs_env.sensors import SensorState
 class LegacyBlendBCDriver:
     """Driver BC ibrido legacy: fonde due modelli in base al contesto pista.
 
-    - straight_model: bc_from_attempt1_v1 — migliore in rettilineo
-    - corner_model:   bc_from_olddriver_v1 — migliore in curva
+    - straight_model: bc_from_attempt1_v1, migliore in rettilineo
+    - corner_model:   bc_from_olddriver_v1, migliore in curva
 
     Il peso di blend dipende da track[9] (sensore di distanza frontale):
       - track[9] > STRAIGHT_THRESHOLD → modello rettilineo puro
@@ -55,8 +46,8 @@ class LegacyBlendBCDriver:
     ACCEL_GAIN = 1.40
     BRAKE_GAIN = 0.80
 
-    STRAIGHT_THRESHOLD = 44.0  # m — sopra: modello rettilineo puro
-    CORNER_THRESHOLD = 22.0  # m — sotto: modello curva puro
+    STRAIGHT_THRESHOLD = 44.0  # m (sopra: modello rettilineo puro)
+    CORNER_THRESHOLD = 22.0  # m (sotto: modello curva puro)
 
     STARTUP_STEPS = STARTUP_STEPS
 

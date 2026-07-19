@@ -6,7 +6,7 @@ Panoramica del protocollo
      SCR(init -45 -38 -30 -22 -15 -10 -6 -3 -1 0 1 3 6 10 15 22 30 38 45)
    I numeri sono gli angoli dei rangefinder in gradi.
 
-2. Il server risponde con una stringa di sensori ad ogni step di simulazione (~20 ms, 50 step/s).
+2. Il server risponde con una stringa di sensori ad ogni step di simulazione (20 ms circa, 50 step/s).
 
 3. Il client risponde con una stringa di controllo:
      (accel X)(brake X)(steer X)(gear X)(clutch X)(meta X)
@@ -145,7 +145,7 @@ class TORCSClient:
                     "TORCS reset the connection (WinError 10054). "
                     "The SCR server likely timed out waiting for the client. "
                     "Ensure the driver connects and sends the first action before "
-                    "TORCS's SCR timeouts fire (~2-3 s pre-connection, ~2.85 s per-action)."
+                    "TORCS's SCR timeouts fire (about 2-3 s pre-connection, about 2.85 s per-action)."
                 ) from exc
             except socket.timeout:
                 if attempt == self.max_reconnect_attempts:
@@ -193,7 +193,7 @@ class TORCSClient:
     def _update_lap(self, dist_raced: float) -> int:
         """Incrementa il contatore giri quando distRaced si resetta (inizia un nuovo giro)."""
         if dist_raced < self._prev_dist_raced - 100.0:
-            # distRaced è calato — il server lo ha resettato per il nuovo giro
+            # distRaced è calato: il server lo ha resettato per il nuovo giro
             self._lap += 1
         self._prev_dist_raced = dist_raced
         return self._lap

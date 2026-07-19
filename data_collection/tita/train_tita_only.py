@@ -101,7 +101,7 @@ def main() -> None:
     dataset = TensorDataset(X_tensor, Y_tensor)
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
-    # NOTA (audit 2026-07-17): split casuale su telemetria sequenziale a 50 Hz —
+    # NOTA : split casuale su telemetria sequenziale a 50 Hz:
     # frame adiacenti quasi identici finiscono uno in train e uno in val, quindi la
     # val_loss è ottimistica (leakage temporale). Uno split per giro/sessione sarebbe
     # più rigoroso; la validazione decisiva resta comunque quella in pista.

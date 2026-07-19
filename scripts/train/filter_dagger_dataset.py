@@ -3,14 +3,14 @@ del training BC.
 
 Due passi:
 1. Rimuove le righe "degenerate": fuori pista (|trackPos| > 1.0) OPPURE quasi
-   ferme (speed < 5 km/h) — unione dei due criteri, non solo trackPos, perché
-   la coda "fermo al muro" satura anche righe ancora on-track a v~0 prima di
-   uscire fisicamente dai bordi.
+   ferme (speed < 5 km/h), unione dei due criteri, non solo trackPos, perché
+   la coda "fermo al muro" satura anche righe ancora on-track a velocità quasi
+   zero prima di uscire fisicamente dai bordi.
 2. Su quanto resta, comprime le sequenze quasi-identiche consecutive (stesso
    stato/azione ripetuto per molti tick, tipico di micro-recovery in curva)
    a un tetto di MAX_PER_SEGMENT campioni per segmento, per non far dominare
-   il gradiente di training con lo stesso istante ripetuto migliaia di volte
-   — senza però buttare via il segnale di recovery del tutto.
+   il gradiente di training con lo stesso istante ripetuto migliaia di volte,
+   senza però buttare via il segnale di recovery del tutto.
 
 Input: uno o più CSV prodotti da record_dagger.py (colonne feat_0..feat_25 +
 oracle_steer/accel/brake + rollout_* + lap/distFromStart).

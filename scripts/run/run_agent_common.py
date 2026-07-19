@@ -1,8 +1,7 @@
-"""Loop condiviso da scripts/run/run_agent.py e scripts/run/run_agent_rl.py.
+"""Loop condiviso da scripts/run/run_agent.py per tutti i driver (via --driver).
 
 receive/step/send, logging di stato periodico, telemetria opzionale su CSV,
-e salvataggio del JSON di risultati — logica identica prima duplicata nei
-due script, cambiava solo quale classe driver veniva istanziata.
+e salvataggio del JSON di risultati.
 """
 
 from __future__ import annotations
@@ -20,7 +19,7 @@ from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-STATUS_EVERY = 50  # una riga di stato per ogni secondo simulato (~50 step/s)
+STATUS_EVERY = 50  # una riga di stato per ogni secondo simulato (50 step/s circa)
 
 
 def run_driver(
@@ -113,12 +112,12 @@ def run_driver(
                 lap_at_last_record = state.lap
                 logger.info("Lap %d completed in %.3f s", lap_count, state.lastLapTime)
                 if lap_count >= laps:
-                    # NON forzare uno shutdown meta=2 — interromperebbe la
+                    # NON forzare uno shutdown meta=2: interromperebbe la
                     # sessione prima che TORCS possa mostrare la schermata dei
                     # risultati del giro. Per una gara a giri limitati TORCS
                     # termina naturalmente una volta tagliato il traguardo;
                     # basta smettere di guidare e lasciare che mostri i risultati.
-                    logger.info("Target laps reached — releasing control to TORCS.")
+                    logger.info("Target laps reached, releasing control to TORCS.")
                     break
 
     off_track_pct = (off_track_steps / max(total_steps, 1)) * 100.0

@@ -18,21 +18,10 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 LEDGER_PATH = PROJECT_ROOT / "laptime_ledger.csv"
 LEDGER_FIELDS = [
-    "config_id", "git_sha",
+    "config_id",
     "best_lap_s", "median_lap_s", "top_speed_kmh",
     "off_track_pct", "damage", "valid", "notes",
 ]
-
-
-def _git_sha() -> str:
-    try:
-        r = subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
-            capture_output=True, text=True, cwd=PROJECT_ROOT,
-        )
-        return r.stdout.strip()
-    except Exception:
-        return "unknown"
 
 
 def _run_race(laps: int) -> dict:
@@ -53,7 +42,7 @@ def _run_race(laps: int) -> dict:
     ]
     if not candidates:
         raise RuntimeError(
-            f"No results JSON newer than race start found in {results_dir} — race may have failed silently"
+            f"No results JSON newer than race start found in {results_dir}; race may have failed silently"
         )
     newest = max(candidates, key=lambda p: p.stat().st_mtime)
     return json.loads(newest.read_text())
@@ -100,7 +89,7 @@ def main() -> None:
         max_speed = max(max_speed, r.get("max_speed_kmh", 0.0))
         off_track_pct = max(off_track_pct, r.get("off_track_pct", 0.0))
         if "damage" not in r:
-            print("  Warning: 'damage' not present in results JSON — assuming 0.0")
+            print("  Warning: 'damage' not present in results JSON, assuming 0.0")
         damage_total = max(damage_total, r.get("damage", 0.0))
 
     valid_times = [t for t in all_lap_times if t > 0]
@@ -110,7 +99,6 @@ def main() -> None:
 
     row = {
         "config_id": config_id,
-        "git_sha": _git_sha(),
         "best_lap_s": f"{best:.3f}" if best else "",
         "median_lap_s": f"{med:.3f}" if med else "",
         "top_speed_kmh": f"{max_speed:.2f}",

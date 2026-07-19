@@ -8,9 +8,7 @@ Usage:
     conda run -n ai_env python _DRIVER/bc_source_driver/run_attempt_model.py
 
     # Secondo: aumentare i dati per una guida più aggressiva
-    # NOTA: lo script scripts/augment_speed.py citato qui storicamente non esiste
-    # più in questo repo (rimosso). L'equivalente attuale per preparare/aumentare
-    # dati di training è scripts/train/prepare_training_data.py.
+    # (nota: augment_speed.py non esiste più, vedi scripts/train/prepare_training_data.py)
     conda run -n ai_env python scripts/augment_speed.py \\
         --input data/attempt_model_20260629_*.csv \\
         --output data/attempt_model_augmented_20260629_*.csv
@@ -103,11 +101,8 @@ def main():
     df_original = load_csv_files(args.original)
     df_augmented = load_csv_files(args.augmented)
 
-    # Combina i dataset: l'80% campionato dal dataset originale e il 20%
-    # campionato dal dataset aumentato (frazioni prese DA CIASCUN dataset
-    # separatamente, non proporzioni della miscela finale — es. con dataset
-    # di pari dimensione il risultato è ~80% righe originali e ~20% righe
-    # aumentate, ma non è garantito in generale).
+    # 80% campionato dall'originale + 20% dall'aumentato (frazioni di ciascun
+    # dataset separatamente, non della miscela finale).
     df_combined = pd.concat([
         df_original.sample(frac=0.8, random_state=42),
         df_augmented.sample(frac=0.2, random_state=42),
@@ -142,7 +137,7 @@ def main():
     dataset = TensorDataset(X_tensor, Y_tensor)
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
-    # NOTA (audit 2026-07-17): split casuale su telemetria sequenziale a 50 Hz —
+    # NOTA : split casuale su telemetria sequenziale a 50 Hz:
     # frame adiacenti quasi identici finiscono uno in train e uno in val, quindi la
     # val_loss è ottimistica (leakage temporale). Uno split per giro/sessione sarebbe
     # più rigoroso; la validazione decisiva resta comunque quella in pista.

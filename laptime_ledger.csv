@@ -1,22 +1,22 @@
-config_id,git_sha,best_lap_s,median_lap_s,top_speed_kmh,off_track_pct,damage,valid,notes
-baseline_rule_based,5863559,151.688,151.688,166.83,0.0,0,true,baseline prima di qualunque ottimizzazione
-phase_b_abs_higher_brakes,5863559,148.448,148.448,172.11,0.0,0,true,ABS + BRAKE_MAX alzato a 0.82/0.88/0.93 per regime di velocità
-bc_hybrid_attempt1_olddriver,bcfe1f9,125.790,,199.0,0,0,true,BC ibrido: bc_from_attempt1_v1 (rettilineo) + bc_from_olddriver_v1 (curva)
-bc_hybrid_tighter_blend,24ab766,121.978,121.978,199.6,0.0,0,true,Soglie di blend ristrette 120→44/60→22 m; tuning gain provato e sempre peggiorativo
-bc_selfdistill_v1_single_model,2835541,,,unknown,unknown,0,false,"Self-distillation modello singolo: schiantato ~t=111s, nessun esempio di recupero — non adottato"
-rl_residual_bc_base_sac,pending,127.070,127.070,197.32,0.0,0,true,"Residual RL (base BC + correzione SAC): completa il giro, 0% fuori pista, ~4% più lento di bc — non promosso"
-rl_direct_bc_warmstart_finetune,pending,,,156.66,90.5,0,false,"Fine-tune diretto (warm-start olddriver, refined_v2, non residual): collassato a episodio 13, 90.5% fuori pista — inutilizzabile"
-rl_direct_bc_warmstart_finetune_v2_fixed_entcoef,pending,143.244,143.244,156.21,0.0,0,true,"Come sopra con ent_coef fisso 0.02: stabile ma 143.244s, più lento di bc e residual — non promosso"
-rl_direct_sac_9_variants_all_failed,pending,,,,,,false,9 varianti SAC dirette (reward/ent_coef/lr diversi): tutte instabili al via del gradiente attore; migliore 129.684s — abbandonato per CEM
-cem_v1_hybrid_blackbox,pending,116.870,116.870,199.2,0.0,0,true,"CEM v1: policy ibrida rettilineo/curva, ottimizzazione black-box sui pesi bc; 116.870s, 0% fuori pista — batte bc"
-cem_v2_hybrid_blackbox,pending,111.788,111.788,195.73,0.0,0,true,"CEM v2 (resume da v1): 111.788s, 0% fuori pista — nuovo record"
-cem_v3_attempt1_REJECTED,pending,112.564,112.564,187.38,5.41,0,false,"CEM v3 tentativo 1: fitness training -107.94, ma valutazione reale 112.564s/5.41% fuori pista — rigettato (mismatch training/eval)"
-cem_v3_attempt2_hybrid_blackbox,pending,109.010,109.010,189.1,0.5,0,true,"CEM v3 tentativo 2: 109.010s, 0.5% fuori pista — nuovo record"
-cem_v4_attempt1_REJECTED,pending,,,186.54,70.66,1.0,false,"CEM v4 tentativo 1: fitness -104.45, valutazione reale 0 giri/70.66% fuori pista/danno 1.0 — rigettato"
-cem_v4_attempt2_REJECTED,pending,,,186.54,70.76,1.0,false,CEM v4 tentativo 2: stesso fallimento (70.76% fuori pista) — rigettato; aggiunta doppia verifica a train_cem.py
-cem_v4_hybrid_blackbox,pending,108.000,108.000,187.48,0.0,0,true,"CEM v4 tentativo 3 (con doppia verifica): 108.000s, 0% fuori pista — nuovo record"
-cem_v5_attempt1_REJECTED,pending,109.272,109.272,190.53,0.0,0,false,"CEM v5 tentativo 1: 109.272s, più lento di v4 — rigettato"
-cem_v5_attempt2_REJECTED,pending,109.984,109.984,187.48,4.1,0,false,"CEM v5 tentativo 2: 109.984s, 4.1% fuori pista — rigettato"
-cem_v5_hybrid_blackbox,pending,105.812,105.812,187.06,0.0,0,true,"CEM v5 tentativo 3 (sigma più piccolo): 105.812s, 0% fuori pista — nuovo record assoluto"
-bc_tita_v20_promoted_to_production,1628a05,111.986,112.728,208.05,0.0,0,true,"Clone BC di tita (DLL proxy) + 8 round DAgger: 111.986s, 0% fuori pista — promosso a _DRIVER/driver.py, batte il blend di 12.3s"
-cem_v5_promoted_to_production,f960be7,105.812,105.812,187.06,0.0,0,true,cem_v5 promosso a _DRIVER/driver.py al posto di bc_tita_v20: 105.812s vs 114.02s in confronto diretto; affidabilità inferiore nota (1 uscita di pista su 4 run) — rollback disponibile in _DRIVER/models/
+config_id,best_lap_s,median_lap_s,top_speed_kmh,off_track_pct,damage,valid,notes
+baseline_rule_based,151.688,151.688,166.83,0.0,0,true,baseline prima di qualunque ottimizzazione
+phase_b_abs_higher_brakes,148.448,148.448,172.11,0.0,0,true,ABS + BRAKE_MAX alzato a 0.82/0.88/0.93 per regime di velocità
+bc_hybrid_attempt1_olddriver,125.790,,199.0,0,0,true,BC ibrido: bc_from_attempt1_v1 (rettilineo) + bc_from_olddriver_v1 (curva)
+bc_hybrid_tighter_blend,121.978,121.978,199.6,0.0,0,true,Soglie di blend ristrette 120→44/60→22 m; tuning gain provato e sempre peggiorativo
+bc_selfdistill_v1_single_model,,,unknown,unknown,0,false,"Self-distillation modello singolo: schiantato ~t=111s, nessun esempio di recupero — non adottato"
+rl_residual_bc_base_sac,127.070,127.070,197.32,0.0,0,true,"Residual RL (base BC + correzione SAC): completa il giro, 0% fuori pista, ~4% più lento di bc — non promosso"
+rl_direct_bc_warmstart_finetune,,,156.66,90.5,0,false,"Fine-tune diretto (warm-start olddriver, refined_v2, non residual): collassato a episodio 13, 90.5% fuori pista — inutilizzabile"
+rl_direct_bc_warmstart_finetune_v2_fixed_entcoef,143.244,143.244,156.21,0.0,0,true,"Come sopra con ent_coef fisso 0.02: stabile ma 143.244s, più lento di bc e residual — non promosso"
+rl_direct_sac_9_variants_all_failed,,,,,,false,9 varianti SAC dirette (reward/ent_coef/lr diversi): tutte instabili al via del gradiente attore; migliore 129.684s — abbandonato per CEM
+cem_v1_hybrid_blackbox,116.870,116.870,199.2,0.0,0,true,"CEM v1: policy ibrida rettilineo/curva, ottimizzazione black-box sui pesi bc; 116.870s, 0% fuori pista — batte bc"
+cem_v2_hybrid_blackbox,111.788,111.788,195.73,0.0,0,true,"CEM v2 (resume da v1): 111.788s, 0% fuori pista — nuovo record"
+cem_v3_attempt1_REJECTED,112.564,112.564,187.38,5.41,0,false,"CEM v3 tentativo 1: fitness training -107.94, ma valutazione reale 112.564s/5.41% fuori pista — rigettato (mismatch training/eval)"
+cem_v3_attempt2_hybrid_blackbox,109.010,109.010,189.1,0.5,0,true,"CEM v3 tentativo 2: 109.010s, 0.5% fuori pista — nuovo record"
+cem_v4_attempt1_REJECTED,,,186.54,70.66,1.0,false,"CEM v4 tentativo 1: fitness -104.45, valutazione reale 0 giri/70.66% fuori pista/danno 1.0 — rigettato"
+cem_v4_attempt2_REJECTED,,,186.54,70.76,1.0,false,CEM v4 tentativo 2: stesso fallimento (70.76% fuori pista) — rigettato; aggiunta doppia verifica a train_cem.py
+cem_v4_hybrid_blackbox,108.000,108.000,187.48,0.0,0,true,"CEM v4 tentativo 3 (con doppia verifica): 108.000s, 0% fuori pista — nuovo record"
+cem_v5_attempt1_REJECTED,109.272,109.272,190.53,0.0,0,false,"CEM v5 tentativo 1: 109.272s, più lento di v4 — rigettato"
+cem_v5_attempt2_REJECTED,109.984,109.984,187.48,4.1,0,false,"CEM v5 tentativo 2: 109.984s, 4.1% fuori pista — rigettato"
+cem_v5_hybrid_blackbox,105.812,105.812,187.06,0.0,0,true,"CEM v5 tentativo 3 (sigma più piccolo): 105.812s, 0% fuori pista — nuovo record assoluto"
+bc_tita_v20_promoted_to_production,111.986,112.728,208.05,0.0,0,true,"Clone BC di tita (DLL proxy) + 8 round DAgger: 111.986s, 0% fuori pista — promosso a _DRIVER/driver.py, batte il blend di 12.3s"
+cem_v5_promoted_to_production,105.812,105.812,187.06,0.0,0,true,cem_v5 promosso a _DRIVER/driver.py al posto di bc_tita_v20: 105.812s vs 114.02s in confronto diretto; affidabilità inferiore nota (1 uscita di pista su 4 run) — rollback disponibile in _DRIVER/models/

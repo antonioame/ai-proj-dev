@@ -1,9 +1,8 @@
-"""Loop di valutazione condiviso da tutti gli scripts/evaluate*.py.
+"""Loop di valutazione condiviso da scripts/eval/evaluate.py (tutti i driver,
+via --driver) e da data_collection/tita/evaluate_tita_candidate.py.
 
 receive/step/send, rilevamento tempo giro, percentuale fuori pista, e salvataggio
-del JSON di risultati — logica identica prima duplicata in evaluate.py,
-evaluate_cem.py, evaluate_bc_dagger.py ed evaluate_rl.py, cambiava solo quale
-classe driver veniva istanziata.
+del JSON di risultati.
 """
 
 from __future__ import annotations
@@ -37,11 +36,9 @@ def run_eval_loop(
     total_steps = 0
     max_damage = 0.0
     lap_count = 0
-    # Giro (state.lap) al momento dell'ultima registrazione in lap_times: usato
-    # come guard anti-doppio-conteggio e per rilevare un nuovo giro anche
-    # quando lastLapTime è identico al giro precedente (simulazione
-    # deterministica a parità di codice: due giri consecutivi possono avere
-    # lo stesso tempo al millesimo, e il solo confronto sul tempo non lo vedrebbe).
+    # state.lap all'ultima registrazione: la simulazione è deterministica, quindi
+    # due giri consecutivi possono avere lo stesso lastLapTime al millesimo, e
+    # serve questo contatore (non solo il confronto sul tempo) per non perderli.
     lap_at_last_record = 0
     aborted_no_lap = False
 
@@ -73,11 +70,6 @@ def run_eval_loop(
             if abs(state.trackPos) > 1.0:
                 off_track_steps += 1
 
-            # Rileva un nuovo giro completato. Non basta confrontare lastLapTime:
-            # la simulazione è deterministica a parità di codice, quindi due giri
-            # consecutivi possono avere lo stesso tempo al millesimo — in quel
-            # caso serve il contatore state.lap (derivato dai reset di distRaced)
-            # per accorgersi comunque che è iniziato un nuovo giro.
             if state.lastLapTime > 0 and (
                 not lap_times
                 or state.lastLapTime != lap_times[-1]

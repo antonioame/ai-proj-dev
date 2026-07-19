@@ -48,7 +48,7 @@ def main() -> None:
                 lap_times.append(state.lastLapTime)
                 print(f"Lap {len(lap_times)} completed in {state.lastLapTime:.3f} s")
                 if len(lap_times) >= args.laps:
-                    print("Target laps reached — releasing control to TORCS.")
+                    print("Target laps reached, releasing control to TORCS.")
                     break
 
 

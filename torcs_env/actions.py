@@ -10,16 +10,16 @@ class Action:
     # Sterzo: -1 (tutto a destra) a +1 (tutto a sinistra)
     steer: float = 0.0
 
-    # Acceleratore: 0–1
+    # Acceleratore: 0-1
     accel: float = 0.0
 
-    # Freno: 0–1
+    # Freno: 0-1
     brake: float = 0.0
 
-    # Marcia: -1 (retromarcia), 0 (folle), 1–6
+    # Marcia: -1 (retromarcia), 0 (folle), 1-6
     gear: int = 1
 
-    # Frizione: 0–1
+    # Frizione: 0-1
     clutch: float = 0.0
 
     # Meta opzionale: richiede il restart della gara o lo shutdown del client

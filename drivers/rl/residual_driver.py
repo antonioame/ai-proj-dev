@@ -1,29 +1,18 @@
-"""Driver RL residual — il driver BC legacy funzionante più una correzione
-appresa e limitata.
+"""Driver RL residual: il driver BC legacy funzionante più una correzione
+appresa e limitata. Rispecchia per la guida dal vivo il ResidualTorcsSacEnv
+usato in training: l'azione di base arriva da `LegacyBlendBCDriver` (blend
+legacy rettilineo/curva, 121.978s), e la policy SAC aggiunge un piccolo
+residuo (scalato da RESIDUAL_SCALE) su steer/accel/brake. Stessa interfaccia
+step() di BCDriver/RLDriver, quindi scripts/eval/evaluate.py --driver rl --residual
+e scripts/run/run_agent.py --driver rl --residual possono usarlo come sostituto diretto.
 
-Rispecchia per la guida dal vivo il ResidualTorcsSacEnv usato in fase di
-training: l'azione di base arriva da `LegacyBlendBCDriver` (blend legacy
-rettilineo/curva, 121.978s), e la policy SAC aggiunge un piccolo residuo
-(scalato da RESIDUAL_SCALE) su steer/accel/brake. Stessa interfaccia step()
-di BCDriver/RLDriver, quindi scripts/eval/evaluate_rl.py --residual e
-scripts/run/run_agent_rl.py possono usarlo come sostituto diretto.
+La base resta `LegacyBlendBCDriver`, non l'attuale `_DRIVER.driver.BCDriver`
+(oggi cem_v5): il checkpoint `sac_corkscrew_residual.zip` ha imparato il
+residuo sopra al comportamento del blend legacy, quindi cambiare base
+invaliderebbe il checkpoint. Statistiche di normalizzazione
+(`bc_from_olddriver_v1.npz`) e RESIDUAL_SCALE/RESIDUAL_L2_COEF invariati
+rispetto al training originale.
 
-Nota sulla base: il checkpoint `sac_corkscrew_residual.zip` è stato
-addestrato quando `_DRIVER.driver.BCDriver` era ancora il blend a due reti
-qui sopra descritto. Il 2026-07-15 `_DRIVER.driver.BCDriver` è stato
-sostituito dal modello singolo `bc_tita_v20` (111.986s), e il 2026-07-19 di
-nuovo da un checkpoint CEM (`cem_v5`, 105.812s, drivers/cem/driver.py) —
-usare uno di questi come base qui invaliderebbe il checkpoint esistente,
-perché il residuo è stato appreso sopra al comportamento del blend legacy,
-non su quello dei driver successivi. Per questo la base resta
-`LegacyBlendBCDriver` (vedi drivers/rl/legacy_bc_blend.py) e non il
-`BCDriver` di produzione. Le statistiche di normalizzazione dell'osservazione
-SAC (`bc_from_olddriver_v1.npz`) e RESIDUAL_SCALE/RESIDUAL_L2_COEF restano
-invariati rispetto al training originale.
-
-La ri-valutazione in pista (`scripts/eval/evaluate_rl.py --residual`) resta da
-fare per riconfermare i 127.07s/0% off-track documentati con questa base
-corretta — non eseguibile in questa sessione (nessun TORCS in esecuzione).
 """
 
 from __future__ import annotations

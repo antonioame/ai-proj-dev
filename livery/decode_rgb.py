@@ -1,10 +1,10 @@
 """Debug: decodifica e ispeziona i file RGB delle livree.
 
 NOTA: nonostante i nomi storici parlino di "Radiance", il magic number
-verificato qui (0x01DA) è quello del formato SGI RGB — il vero formato delle
+verificato qui (0x01DA) è quello del formato SGI RGB: il vero formato delle
 texture di gioco. Il formato
 Radiance apparteneva a una livrea precedente (car1-stock1) ormai rimossa:
-questo script è di fatto un residuo storico, candidato alla rimozione —
+questo script è di fatto un residuo storico, candidato alla rimozione:
 l'utilità di ispezione attuale è livery/decode_sgi.py.
 """
 

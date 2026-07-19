@@ -2,15 +2,14 @@
 
 Carica un unico modello BCPolicy addestrato su dataset originale + DAgger
 filtrato (scripts/train/train_bc_dagger.py). Stessa interfaccia step()/
-on_restart() degli altri driver, così scripts/eval/evaluate_bc_dagger.py può
-sostituirlo direttamente senza toccare scripts/eval/evaluate.py.
+on_restart() degli altri driver, così scripts/eval/evaluate.py --driver bc_dagger
+può sostituirlo direttamente.
 
 Guadagni post-hoc e logica di avvio/cambio marcia identici al BCDriver
-dell'epoca in cui bc_dagger_v1 è stato addestrato (il blend pre-2026-07-15:
+dell'epoca in cui bc_dagger_v1 è stato addestrato (il blend :
 STEER_GAIN=1.8/ACCEL=1.40/BRAKE=0.80/STARTUP_STEPS=80), per un confronto equo
-a parità di pipeline di controllo. Nota: il BCDriver di produzione è cambiato
-due volte da allora (bc_tita_v20, modello singolo STEER_GAIN=1.0, dal
-2026-07-15; poi cem_v5, dal 2026-07-19) — i valori qui NON vanno allineati a
+a parità di pipeline di controllo. Nota: il BCDriver principale è cambiato
+da allora (bc_tita_v20 e poi cem_v5), i valori qui NON vanno allineati a
 nessuno dei due, sono legati a questo checkpoint.
 """
 

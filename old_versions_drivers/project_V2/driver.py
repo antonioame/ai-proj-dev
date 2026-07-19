@@ -26,13 +26,13 @@ STEER_LOCK: float = 0.785398  # 45° in radianti
 #
 #   physics_safe(d) = sqrt(max(0, (d - BRAKE_MARGIN) * BRAKE_DECEL_FACTOR))
 #
-# BRAKE_DECEL_FACTOR calibrato per questo simulatore: dà ~1 g di decelerazione.
-BRAKE_DECEL_FACTOR: float = 270.0   # ~1.05 g; riflette pressione freno più alta con ABS (era 255)
+# BRAKE_DECEL_FACTOR calibrato per questo simulatore: dà circa 1 g di decelerazione.
+BRAKE_DECEL_FACTOR: float = 270.0   # 1.05 g circa; riflette pressione freno più alta con ABS (era 255)
 BRAKE_MARGIN: float = 5.0           # metri di margine di sicurezza nella formula di arresto
 TARGET_PHYSICS_SCALE: float = 1.20  # target = physics_safe × questo → fisica vincola
 MAX_SPEED: float = 200.0            # limite assoluto (km/h)
 
-# Limitatori di velocità ai margini — intervengono solo quando si sbanda vicino al limite assoluto
+# Limitatori di velocità ai margini: intervengono solo quando si sbanda vicino al limite assoluto
 EDGE_SPEED_SOFT: tuple[float, float] = (0.75, 140.0)
 EDGE_SPEED_HARD: tuple[float, float] = (0.88, 100.0)
 
@@ -40,8 +40,8 @@ EDGE_SPEED_HARD: tuple[float, float] = (0.88, 100.0)
 # Modello frenata
 # ---------------------------------------------------------------------------
 # Pressione freno massima per regime di velocità (ABS consente valori più alti in sicurezza)
-BRAKE_MAX_HIGH: float = 0.82   # > 140 km/h   (era 0.65 — ABS previene lockup)
-BRAKE_MAX_MED:  float = 0.88   # 90–140 km/h  (era 0.78)
+BRAKE_MAX_HIGH: float = 0.82   # > 140 km/h   (era 0.65, ABS previene lockup)
+BRAKE_MAX_MED:  float = 0.88   # 90-140 km/h  (era 0.78)
 BRAKE_MAX_LOW:  float = 0.93   # < 90 km/h    (era 0.90)
 
 # Distribuzione della forza di frenata elettronica: ridotta durante curva
@@ -72,13 +72,13 @@ THROTTLE_MAX_INTEGRAL: float = 1.0
 # Controllo trazione (TCS)
 # ---------------------------------------------------------------------------
 TCS_STEER_THRESH: float = 0.18
-TCS_GAIN_LOW_GEAR: float = 1.45  # marce 1–2
+TCS_GAIN_LOW_GEAR: float = 1.45  # marce 1-2
 TCS_GAIN_MID_GEAR: float = 1.20  # marcia 3
 TCS_GAIN_HIGH_GEAR: float = 0.70 # marce 4+
 TCS_MIN_ACCEL: float = 0.25
 
 # TCS pattinamento ruota
-WHEEL_RADIUS: float = 0.33        # m — raggio pneumatico TORCS approssimativo
+WHEEL_RADIUS: float = 0.33        # m, raggio pneumatico TORCS approssimativo
 TCS_SLIP_THRESHOLD: float = 1.25  # spin posteriore / atteso > questo attiva riduzione
 TCS_SLIP_GAIN: float = 3.0
 
@@ -104,7 +104,7 @@ GEAR_SPEED_CAPS: list[tuple[float, int]] = [
 # ---------------------------------------------------------------------------
 # Ricerca apice: distorci target posizione tracciato verso interno curva
 # ---------------------------------------------------------------------------
-# La curvatura è stimata dall'asimmetria delle coppie di sensori ±15°–30°:
+# La curvatura è stimata dall'asimmetria delle coppie di sensori ±15°-30°:
 #   curvatura = (left_avg − right_avg) / (left_avg + right_avg)
 # Curvatura positiva → tracciato curva a destra → target trackPos negativo (interno).
 CURVE_TRACKPOS_GAIN: float = 0.30   # scala da curvatura a offset trackPos
@@ -203,11 +203,11 @@ class RuleBasedDriver:
         return steer
 
     # ------------------------------------------------------------------
-    # Distanza frontale — usata sia per il target di velocità sia per gas/freno
+    # Distanza frontale, usata sia per il target di velocità sia per gas/freno
     # ------------------------------------------------------------------
 
     def _fwd_dist(self, state: SensorState) -> float:
-        """Minimo dei sensori 7–11 (≈ ±1–3°): il settore frontale più stretto.
+        """Minimo dei sensori 7-11 (circa ±1-3°): il settore frontale più stretto.
 
         Usare il minimo significa che ogni sensore centrale deve vedere strada
         libera prima di considerare il percorso aperto; il massimo dell'arco
@@ -221,7 +221,7 @@ class RuleBasedDriver:
         return min(sensors[7:12])
 
     # ------------------------------------------------------------------
-    # Target di velocità — basato sulla fisica, mai limitato da tabelle di ricerca
+    # Target di velocità: basato sulla fisica, mai limitato da tabelle di ricerca
     # ------------------------------------------------------------------
 
     def _target_speed(self, state: SensorState, fwd_dist: float) -> float:
@@ -230,7 +230,7 @@ class RuleBasedDriver:
         L'equilibrio fisico è la velocità alla quale la distanza di arresto
         eguaglia esattamente fwd_dist. Impostare il target sopra l'equilibrio
         significa che è sempre la frenata (non la tabella) a limitare la
-        velocità in curva — e non ci sono discontinuità a scalino tra i
+        velocità in curva, e non ci sono discontinuità a scalino tra i
         breakpoint.
         """
         target = min(MAX_SPEED, _physics_safe_speed(fwd_dist) * TARGET_PHYSICS_SCALE)
@@ -258,7 +258,7 @@ class RuleBasedDriver:
         speed = state.speed
         stopping_dist = speed * speed / BRAKE_DECEL_FACTOR + BRAKE_MARGIN
 
-        # PRIORITÀ 1 — Frena quando il muro è entro la distanza di arresto E siamo
+        # PRIORITÀ 1. Frena quando il muro è entro la distanza di arresto E siamo
         # sopra la velocità fisicamente sicura per quella distanza.
         if fwd_dist < stopping_dist and speed > physics_safe:
             diff = speed - physics_safe
@@ -276,7 +276,7 @@ class RuleBasedDriver:
             self._speed_integral = 0.0
             return 0.0, brake
 
-        # PRIORITÀ 2 — Sopra il target ma senza necessità di frenata immediata: in scia.
+        # PRIORITÀ 2. Sopra il target ma senza necessità di frenata immediata: in scia.
         if speed > target:
             diff = speed - target
             self._speed_integral = max(
@@ -285,7 +285,7 @@ class RuleBasedDriver:
             )
             return 0.0, 0.0
 
-        # PRIORITÀ 3 — Sotto il target e strada libera: a tavoletta.
+        # PRIORITÀ 3. Sotto il target e strada libera: a tavoletta.
         if fwd_dist >= FULL_THROTTLE_LOOKAHEAD:
             self._speed_integral = min(
                 THROTTLE_MAX_INTEGRAL,
@@ -293,7 +293,7 @@ class RuleBasedDriver:
             )
             return 1.0, 0.0
 
-        # PRIORITÀ 4 — Sotto il target ma curva in vista: gas proporzionale + integrale.
+        # PRIORITÀ 4. Sotto il target ma curva in vista: gas proporzionale + integrale.
         error = target - speed
         self._speed_integral = max(
             -THROTTLE_MAX_INTEGRAL,

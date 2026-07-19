@@ -1,27 +1,20 @@
-"""Utility di warm-start BC -> SAC (REINFORCEMENT_LEARNING.md Sezione 6.1).
+"""Utility di warm-start BC -> SAC.
 
-NOTA STORICA: la descrizione che segue si riferisce al BCDriver dell'epoca in
-cui questo warm-start è stato progettato (pre-promozione del 2026-07-15) — il
-BCDriver di produzione è cambiato due volte da allora (bc_tita_v20, modello
-singolo, dal 2026-07-15; cem_v5 dal 2026-07-19), ma il warm-start e i
-checkpoint SAC che ne derivano restano legati ai modelli del blend storico,
-quindi la descrizione resta quella corretta per questo modulo.
+Nota storica: questo modulo descrive il BCDriver poi sostituito, in cui il
+warm-start è stato progettato (pre-promozione bc_tita_v20/cem_v5). Il
+BCDriver principale è cambiato da allora, ma il warm-start e i checkpoint
+SAC che ne derivano restano legati a quei modelli storici.
 
-La "rete addestrata con BC" della Fase 2 era, all'epoca, in realtà una
-fusione ibrida di due modelli addestrati separatamente (il BCDriver di allora
-fondeva bc_from_attempt1_v1 per i rettilinei con bc_from_olddriver_v1
-per le curve, più moltiplicatori di guadagno applicati a posteriori e cambio
-marcia manuale basato su RPM esterno a entrambe le reti; oggi quel blend è
-replicato in drivers/rl/legacy_bc_blend.py). Non esisteva un'unica
-rete da cui trapiantare i pesi come assume la Sezione 6.1.
+Prima il "modello BC" era in realtà un blend di due reti separate
+(bc_from_attempt1_v1 per i rettilinei, bc_from_olddriver_v1 per le curve, più
+gain post-hoc e cambio marcia manuale su RPM, oggi replicato in
+drivers/rl/legacy_bc_blend.py), non un'unica rete da cui trapiantare i pesi.
 
-Decisione (confermata con l'utente il 2026-07-08): fare il warm-start
-dell'attore SAC solo da bc_from_olddriver_v1 (il modello curva) — il più
-generalista dei due. La logica di fusione, i moltiplicatori di guadagno
-STEER/ACCEL/BRAKE e il cambio marcia basato su RPM sono trattati come
-euristiche solo-BC; il fine-tuning RL è libero di reimpararli/sostituirli (il
-cambio marcia resta comunque esterno alla rete in entrambi i casi, gestito
-direttamente da training/rl/torcs_gym_env.py e drivers/rl/driver.py).
+Decisione (confermata con l'utente): warm-start dell'attore SAC solo da
+bc_from_olddriver_v1 (il più generalista dei due). Logica di fusione, gain
+STEER/ACCEL/BRAKE e cambio marcia sono trattati come euristiche solo-BC; il
+fine-tuning RL è libero di reimpararli (il cambio marcia resta comunque
+esterno alla rete, gestito da training/rl/torcs_gym_env.py e drivers/rl/driver.py).
 """
 
 from __future__ import annotations
@@ -56,15 +49,15 @@ def load_bc_backbone_into_actor(model: SAC, bc_checkpoint: Path = DEFAULT_BC_CHE
         head_steer  Linear(64, 1)  ┐
         head_accel  Linear(64, 1)  ├─ impilate -> actor.mu  Linear(64, 3)
         head_brake  Linear(64, 1)  ┘
-        head_gear   Linear(64, 1)    (scartata — la marcia è gestita fuori
+        head_gear   Linear(64, 1)    (scartata, la marcia è gestita fuori
                                        dalla rete; vedi torcs_gym_env.py)
 
     È un adattatore approssimato, non un trasferimento bit-esatto: BC applica
     tanh/sigmoid/sigmoid per ciascuna testa, mentre l'attore SAC di SB3
     comprime sempre `mu` con tanh internamente prima di riscalare ai limiti
-    dello spazio d'azione. Abbastanza vicino per un warm-start — la Sezione
-    6.1 permette esplicitamente "an adapter layer rather than retraining
-    feature extraction from scratch" per questo caso.
+    dello spazio d'azione. Abbastanza vicino per un warm-start: è ammesso usare
+    "an adapter layer rather than retraining feature extraction from scratch"
+    per questo caso.
 
     Richiede che la policy SAC sia stata costruita con policy_kwargs
     net_arch=[128, 64] così le forme di actor.latent_pi/mu combaciano
@@ -96,21 +89,14 @@ def load_bc_backbone_into_actor(model: SAC, bc_checkpoint: Path = DEFAULT_BC_CHE
         actor.mu.weight.copy_(mu_weight)
         actor.mu.bias.copy_(mu_bias)
 
-        # Rumore di esplorazione iniziale modesto e non nullo, invece
-        # dell'inizializzazione casuale di default di SB3 — l'attore parte
-        # vicino alla policy BC deterministica (Sezione 4.2.4: preferire
-        # cambiamenti che non disimparino il comportamento BC sicuro nelle
-        # prime fasi del fine-tuning).
-        #
-        # -1.0 (std≈0.368) si è rivelato tutt'altro che "modesto": su
-        # accel/brake, il cui range valido è [0,1], un sigma di 0.368 copre
-        # oltre un terzo dell'intero spazio d'azione. In 8 run diretti
-        # indipendenti (reward diverse, entropia auto/fissa da 0.02 a 0.08,
-        # learning rate da 3e-4 a 5e-5) la policy degrada sistematicamente
-        # nello stesso identico modo appena l'attore inizia ad aggiornarsi —
-        # sempre a valle di questo stesso rumore iniziale enorme. -2.3
-        # (std≈0.100) è un ordine di grandezza più vicino a un vero rumore di
-        # rifinitura attorno a una policy già buona.
+        # Rumore di esplorazione iniziale piccolo ma non nullo (invece
+        # dell'init casuale di SB3), così l'attore parte vicino alla policy BC
+        # deterministica. -1.0 (std circa 0.368) sembrava già modesto ma non
+        # lo è: su accel/brake (range [0,1]) copre oltre un terzo dello spazio
+        # d'azione, e in 8 run indipendenti (reward/entropia/learning rate
+        # diversi) la policy degradava sempre appena l'attore iniziava ad
+        # aggiornarsi. -2.3 (std circa 0.100) è un ordine di grandezza più
+        # vicino a un vero rumore di rifinitura.
         actor.log_std.weight.zero_()
         actor.log_std.bias.fill_(-2.3)
 
@@ -120,8 +106,8 @@ def load_bc_backbone_into_actor(model: SAC, bc_checkpoint: Path = DEFAULT_BC_CHE
 class WarmStartSAC(SAC):
     """SAC con una finestra di warm-up solo per il critic.
 
-    Sezione 6.1: "Initialize the SAC critic separately (it has no BC
-    equivalent) — a few thousand steps of critic-only warm-up before joint
+    "Initialize the SAC critic separately (it has no BC
+    equivalent): a few thousand steps of critic-only warm-up before joint
     actor-critic updates begin can reduce early instability, since the actor
     starts 'ahead' of an untrained critic."
 

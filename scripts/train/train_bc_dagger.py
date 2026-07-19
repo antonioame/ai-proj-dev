@@ -3,9 +3,9 @@ di telemetria (data/driver_*.csv, driver rule-based) con il dataset DAgger
 filtrato (scripts/train/filter_dagger_dataset.py), che usa lo stesso RuleBasedDriver
 come oracolo durante il rollout del BC driver reale.
 
-Diversamente dal driver in produzione dell'epoca (il blend di due reti
-rettilineo/curva, poi sostituito da bc_tita_v20 il 2026-07-15), qui si
-addestra UN SOLO modello unificato sull'unione dei due dataset —
+Diversamente dal driver principale dell'epoca (il blend di due reti
+rettilineo/curva, poi sostituito da bc_tita_v20), qui si
+addestra UN SOLO modello unificato sull'unione dei due dataset:
 l'architettura BCPolicy (26→128→64, 4 teste) è la stessa.
 
 Non tocca né sovrascrive alcun file esistente: nuovo script, nuovo checkpoint
@@ -13,7 +13,7 @@ in _DRIVER/models/bc_dagger_v1.{pth,npz}.
 
 Nota sui dati originali: le sessioni data/driver_*.csv non hanno tutte le
 colonne speedY/speedZ (aggiunte in una revisione successiva del formato
-sensori) — dove mancano vengono azzerate. Per queste righe la rete vede quindi
+sensori), dove mancano vengono azzerate. Per queste righe la rete vede quindi
 un segnale costante (zero) su quei due canali, un'approssimazione dichiarata,
 non i valori reali.
 
@@ -114,7 +114,7 @@ def main() -> None:
     dataset = TensorDataset(X_tensor, Y_tensor)
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
-    # NOTA (audit 2026-07-17): split casuale su telemetria sequenziale a 50 Hz —
+    # NOTA : split casuale su telemetria sequenziale a 50 Hz:
     # frame adiacenti quasi identici finiscono uno in train e uno in val, quindi la
     # val_loss è ottimistica (leakage temporale). Uno split per giro/sessione sarebbe
     # più rigoroso; la validazione decisiva resta comunque quella in pista.

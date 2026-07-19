@@ -2,7 +2,7 @@
 
 Copre in particolare il caso limite corretto dal fix: la simulazione è
 deterministica a parità di codice, quindi due giri consecutivi possono avere
-lo stesso lastLapTime al millesimo — il conteggio deve comunque accorgersi
+lo stesso lastLapTime al millesimo, il conteggio deve comunque accorgersi
 del nuovo giro grazie al contatore state.lap, senza contare due volte lo
 stesso giro.
 """

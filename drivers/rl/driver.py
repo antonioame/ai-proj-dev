@@ -1,9 +1,9 @@
-"""Driver RL Fase 3 — SAC fine-tuned a partire dal modello BC per le curve.
+"""Driver RL Fase 3: SAC fine-tuned a partire dal modello BC per le curve.
 
 Stessa interfaccia step() di _DRIVER.driver.BCDriver, quindi è intercambiabile
-in scripts/run/run_agent_rl.py / scripts/eval/evaluate_rl.py. Non è il driver
+in scripts/run/run_agent.py --driver rl / scripts/eval/evaluate.py --driver rl. Non è il driver
 attivo/di default: SAC puro (senza base BC) sfrutta tutta l'autorità sul
-reward di velocità e va in reward-hacking — con i checkpoint disponibili
+reward di velocità e va in reward-hacking: con i checkpoint disponibili
 (sac_corkscrew_v1, sac_corkscrew_refined_v2) la policy si blocca (0 giri
 completati, velocità media <1 km/h).
 Il driver RL funzionante è drivers/rl/residual_driver.py (ResidualRLDriver).
@@ -29,12 +29,12 @@ MODELS_DIR = Path(__file__).resolve().parent / "models"
 DEFAULT_CHECKPOINT = MODELS_DIR / "sac_corkscrew_v1.zip"
 NORM_STATS_PATH = Path(__file__).resolve().parents[2] / "_DRIVER" / "models" / "bc_from_olddriver_v1.npz"
 
-# Stessi guadagni post-hoc di torcs_gym_env.py, cioè quelli del BC blend
-# STORICO su cui questi checkpoint SAC sono stati addestrati (i BCDriver di
-# produzione successivi, bc_tita_v20 poi cem_v5, usano guadagni diversi — NON
-# vanno imitati qui) — devono combaciare esattamente con quelli applicati in
-# training, altrimenti l'inferenza non rispecchia ciò su cui la policy è
-# stata addestrata.
+# Stessi guadagni post-hoc di torcs_gym_env.py, quelli del BC blend storico su
+# cui questi checkpoint SAC sono stati addestrati: devono combaciare
+# esattamente con quelli usati in training, altrimenti l'inferenza non
+# rispecchia ciò su cui la policy è stata addestrata. I BCDriver principali
+# successivi (bc_tita_v20, poi cem_v5) usano guadagni diversi e non vanno
+# imitati qui.
 _STEER_GAIN = 1.8
 _ACCEL_GAIN = 1.40
 _BRAKE_GAIN = 0.80

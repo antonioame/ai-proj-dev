@@ -2,7 +2,7 @@
 e il driver RL (drivers/rl/driver.py): l'architettura BCPolicy, il caricamento di
 un checkpoint+statistiche di normalizzazione, la fase di avvio a marcia fissa, e il
 cambio marcia basato su soglie RPM. Prima di questo modulo ciascun driver duplicava
-questi ~40 righe verbatim — tenuti qui evita che le tre copie divergano silenziosamente.
+queste circa 40 righe verbatim, tenuti qui evita che le tre copie divergano silenziosamente.
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ GEAR_DOWN_RPM = 6000.0
 
 # Fase di avvio: accelerazione piena con sterzo a zero per questo numero di step.
 # Mantiene l'auto dritta mentre il modello riceve input fuori distribuzione
-# (OOD: velocità≈0, marcia=0).
+# (OOD: velocità quasi 0, marcia=0).
 STARTUP_STEPS = 80
 
 

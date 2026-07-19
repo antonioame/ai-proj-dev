@@ -8,7 +8,7 @@ di sensori. Il workflow previsto:
   Mac:     python scripts/record/record_human.py
 
 Il CSV viene salvato come data/human_YYYYMMDD_HHMMSS.csv.
-Una riga = uno step di simulazione (~20 ms, 50 step/s).
+Una riga = uno step di simulazione (20 ms circa, 50 step/s).
 
 Colonne CSV: timestamp, angle, speed, speedY, speedZ, trackPos,
              track_0 … track_18, rpm, gear, distRaced, curLapTime,

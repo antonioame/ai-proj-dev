@@ -25,7 +25,7 @@ from torcs_env.client import RESTART, SHUTDOWN, TORCSClient
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger(__name__)
 
-STATUS_EVERY = 50  # una riga di stato per ogni secondo simulato (~50 step/s)
+STATUS_EVERY = 50  # una riga di stato per ogni secondo simulato (50 step/s circa)
 
 
 def run(
@@ -43,7 +43,7 @@ def run(
     lap_times: list[float] = []
     lap_count = 0
     # Giro (state.lap) all'ultima registrazione: rileva un nuovo giro anche se
-    # due giri consecutivi hanno tempo identico (simulazione deterministica) —
+    # due giri consecutivi hanno tempo identico (simulazione deterministica):
     # stesso doppio criterio di scripts/eval/evaluate_common.py.
     lap_at_last_record = 0
     max_speed = 0.0
@@ -96,7 +96,7 @@ def run(
                 lap_at_last_record = state.lap
                 logger.info("Lap %d completed in %.3f s", lap_count, state.lastLapTime)
                 if lap_count >= laps:
-                    logger.info("Target laps reached — releasing control to TORCS.")
+                    logger.info("Target laps reached, releasing control to TORCS.")
                     break
 
     off_track_pct = (off_track_steps / max(total_steps, 1)) * 100.0

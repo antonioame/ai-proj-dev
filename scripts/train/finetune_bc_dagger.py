@@ -1,6 +1,6 @@
 """Fine-tuning a caldo (warm-start) di bc_from_olddriver_v1 usando SOLO il
 dataset DAgger filtrato (data/dagger_bc_filtered.csv) come dati di
-correzione — non un retraining da zero.
+correzione, non un retraining da zero.
 
 Diversamente da scripts/train/train_bc_dagger.py (retraining completo su dataset
 originale + DAgger, invalidato: il dataset "originale" disponibile nel repo
@@ -10,7 +10,7 @@ rate basso solo sulle 27.366 righe DAgger, per correggere senza disgregare
 il comportamento già buono.
 
 Cruciale: la normalizzazione (mean/std) usata è quella ESISTENTE di
-bc_from_olddriver_v1.npz, non ricalcolata sui nuovi dati — i pesi caricati
+bc_from_olddriver_v1.npz, non ricalcolata sui nuovi dati: i pesi caricati
 sono validi solo per quella normalizzazione.
 
 Non tocca né sovrascrive bc_from_olddriver_v1.{pth,npz} né alcun altro file
@@ -84,7 +84,7 @@ def main() -> None:
     dataset = TensorDataset(X_tensor, Y_tensor)
     train_size = int(0.8 * len(dataset))
     val_size = len(dataset) - train_size
-    # NOTA (audit 2026-07-17): split casuale su telemetria sequenziale a 50 Hz —
+    # NOTA : split casuale su telemetria sequenziale a 50 Hz:
     # frame adiacenti quasi identici finiscono uno in train e uno in val, quindi la
     # val_loss è ottimistica (leakage temporale). Uno split per giro/sessione sarebbe
     # più rigoroso; la validazione decisiva resta comunque quella in pista.

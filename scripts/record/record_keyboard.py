@@ -19,7 +19,7 @@ Associazioni tasti:
   D / →    : Sterza a destra
   Q        : Scala marcia (solo controllo manuale)
   E        : Sale di marcia (solo controllo manuale)
-  (Il cambio marcia è manuale — hai il controllo completo)
+  (Il cambio marcia è manuale, hai il controllo completo)
 
 Output CSV: data/keyboard_YYYYMMDD_HHMMSS.csv
 """
@@ -71,7 +71,7 @@ class KeyboardController:
         self.accel_scale = 0.8
         self.brake_scale = 0.8
 
-        # Cooldown cambio marcia (0.3s = ~15 step a 50Hz)
+        # Cooldown cambio marcia (0.3s = 15 step circa a 50Hz)
         self.gear_cooldown_steps = 15
         self.last_gear_change_step = -100
 
@@ -121,7 +121,7 @@ class KeyboardController:
             brake = self.brake_scale
 
         # Controllo manuale marcia (Q=scala, E=sale) con cooldown
-        # Cooldown = 15 step = ~0.3 secondi a 50Hz (finestra di debounce tarata empiricamente)
+        # Cooldown = 15 step = 0.3 secondi circa a 50Hz (finestra di debounce tarata empiricamente)
         if (step - self.last_gear_change_step) >= self.gear_cooldown_steps:
             if 'q' in keys and self.current_gear > 1:
                 self.current_gear -= 1
@@ -173,7 +173,7 @@ def record(host: str | None = None, port: int | None = None) -> Path:
         with TORCSClient(host=host, port=port) as client:
             logger.info("Connected to TORCS. Recording keyboard-driven lap.")
             logger.info("Controls: W/↑=accel, S/↓=brake, A/←=steer-left, D/→=steer-right")
-            logger.info("Gear: MANUAL CONTROL — Q=downshift, E=upshift (you have full control)")
+            logger.info("Gear: MANUAL CONTROL, Q=downshift, E=upshift (you have full control)")
 
             while not lap_completed:
                 result = client.receive()
@@ -195,7 +195,7 @@ def record(host: str | None = None, port: int | None = None) -> Path:
 
                 rows.append(build_row(time.time(), state, action))
 
-                # Stato live ogni 20 step (~0.4s a 50 step/s)
+                # Stato live ogni 20 step (0.4s circa a 50 step/s)
                 if len(rows) % 20 == 0:
                     logger.info(
                         "time=%.1f speed=%.1f gear=%d trackPos=%.2f angle=%.2f "
@@ -210,7 +210,7 @@ def record(host: str | None = None, port: int | None = None) -> Path:
                     logger.info("✓ Lap completed in %.3f s", lap_time)
                     lap_complete_step = step
 
-                # Attende altri 20 step (~0.4s a 50 step/s) dopo il completamento
+                # Attende altri 20 step (0.4s circa a 50 step/s) dopo il completamento
                 # del giro prima di uscire. Dà a TORCS il tempo di stabilizzarsi
                 # prima della chiusura
                 if lap_complete_step >= 0 and (step - lap_complete_step) >= 20:

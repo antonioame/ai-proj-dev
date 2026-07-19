@@ -1,12 +1,13 @@
-"""Launcher autonomo: avvia TORCS headless e poi esegue l'agente Python.
+"""Launcher autonomo: avvia TORCS headless e poi esegue lo script a valle.
 
 Usage:
     python scripts/launch/launch_race.py [--laps 1] [--telemetry]
+    python scripts/launch/launch_race.py --mode record [--laps 3]
 
 Lo script individua l'installazione di TORCS sotto U:\\AI-Partition\\torcs\\torcs,
 avvia wtorcs.exe con -r (modalità gara), attende che il server apra la sua
-porta UDP, poi lancia run_agent.py. Entrambi i processi vengono ripuliti
-all'uscita.
+porta UDP, poi lancia run_agent.py (--mode race, default) o record_agent.py
+(--mode record). Entrambi i processi vengono ripuliti all'uscita.
 """
 
 from __future__ import annotations
@@ -25,10 +26,13 @@ logger = logging.getLogger(__name__)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Autonomous TORCS race launcher (BC driver)")
-    parser.add_argument("--laps", type=int, default=1)
-    parser.add_argument("--telemetry", action="store_true")
+    parser = argparse.ArgumentParser(description="Autonomous TORCS launcher (race or record mode)")
+    parser.add_argument("--mode", choices=["race", "record"], default="race")
+    parser.add_argument("--laps", type=int, default=None,
+                        help="Defaults to 1 for --mode race, 3 for --mode record")
+    parser.add_argument("--telemetry", action="store_true", help="Only for --mode race")
     args = parser.parse_args()
+    laps = args.laps if args.laps is not None else (1 if args.mode == "race" else 3)
 
     torcs_proc = start_torcs()
 
@@ -40,11 +44,14 @@ def main() -> None:
             sys.exit(1)
         logger.info("TORCS is ready.")
 
-        extra_args = ["--laps", str(args.laps)]
-        if args.telemetry:
-            extra_args.append("--telemetry")
-        exit_code = run_downstream_script("run/run_agent.py", *extra_args)
-        logger.info("Agent finished with exit code %d.", exit_code)
+        if args.mode == "race":
+            extra_args = ["--laps", str(laps)]
+            if args.telemetry:
+                extra_args.append("--telemetry")
+            exit_code = run_downstream_script("run/run_agent.py", *extra_args)
+        else:
+            exit_code = run_downstream_script("record/record_agent.py", "--laps", str(laps))
+        logger.info("Downstream script finished with exit code %d.", exit_code)
 
     finally:
         stop_torcs(torcs_proc)

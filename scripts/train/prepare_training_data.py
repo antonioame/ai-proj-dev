@@ -8,9 +8,9 @@ Due operazioni:
               disallineamento tra training e inferenza
 
 Strategia di augmentation (orientata alla performance):
-  - accel:  +7%  limitato a [0, 1]   — più gas in uscita di curva e sui rettilinei
-  - steer:  +5%  limitato a [-1, 1]  — linea di curva più stretta
-  - brake:  -10% limitato a [0, 1]   — punto di frenata più tardivo
+  - accel:  +7%  limitato a [0, 1]   (più gas in uscita di curva e sui rettilinei)
+  - steer:  +5%  limitato a [-1, 1]  (linea di curva più stretta)
+  - brake:  -10% limitato a [0, 1]   (punto di frenata più tardivo)
 
 Usage:
     conda run -n ai_env python scripts/train/prepare_training_data.py \
@@ -22,14 +22,14 @@ Usage:
 import argparse
 import pandas as pd
 
-# Colonne di input dei sensori — mai modificate
+# Colonne di input dei sensori, mai modificate
 INPUT_COLS = (
     ["timestamp", "angle", "speed", "speedY", "speedZ", "trackPos"] +
     [f"track_{i}" for i in range(19)] +
     ["rpm", "gear", "damage", "distRaced", "curLapTime"]
 )
 
-# Colonne di output azione — aumentate
+# Colonne di output azione, aumentate
 OUTPUT_COLS = ["steer", "accel", "brake"]
 
 EXPECTED_COLS = INPUT_COLS + OUTPUT_COLS

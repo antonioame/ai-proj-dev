@@ -1,39 +1,24 @@
 """Ambiente Residual-RL: SAC impara una piccola correzione sopra al driver BC
 funzionante, invece di provare a sostituirlo.
 
-Perché esiste
--------------
-Il primo tentativo RL (train_sac.py senza --residual) faceva il warm-start di
-SAC da una singola sotto-rete BC grezza (bc_from_olddriver_v1) — ma il driver
-che completa davvero il giro del Corkscrew è l'*intera* pipeline
-`_DRIVER.driver.BCDriver`: una fusione di due reti, guadagni STEER/ACCEL/BRAKE
-applicati a posteriori, gestione marce basata su RPM e una fase di avvio. Fare
-il warm-start dai pesi di una singola sotto-rete NON è lo stesso che partire
-dal driver funzionante, e l'esplorazione per entropia di SAC erodeva anche
-quello fino a un'auto che si blocca (0 giri completati).
+  azione_finale = base_bc.step(state) + RESIDUAL_SCALE * rl_residual
 
-Il residual RL risolve entrambi i problemi:
-  azione_finale = base_bc.step(state)  +  RESIDUAL_SCALE * rl_residual
+Il warm-start da una singola sotto-rete BC (train_sac.py senza --residual)
+falliva: il driver che completa il giro è l'intera pipeline BC (fusione di
+reti + guadagni + gestione marce), e l'esplorazione di SAC degradava la
+sotto-rete fino a un'auto bloccata (0 giri completati).
 
-dove `base_bc` è il blend BC legacy (LegacyBlendBCDriver, 121.978s) — la
-pipeline completa su cui il checkpoint consegnato è stato addestrato. Nota
-(2026-07-17): la base NON è più importata da `_DRIVER.driver.BCDriver`,
-perché quel modulo è cambiato due volte da allora (bc_tita_v20 dal
-2026-07-15, poi cem_v5 dal 2026-07-19, entrambi modello/architettura diversi
-dal blend e con gain diversi): il residuo sommato a una base diversa da
-quella di training non è mai stato validato. La base legacy è congelata in
-drivers/rl/legacy_bc_blend.py apposta per questo.
-con `rl_residual` in [-1, 1]^3 e l'attore SAC azzerato all'init (vedi
-zero_residual_actor), così all'inizio del training l'agente guida
-*esattamente* come il driver BC da 121.978s e completa i giri da subito. L'RL
-impara poi piccole correzioni limitate e dipendenti dallo stato per andare più
-veloce. Essendo il residuo limitato, non può bloccarsi catastroficamente o
-uscire di pista come faceva la policy addestrata da zero — la base BC tiene
-l'auto in vita.
+`base_bc` è il blend BC legacy (LegacyBlendBCDriver, 121.978s), congelato in
+drivers/rl/legacy_bc_blend.py perché `_DRIVER.driver.BCDriver` è cambiato da
+allora (bc_tita_v20, poi cem_v5) e il residuo, addestrato su quella pipeline
+specifica, non è mai stato validato su una base diversa.
 
-Questo riusa TorcsSacEnv interamente (rilancio TORCS per-episodio, reward,
-terminazione, osservazione) e cambia solo il modo in cui viene costruito il
-comando di controllo.
+`rl_residual` è in [-1, 1]^3 e l'attore SAC parte azzerato (zero_residual_actor):
+il training inizia guidando come il driver BC e completa giri da subito;
+l'RL impara poi correzioni piccole e limitate, che non possono far uscire di
+pista o bloccare l'auto come la policy addestrata da zero.
+
+Riusa TorcsSacEnv interamente, cambia solo come viene costruito il comando.
 """
 
 from __future__ import annotations
@@ -47,43 +32,24 @@ from gymnasium import spaces
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-# Base = blend BC legacy, NON il BCDriver di produzione: il checkpoint
-# residual consegnato è stato addestrato quando _DRIVER.driver.BCDriver era
-# ancora il blend a due reti (pre-promozione bc_tita_v20 del 2026-07-15).
-# Usare la base nuova invaliderebbe checkpoint esistente ed eventuali resume.
-# Vedi il docstring di drivers/rl/legacy_bc_blend.py.
+# Base = blend BC legacy congelato, non il BCDriver principale attuale
+# (vedi docstring del modulo e di drivers/rl/legacy_bc_blend.py).
 from drivers.rl.legacy_bc_blend import LegacyBlendBCDriver
 from torcs_env.actions import Action
 from torcs_env.sensors import SensorState
 from training.rl.torcs_gym_env import TorcsSacEnv
 
-# Magnitudine fisica massima della correzione RL su ciascuno di
-# steer/accel/brake, e la penalità L2 che tiene il residuo addestrato vicino
-# alla base BC.
-#
-# Insieme, questi due valori fanno sì che il driver residual consegnato
-# funzioni davvero (completa il giro, 0% fuori pista) e sia genuinamente RL
-# (una policy SAC addestrata corregge la base ad ogni step). Il checkpoint
-# consegnato (drivers/rl/models/sac_corkscrew_residual) è stato addestrato con
-# questi valori e valuta in modo deterministico a 127.07s, 0% fuori pista, 0
-# danni (contro BC 121.978s / 0%).
-#   * La scala limita quanto l'RL può allontanare l'auto dalla linea BC. Un
-#     attacco "mai frenare" nel caso peggiore costante esce da una curva
-#     (~91% del percorso) a ogni scala 0.02-0.05, ma è un attacco stupido che
-#     non frena mai; una policy addestrata su giri puliti (con la penalità
-#     -200 fuori pista) impara a frenare in curva, quindi 0.03 è sicuro per
-#     una policy addestrata.
-#   * RESIDUAL_L2_COEF penalizza ||residuo||^2 ad ogni step, quindi una
-#     correzione deve ripagare il proprio costo in reward di guida — la
-#     policy per default resta quasi puro BC e corregge solo dove aiuta
-#     chiaramente. Con questo + un training per-episodio pulito (vedi il
-#     commento sulla config SAC in train_sac sul perché il training per-step
-#     corrompeva ogni run precedente) il residuo appreso mantiene l'auto
-#     esattamente sulla linea di BC (0% fuori pista).
-# Nota: questo NON batte BC sul tempo giro (~4% più lento) — l'obiettivo era
-# un driver funzionante, genuinamente RL, che completasse il giro in
-# sicurezza. Battere BC richiederebbe un reward basato sul tempo giro, non un
-# aggiustamento della scala.
+# RESIDUAL_SCALE: magnitudine fisica massima della correzione RL su ciascuno
+# di steer/accel/brake. Anche un ipotetico attacco "mai frenare" a scala
+# 0.02-0.05 uscirebbe di pista solo in curva (circa 91% del percorso resta
+# sicuro); una policy addestrata (che impara a frenare, con la penalità -200
+# fuori pista) è al sicuro con 0.03. RESIDUAL_L2_COEF: penalità L2 sul
+# residuo, così la policy corregge solo dove il guadagno in reward ripaga il
+# costo, restando quasi puro BC altrove. Con questi valori il checkpoint
+# consegnato (drivers/rl/models/sac_corkscrew_residual) valuta a 127.07s, 0%
+# fuori pista (contro BC 121.978s/0%), circa 4% più lento di BC, perché
+# l'obiettivo era un driver RL funzionante e sicuro, non battere il tempo
+# giro di BC.
 RESIDUAL_SCALE = 0.03
 RESIDUAL_L2_COEF = 5.0
 
@@ -130,24 +96,14 @@ class ResidualTorcsSacEnv(TorcsSacEnv):
 
 
 def zero_residual_actor(model) -> None:
-    """Azzera il layer di output dell'attore SAC così la media iniziale del
-    residuo è 0 — cioè il training parte guidando esattamente come la base
-    BC — e inizia con una std di esplorazione *molto* piccola.
-
-    Qui la std di esplorazione conta molto: si somma a un driver BC che già
-    inserisce le curve strette del Corkscrew, quindi anche un rumore di
-    sterzo modesto (un tentativo precedente con std di esplorazione ≈0.22,
-    sensibilmente più ampia dell'attuale) si accumula e manda l'auto fuori
-    pista dopo ~285 step, prima ancora che completi un giro — così l'agente
-    non vede mai il reward per aver finito. log_std = -3.0 (std≈0.05, che
-    dopo la compressione tanh e la scala RESIDUAL_SCALE corrisponde a un
-    jitter fisico di sterzo per step dell'ordine di qualche millesimo, con
-    picchi fino a ~±0.007 su lunghe sequenze — verificato per simulazione)
-    mantiene l'esplorazione abbastanza delicata da far restare l'auto
-    in pista e far girare gli episodi per giri completi, dando a SAC un vero
-    segnale di giro completato da cui imparare. La policy deterministica
-    mantiene comunque la piena autorità ±RESIDUAL_SCALE — solo il rumore in
-    fase di training è piccolo.
+    """Azzera il layer di output dell'attore SAC: il residuo iniziale è 0
+    (si parte guidando esattamente come la base BC) con std di esplorazione
+    molto piccola (log_std=-3.0, std circa 0.05). Serve piccola perché il rumore si
+    somma a un driver che già inserisce curve strette: una std più ampia
+    (0.22 circa, provata in un run precedente) mandava l'auto fuori pista dopo
+    285 step circa, prima di completare un giro, senza mai dare a SAC il segnale
+    di giro completato. La policy deterministica mantiene comunque piena
+    autorità ±RESIDUAL_SCALE, solo il rumore in training è ridotto.
     """
     actor = model.policy.actor
     with torch.no_grad():

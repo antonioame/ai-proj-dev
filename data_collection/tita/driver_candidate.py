@@ -3,7 +3,7 @@
 
 Stessa architettura/interfaccia di drivers/bc_dagger/driver.py (BCDaggerDriver)
 e stessa logica di avvio/cambio marcia; i gain pero' NON sono identici:
-STEER_GAIN qui e' 1.0 (non 1.8 come in BCDaggerDriver) — differenza
+STEER_GAIN qui e' 1.0 (non 1.8 come in BCDaggerDriver): differenza
 intenzionale, verificata empiricamente: col modello clonato da tita un gain
 di sterzo alto causava oscillazioni e uscite di pista in curva. Unica altra
 differenza e' il checkpoint caricato (data_collection/tita/candidate_models/,

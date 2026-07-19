@@ -1,7 +1,7 @@
-"""Entry point di training SAC per la Fase 3 (REINFORCEMENT_LEARNING.md Sezioni 6 e 9).
+"""Entry point di training SAC per la Fase 3.
 
 Di default questo script lancia da sé un TORCS headless (con la working
-directory corretta — vedi il commento su TORCS_EXE più sotto) una volta
+directory corretta, vedi il commento su TORCS_EXE più sotto) una volta
 costruito il modello SAC, così il client si connette prima che scatti il
 breve timeout di pre-connessione di TORCS. Passa --no-launch-torcs per
 connetterti invece a un server avviato separatamente.
@@ -50,8 +50,7 @@ NET_ARCH = [128, 64]
 
 
 class EpisodeCheckpointCallback(BaseCallback):
-    """Salva un checkpoint ogni `episodes_per_checkpoint` episodi completati
-    (Sezione 8: "Checkpoint every ~50 episodes")."""
+    """Salva un checkpoint ogni `episodes_per_checkpoint` episodi completati."""
 
     def __init__(self, save_dir: Path, episodes_per_checkpoint: int = 50, verbose: int = 1):
         super().__init__(verbose)
@@ -90,7 +89,7 @@ def main() -> None:
     parser.add_argument("--learning-rate", type=float, default=3e-4,
                          help="SAC learning rate (actor+critic+ent_coef optimizer), SB3 default 3e-4. "
                               "In every direct-mode run so far the actor degrades as soon as it starts "
-                              "updating, regardless of reward/entropy/warmup tuning — a much smaller "
+                              "updating, regardless of reward/entropy/warmup tuning: a much smaller "
                               "value (e.g. 5e-5) fine-tunes a warm-started actor without destructive "
                               "drift, mirroring what fixed the analogous BC fine-tuning collapse.")
     parser.add_argument("--ent-coef", default=None,
@@ -107,7 +106,7 @@ def main() -> None:
         "--residual", action="store_true",
         help="Residual RL: learn a bounded correction on top of the full BC driver "
              "(ResidualTorcsSacEnv) instead of replacing it. Best fix for the "
-             "from-scratch policy stalling — starts driving exactly like BC.",
+             "from-scratch policy stalling, starts driving exactly like BC.",
     )
     parser.add_argument("--resume", default=None, help="Path to an existing SAC .zip checkpoint to resume from")
     parser.add_argument("--save-path", default=str(DEFAULT_SAVE_PATH))
@@ -140,23 +139,16 @@ def main() -> None:
         reset_num_timesteps = False
         warm_started_from = None
     else:
-        # Il residual RL mantiene l'esplorazione delicata (un coefficiente di
-        # entropia fisso e piccolo) così la correzione resta vicina alla base
-        # BC; la variante ad azione diretta auto-regola l'entropia da zero.
-        # CRITICO: raccogliere un intero episodio prima di fare gli update del
-        # gradiente (train_freq per episodio), invece dell'update del
-        # gradiente di default di SB3 dopo ogni singolo step. TORCS `-r`
-        # headless gira sul proprio clock e NON aspetta un client lento —
-        # continua ad avanzare la simulazione con l'ultima azione. Un update
-        # del gradiente per-step (~10-30ms su CPU) è un ritardo sufficiente
-        # perché l'auto derivi dalla linea di gara al lancio ad alta velocità
-        # e si schianti, il che ha corrotto silenziosamente ogni run RL
-        # precedente (gli episodi finivano fuori pista dopo ~300 step a
-        # prescindere dalla policy — verificato forzando l'azione a puro BC e
-        # schiantandosi comunque con il training per-step).
-        # Fare gli update del gradiente tra un episodio e l'altro (auto ferma
-        # o in fase di reset) mantiene bassa la latenza per-step così l'auto
-        # guida davvero.
+        # Entropia fissa e piccola per il residual RL (resta vicino alla base BC);
+        # la variante ad azione diretta auto-regola l'entropia da zero.
+        # CRITICO: update del gradiente per-episodio, non per-step. TORCS `-r`
+        # headless gira sul proprio clock e non aspetta un client lento: un
+        # update per-step (10-30ms circa) basta a far derivare l'auto dalla linea di
+        # gara e schiantarsi, il che corrompeva silenziosamente ogni run
+        # precedente (episodi fuori pista dopo circa 300 step a prescindere dalla
+        # policy: verificato forzando un'azione puro-BC, che si schiantava
+        # comunque col training per-step). Aggiornare tra un episodio e l'altro
+        # tiene bassa la latenza per-step così l'auto guida davvero.
         model = WarmStartSAC(
             "MlpPolicy",
             env,
@@ -214,7 +206,7 @@ def main() -> None:
     )
 
     # TORCS viene lanciato e chiuso per-episodio dall'ambiente stesso
-    # (TorcsSacEnv, auto_launch_torcs) — vedi quel modulo per il motivo per
+    # (TorcsSacEnv, auto_launch_torcs), vedi quel modulo per il motivo per
     # cui si rilancia invece di usare un restart in-gara.
     try:
         model.learn(
@@ -227,7 +219,7 @@ def main() -> None:
         save_path = Path(args.save_path)
         if save_path.exists():
             # Non sovrascrivere mai un checkpoint consegnato/tracciato già presente
-            # (es. il default sac_corkscrew_v1.zip) — salva a fianco con il run_id.
+            # (es. il default sac_corkscrew_v1.zip), salva a fianco con il run_id.
             save_path = save_path.parent / f"{save_path.stem}_{run_id}{save_path.suffix}"
             logger.warning("Existing checkpoint preserved, saved to %s instead", save_path)
         save_path.parent.mkdir(parents=True, exist_ok=True)

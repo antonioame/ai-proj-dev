@@ -1,34 +1,26 @@
-"""Cross-Entropy Method (CEM) — ottimizzazione black-box dei pesi della rete,
+"""Cross-Entropy Method (CEM): ottimizzazione black-box dei pesi della rete,
 alternativa strutturale al SAC diretto (TD-learning).
 
-Motivazione: 9 run SAC diretti indipendenti (reward raw-speed/progress-based
-prudente/aggressiva, entropia auto/0.02/0.04/0.08, learning rate 3e-4/5e-5,
-rumore di esplorazione iniziale alto/basso, guadagni BC presenti/assenti,
-scala 200k-500k step) mostrano tutti lo stesso pattern: la policy resta
-stabile finché l'attore è congelato, poi degrada sistematicamente non appena
-gli update del gradiente TD iniziano — mai un miglioramento netto su BC
-(121,978s). Diagnosi: non è più un problema di taratura di iperparametri,
-è il meccanismo di TD-learning stesso (bootstrap su un critic il cui errore
-si propaga negli update dell'attore) a essere strutturalmente instabile in
-questo ambiente.
+Perché: 9 run SAC diretti (reward/entropia/learning rate/rumore diversi)
+mostrano tutti lo stesso pattern, la policy resta stabile finché l'attore è
+congelato e degrada non appena partono gli update del gradiente TD, mai un
+miglioramento netto su BC (121,978s). Non è un problema di iperparametri: è
+il TD-learning stesso (bootstrap su un critic il cui errore si propaga
+nell'attore) a essere strutturalmente instabile in questo ambiente.
 
-CEM è strutturalmente diverso: non c'è un critic da cui ereditare errore, non
-c'è backpropagation attraverso una value function — si perturbano i pesi
-della policy, si valuta ogni variante con un giro REALE su TORCS (fitness =
-tempo sul giro vero, non un proxy), e si tengono solo le varianti migliori.
-Non può "collassare" per un gradiente distruttivo: nel caso peggiore, una
-generazione non migliora e si riprova dalla media corrente.
+CEM evita il problema alla radice: nessun critic, nessuna backpropagation su
+una value function. Perturba i pesi della policy, valuta ogni variante con
+un giro reale su TORCS (fitness = tempo sul giro vero) e tiene solo le
+varianti migliori: nel caso peggiore una generazione non migliora e si
+riprova dalla media corrente, non può collassare per un gradiente distruttivo.
 
-Rete: HybridCemPolicy (drivers/cem/driver.py) — due sotto-reti rettilineo/
-curva fuse su track[9] esattamente come _DRIVER/driver.py.BCDriver, non un
-singolo modello. Necessario: una CemPolicy a rete singola (solo pesi
-bc_from_olddriver_v1) è risultata bloccata a 142,87s, 21s sotto la vera BC,
-perché priva della specializzazione rettilineo/curva del blend. CEM deve
-partire dal vero ceiling architetturale di BC (121,978s verificato), non da
-uno strutturalmente più basso.
+Rete: HybridCemPolicy (drivers/cem/driver.py), due sotto-reti rettilineo/curva
+fuse su track[9] come _DRIVER/driver.py.BCDriver, non un modello singolo: una
+CemPolicy a rete singola si è bloccata a 142,87s (21s sotto la vera BC) per
+mancanza di questa specializzazione.
 
-Non tocca file esistenti di Fase 1/2 (_DRIVER/*) né i checkpoint SAC già
-salvati. Nuovo script, nuovi checkpoint in drivers/rl/models/cem_*.
+Non tocca i file di Fase 1/2 né i checkpoint SAC esistenti: nuovi checkpoint
+in drivers/rl/models/cem_*.
 
 Usage:
     conda run -n ai_env python training/rl/train_cem.py \\
@@ -152,13 +144,11 @@ def run_episode(env: TorcsSacEnv, policy: HybridCemPolicy) -> EpisodeResult:
         step_count += 1
 
         if step_count <= _STARTUP_STEPS:
-            # NOTA (audit 2026-07-17): l'env ha GIÀ eseguito il proprio burst di
-            # avvio da 80 step in _run_startup durante _ensure_started, quindi in
-            # training l'auto riceve ~160 step di pieno gas contro gli 80 di
-            # evaluate_cem.py — lieve differenza di profilo di lancio fra fitness
-            # di training ed eval. Lasciata INVARIATA di proposito: tutti i
-            # checkpoint cem_v1..v5 sono stati selezionati sotto questo profilo,
-            # cambiarlo ora renderebbe i fitness storici non confrontabili.
+            # L'env ha già eseguito 80 step di burst in _run_startup, quindi qui
+            # l'auto riceve circa 160 step di pieno gas contro gli 80 di
+            # evaluate.py --driver cem. Lasciato invariato apposta: i checkpoint
+            # cem_v1..v5 sono stati selezionati sotto questo profilo, cambiarlo
+            # renderebbe i fitness storici non confrontabili.
             gear = _startup_gear(state.speed)
             current_gear = gear
             cmd = Action(steer=0.0, accel=1.0, brake=0.0, gear=gear)
@@ -253,7 +243,7 @@ def main() -> None:
     try:
         for gen in range(1, args.generations + 1):
             # Il candidato 0 di ogni generazione è sempre theta_mean stesso
-            # (nessuna perturbazione) — così possiamo tracciare il progresso
+            # (nessuna perturbazione), così possiamo tracciare il progresso
             # "pulito" della media a fianco delle perturbazioni esplorative.
             thetas = [theta_mean.copy()] + [
                 theta_mean + rng.normal(0.0, sigma) for _ in range(args.population - 1)
@@ -270,15 +260,12 @@ def main() -> None:
                     res.dist_reached, res.off_track_pct, res.damage,
                 )
 
-                # Un candidato che sembra battere il record va riverificato con
-                # un secondo giro indipendente prima di fidarsene — osservato
-                # più volte: pesi che guidano un giro perfetto in training
-                # falliscono sistematicamente al reload (fino al 70% fuori
-                # pista), segno che un singolo giro può essere "fortunato" e
-                # non rappresentativo. Si usa il PEGGIORE dei due esiti, sia
-                # per il tracking del best sia per la selezione elite di
-                # questa generazione, così un candidato fragile non può più
-                # scavalcare uno robusto sulla base di un solo giro buono.
+                # Un candidato che batte il record va riverificato con un
+                # secondo giro indipendente: pesi che guidano un giro perfetto
+                # falliscono a volte al reload (fino al 70% fuori pista), un
+                # singolo giro può essere "fortunato". Si usa il peggiore dei
+                # due esiti (per il best e per la selezione elite), così un
+                # candidato fragile non scavalca uno robusto per un colpo di fortuna.
                 if res.fitness > best_fitness:
                     set_flat_params(candidate, theta)
                     res_verify = run_episode(env, candidate)
@@ -320,7 +307,7 @@ def main() -> None:
         save_path = Path(args.save_path)
         if save_path.exists():
             # Non sovrascrivere mai un checkpoint promosso/consegnato già presente
-            # (es. il default cem_v1.pth) — salva a fianco con il run_id.
+            # (es. il default cem_v1.pth), salva a fianco con il run_id.
             save_path = save_path.parent / f"{save_path.stem}_{run_id}{save_path.suffix}"
             logger.warning("Existing checkpoint preserved, saved to %s instead", save_path)
         save_path.parent.mkdir(parents=True, exist_ok=True)

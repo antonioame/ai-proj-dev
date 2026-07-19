@@ -1,28 +1,20 @@
 """Driver per valutare un checkpoint ottimizzato con CEM (training/rl/train_cem.py).
 
-Stessa interfaccia step()/on_restart() degli altri driver — sostituibile in
-scripts/eval/evaluate_cem.py senza toccare scripts/eval/evaluate.py.
+Stessa interfaccia step()/on_restart() degli altri driver: sostituibile in
+scripts/eval/evaluate.py --driver cem. È anche
+la classe di cui `_DRIVER.driver.BCDriver` (il driver principale) è un wrapper sottile,
+pinnato su `cem_v5.pth` (105.812s, vedi `_DRIVER/driver.py`).
 
-Dal 2026-07-19 questa è anche la classe di cui `_DRIVER.driver.BCDriver`
-(il driver di produzione) è un wrapper sottile, pinnato su `cem_v5.pth`
-(105.812s) — vedi `_DRIVER/driver.py`. Prima di allora era usata solo per
-`scripts/eval/evaluate_cem.py`, non collegata alla pipeline di produzione.
+Struttura identica al vecchio BCDriver blend (drivers/rl/legacy_bc_blend.py):
+due sotto-reti (rettilineo + curva) fuse in base a track[9]. Necessario: una
+CemPolicy a rete singola si è bloccata a 142,87s (21s peggio della vera BC,
+121,978s) per mancanza di questa specializzazione.
 
-Struttura IDENTICA al vecchio BCDriver blend (quello in _DRIVER/driver.py
-PRIMA della promozione di bc_tita_v20 del 2026-07-15, poi a sua volta
-sostituito da questo checkpoint CEM il 2026-07-19; il blend sopravvive qui
-e in drivers/rl/legacy_bc_blend.py):
-due sotto-reti (rettilineo + curva) fuse in base a track[9]. Scoperto necessario
-dopo che una CemPolicy a singola rete (solo pesi bc_from_olddriver_v1) è
-risultata bloccata a 142,87s — 21s peggio della vera BC (121,978s) — proprio
-perché le manca la specializzazione rettilineo/curva che il blend fornisce.
-
-Ogni sotto-rete usa la PROPRIA normalizzazione (mean/std), non condivisa —
-altro dettaglio di BCDriver facile da perdere: straight_model e corner_model
-sono stati addestrati su dataset diversi con statistiche diverse. Usare la
-normalizzazione sbagliata su una delle due reti produce un comportamento
-completamente rotto (verificato: 82% fuori pista, danno 91, con i pesi BC
-esatti — bug ora corretto registrando mean/std come buffer per sotto-rete).
+Dettaglio facile da perdere: ogni sotto-rete usa la propria normalizzazione
+(mean/std), non condivisa, perché straight_model e corner_model sono stati
+addestrati su dataset diversi. Usare la normalizzazione sbagliata su una
+delle due reti rompe il comportamento (verificato: 82% fuori pista, danno
+91, con i pesi BC esatti; bug ora corretto registrando mean/std per sotto-rete).
 """
 
 from __future__ import annotations
@@ -57,7 +49,7 @@ _CORNER_THRESHOLD = 22.0
 class SubPolicy(nn.Module):
     """Una delle due sotto-reti (rettilineo o curva), stessa architettura di
     _DRIVER/driver.py.BCPolicy, con la propria normalizzazione integrata
-    (registrata come buffer — persiste nel checkpoint, CEM non la perturba
+    (registrata come buffer, persiste nel checkpoint, CEM non la perturba
     perché non è un nn.Parameter)."""
 
     def __init__(self, obs_mean: np.ndarray, obs_std: np.ndarray, input_dim: int = 26, hidden_dims: list | None = None):
@@ -86,7 +78,7 @@ class SubPolicy(nn.Module):
 
 class HybridCemPolicy(nn.Module):
     """Due SubPolicy (straight/corner) fuse esattamente come il _blend_weight
-    del vecchio BCDriver blend (pre-2026-07-15)."""
+    del vecchio BCDriver blend ()."""
 
     def __init__(self):
         super().__init__()

@@ -1,37 +1,22 @@
-"""Raccoglie esempi di RECUPERO per il candidato bc_tita_v2, usando bc
-(_DRIVER.driver.BCDriver, il driver di produzione, sicuro e gia' validato)
-come rete di sicurezza.
+"""Raccoglie esempi di recupero per il candidato bc_tita_v2, usando bc
+(_DRIVER.driver.BCDriver, driver principale già validato) come rete di
+sicurezza: se il candidato esce troppo dalla linea (|trackPos| > SAFETY_TRIGGER),
+il controllo passa a bc finché non rientra stabilmente (sotto SAFETY_RESUME
+per RESUME_HYSTERESIS tick), registrando stato+azione di bc in un CSV con lo
+stesso schema del dataset BC. Non è DAgger in senso stretto (nessuna query
+all'oracolo ad ogni step), solo un dataset di recupero da unire ai giri
+puliti di Tita per il prossimo candidato (bc_tita_v3).
 
-Idea: bc_tita_v2 e' stato addestrato solo su giri "perfetti" di Tita, quindi
-non ha mai visto un esempio di correzione da una traiettoria imprecisa. Se
-mentre guida esce troppo dalla linea (|trackPos| oltre SAFETY_TRIGGER), il
-controllo passa a bc finche' non rientra stabilmente in pista (sotto
-SAFETY_RESUME per RESUME_HYSTERESIS tick consecutivi); durante quel tratto
-si registrano stato sensori + azione di bc (la correzione "giusta") in un
-CSV con lo stesso schema del dataset BC.
+Legge bc solo in lettura, scrive in data_collection/tita/dagger_recovery/.
 
-Non e' DAgger in senso stretto (non si interroga l'oracolo ad ogni step),
-ma un approccio pragmatico "safety-net": il risultato e' un dataset di
-esempi di recupero da unire ai giri puliti di Tita per il prossimo
-candidato (bc_tita_v3).
+Attenzione alle label: le azioni registrate sono quelle di bc DOPO i suoi
+gain post-hoc, ma il driver candidato riapplica i propri gain a tutto
+l'output -> per questi campioni il gain finisce applicato due volte.
+Tollerato finora (bc_tita_v20 completa comunque il giro a 111.986s), ma da
+normalizzare prima di future raccolte (dividere le label bc per i gain, o
+registrare l'output pre-gain).
 
-Non tocca _DRIVER/, drivers/, scripts/, training/: legge bc solo in lettura
-(BCDriver di _DRIVER.driver, mai modificato) e scrive in
-data_collection/tita/dagger_recovery/.
-
-NOTA sulle unita' delle label (rilevata in audit 2026-07-17): le azioni
-registrate qui sono quelle di bc DOPO i gain post-hoc e il clamp
-(safety_action = output finale di BCDriver.step), mentre i CSV di tita
-convertiti contengono azioni raw del bot. All'inferenza il driver candidato
-riapplica i propri gain (ACCEL x1.40, BRAKE x0.80) a TUTTO l'output del
-modello -> per i campioni di recovery il gain risulta di fatto applicato due
-volte. Empiricamente tollerato (bc_tita_v20, addestrato anche su questi
-campioni, completa il giro pulito a 111.986s), ma da normalizzare (dividere
-le label bc per i gain, o registrare l'output pre-gain) PRIMA di eventuali
-futuri round di raccolta.
-
-Prerequisito: TORCS avviato con torcs_env/race_config/corkscrew_solo.xml
-(client SCR, stesso schema di scripts/run/run_agent.py).
+Prerequisito: TORCS avviato con torcs_env/race_config/corkscrew_solo.xml.
 
 Usage:
     python data_collection/tita/dagger_augment.py --laps 5
@@ -85,7 +70,7 @@ def run(
     lap_times: list[float] = []
     lap_count = 0
     # Giro (state.lap) all'ultima registrazione: rileva un nuovo giro anche se
-    # due giri consecutivi hanno tempo identico (simulazione deterministica) —
+    # due giri consecutivi hanno tempo identico (simulazione deterministica),
     # stesso doppio criterio di scripts/eval/evaluate_common.py.
     lap_at_last_record = 0
     total_steps = 0
@@ -179,10 +164,10 @@ def run(
                     logger.info("Lap %d completed in %.3f s (safety-net active for %d/%d ticks so far)",
                                 lap_count, state.lastLapTime, safety_steps, total_steps)
                     if lap_count >= laps:
-                        logger.info("Target laps reached — releasing control to TORCS.")
+                        logger.info("Target laps reached, releasing control to TORCS.")
                         break
         except ConnectionError as exc:
-            logger.warning("Connessione interrotta a meta' corsa (%s) — salvo comunque gli esempi raccolti finora.", exc)
+            logger.warning("Connessione interrotta a meta' corsa (%s), salvo comunque gli esempi raccolti finora.", exc)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

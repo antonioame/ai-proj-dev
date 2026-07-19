@@ -1,4 +1,4 @@
-"""Componenti condivisi da scripts/launch/launch_race.py e scripts/launch/launch_record.py:
+"""Componenti condivisi da scripts/launch/launch_race.py (--mode race/record):
 avvio di TORCS headless, attesa dell'apertura della porta UDP, e lancio dello
 script Python a valle come sottoprocesso.
 """
@@ -26,7 +26,7 @@ TORCS_POLL_INTERVAL = 0.5  # secondi tra un controllo di prontezza e l'altro
 def _port_bound(port: int) -> bool:
     """Restituisce True se qualcosa è già collegato a *port* in UDP.
 
-    Proviamo a fare il bind di un socket noi stessi — se fallisce, un altro
+    Proviamo a fare il bind di un socket noi stessi: se fallisce, un altro
     processo lo possiede già. Inviare pacchetti probe SCR a TORCS
     corromperebbe il suo stato di handshake, quindi rileviamo la prontezza
     senza trasmettere alcun dato.

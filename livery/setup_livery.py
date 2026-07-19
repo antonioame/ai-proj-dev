@@ -37,7 +37,7 @@ IBM_RGB = IBM_DIR / f"{CAR}.rgb"
 TORCS_TEXTURE_PATH = TORCS_ROOT / "cars" / CAR / f"{CAR}.rgb"
 # TORCS mantiene una seconda copia indipendente della stessa texture per ogni slot
 # driver scr_server. La race config (corkscrew_solo.xml) usa idx=0, ed è questa la
-# copia che il gioco carica davvero per l'auto in gara — aggiornare solo
+# copia che il gioco carica davvero per l'auto in gara: aggiornare solo
 # TORCS_TEXTURE_PATH sopra non ha alcun effetto visibile in-game.
 SCR_SERVER_TEXTURE_PATH = TORCS_ROOT / "drivers" / "scr_server" / "0" / f"{CAR}.rgb"
 STATE_FILE = LIVERY_DIR / f".livery_state_{CAR}.json"
@@ -54,7 +54,7 @@ def _png_to_sgi_rgb(png_path: Path, rgb_path: Path, size: tuple[int, int] = TEXT
     """Converte un PNG nel formato SGI RGB non compresso atteso da car1-ow1.
 
     Header di 512 byte (magic 0x01DA, storage=0/verbatim, 4 canali) seguito da
-    un piano di (width*height) byte per canale, in ordine R, G, B, A — lo
+    un piano di (width*height) byte per canale, in ordine R, G, B, A, lo
     stesso layout che livery/decode_sgi.py rilegge, verificato contro il vero
     car1-ow1.rgb distribuito con l'auto (anch'esso storage=0, 512x512, 4 canali).
     """

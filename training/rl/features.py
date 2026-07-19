@@ -7,7 +7,7 @@ faceva il precedente tentativo RL) protegge esattamente dal bug che affondò
 quel tentativo: lo spazio di osservazione RL che derivava silenziosamente
 fuori sincrono rispetto a ciò su cui la rete BC era realmente addestrata
 (vedi la git history intorno ai commit 727593b / d357744 / 074c1ee per
-l'incidente — la BC usava [speed, trackPos, angle, rpm, gear, track[6],
+l'incidente: la BC usava [speed, trackPos, angle, rpm, gear, track[6],
 track[12], track[18]] mentre l'RL usava indici track diversi, causando un
 bug persistente di sterzo-zero mai risolto del tutto prima che l'intero
 tentativo di Fase 3 fosse rimosso).

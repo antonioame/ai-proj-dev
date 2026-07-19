@@ -1,4 +1,4 @@
-"""Test unitari per TORCSClient — tutte le chiamate di rete sono mockate."""
+"""Test unitari per TORCSClient: tutte le chiamate di rete sono mockate."""
 
 import sys
 from pathlib import Path

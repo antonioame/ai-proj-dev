@@ -2,11 +2,10 @@
 
 Puramente additivo: importa torcs_env.client.TORCSClient così com'è e lo
 orchestra dall'esterno. Nessuna modifica a torcs_env/client.py, sensors.py o
-actions.py (REINFORCEMENT_LEARNING.md Sezione 1 / Sezione 6.3).
+actions.py.
 
-Lo spazio d'azione è solo steer/accel/brake — la marcia resta automatica
-(basata su RPM, con le stesse soglie usate da _DRIVER/driver.py), rispettando
-il requisito della Sezione 3 secondo cui lo spazio d'azione RL deve restare
+Lo spazio d'azione è solo steer/accel/brake: la marcia resta automatica
+(basata su RPM, con le stesse soglie usate da _DRIVER/driver.py). Lo spazio d'azione RL resta
 identico a quello già usato da Fase 1/2, così il layout di output
 dell'attore con warm-start BC coincide con quello dell'ambiente.
 """
@@ -38,62 +37,46 @@ logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
-# Soglie del cambio marcia automatico — le stesse usate da tutti i driver BC
+# Soglie del cambio marcia automatico, le stesse usate da tutti i driver BC
 # del progetto (oggi centralizzate in drivers/bc_common.py), così la policy RL
 # e l'eventuale RLDriver vedono lo stesso comportamento marce.
 _GEAR_UP_RPM = 12000.0
 _GEAR_DOWN_RPM = 6000.0
 
-# Guadagni post-hoc del BC blend STORICO (il BCDriver pre-2026-07-15,
-# bc_from_attempt1_v1+bc_from_olddriver_v1, STEER_GAIN=1.8) — NON quelli dei
-# BCDriver di produzione successivi (bc_tita_v20 dal 2026-07-15, STEER_GAIN=1.0;
-# cem_v5 dal 2026-07-19): tutti i checkpoint SAC diretti e il warm-start sono
-# stati costruiti su questi valori, aggiornarli ai driver più recenti
-# invaliderebbe i checkpoint esistenti.
-# Scoperti mancanti dall'intera pipeline SAC diretta dopo 5 run
-# che non sono mai scesi sotto ~127-130s: sac_warmstart.load_bc_backbone_into_actor
-# copia solo i pesi grezzi della rete BC nell'attore SAC, MAI i guadagni
-# applicati a posteriori nell'output di BCDriver.step(). Di conseguenza
-# l'attore con warm-start, anche a zero step di training, guida come una BC
-# "non amplificata" — nel primissimo run diretto (critic_warmup_steps troppo
-# alto, attore mai aggiornato) il checkpoint congelato valutava 143,244s
-# contro i 121,978s della vera BC: ~21s persi SOLO per l'assenza di questi tre
-# moltiplicatori, prima ancora che qualunque fine-tuning RL entri in gioco.
-# Applicarli qui allinea il punto di partenza del warm-start al comportamento
-# BC reale, così il fine-tuning RL parte alla pari con la baseline da battere
-# invece che ~20s indietro.
+# Guadagni post-hoc del BC blend STORICO (STEER_GAIN=1.8), non quelli dei
+# BCDriver principali successivi (bc_tita_v20/cem_v5): tutti i checkpoint
+# SAC sono stati costruiti su questi valori, aggiornarli invaliderebbe i
+# checkpoint esistenti. sac_warmstart.load_bc_backbone_into_actor copia solo i
+# pesi grezzi della rete BC, mai questi guadagni post-hoc, quindi vanno
+# riapplicati qui: senza, un run diretto ha misurato 143,244s contro i
+# 121,978s della vera BC, circa 21s persi solo per l'assenza di questi moltiplicatori.
 _STEER_GAIN = 1.8
 _ACCEL_GAIN = 1.40
 _BRAKE_GAIN = 0.80
 
-# Periodo di grazia all'avvio: applica pieno gas/sterzo zero per questo numero
-# di step prima di passare il controllo alla policy. Rispecchia
-# STARTUP_STEPS dei driver BC (drivers/bc_common.py) — evita che l'attore con warm-start veda mai lo stato
-# di lancio fuori distribuzione (OOD: velocità≈0, marcia=0) che non ha mai
-# visto durante il training BC.
+# Periodo di grazia all'avvio: pieno gas/sterzo zero per questo numero di step
+# prima di passare il controllo alla policy. Rispecchia STARTUP_STEPS dei
+# driver BC, evita che l'attore veda lo stato di lancio (velocità quasi 0, marcia=0)
+# mai visto durante il training BC.
 _STARTUP_STEPS = 80
 
 # Soglie di terminazione episodio.
-_OFF_TRACK_STEPS_LIMIT = 25  # ~0.5s a 50 step/s — "terminazione aggressiva" per la Sezione 8
+_OFF_TRACK_STEPS_LIMIT = 25  # 0.5s circa a 50 step/s, "terminazione aggressiva"
 _STANDING_STILL_KMH = 5.0
-_STANDING_STILL_STEPS_LIMIT = 150  # ~3s
-_MAX_EPISODE_STEPS = 20000  # un giro Corkscrew è ~5.800 step a 50 step/s (Fase 3) — ampio margine
+_STANDING_STILL_STEPS_LIMIT = 150  # 3s circa
+_MAX_EPISODE_STEPS = 20000  # un giro Corkscrew è di circa 5.800 step a 50 step/s (Fase 3), ampio margine
 _EPISODE_START_RETRIES = 4
 
-# Gestione del processo TORCS. Ogni episodio ottiene un processo TORCS NUOVO
-# invece di un restart in-gara con meta=1: empiricamente quel restart in-gara
-# è inaffidabile su questo setup (la connessione si riprende a metà e poi cade
-# dopo pochi step nell'episodio successivo — la stessa instabilità che
-# affliggeva il precedente tentativo di Fase 3, poi rimosso). Rilanciare il
-# processo aggira il problema del tutto. Due requisiti di lancio, imparati a
-# caro prezzo ed entrambi indispensabili:
-#   1. La CWD deve essere la cartella d'installazione di TORCS, altrimenti
-#      TORCS non riesce a risolvere i file di categoria dell'auto ("Bad Car
-#      category for driver scr_server 1") e non apre mai la porta SCR.
-#   2. Connettersi solo DOPO una breve pausa di grazia una volta che la porta
-#      è aperta — TORCS apre la porta un istante prima che il suo loop di
-#      simulazione sia davvero in grado di inviare i sensori, e connettersi
-#      in quella finestra causa un deadlock.
+# Gestione del processo TORCS. Ogni episodio lancia un processo TORCS nuovo
+# invece di un restart in-gara (meta=1): quel restart è inaffidabile su questo
+# setup (la connessione si riprende a metà e cade dopo pochi step). Due
+# requisiti di lancio indispensabili:
+#   1) la CWD deve essere la cartella d'installazione di TORCS, altrimenti
+#      non risolve i file di categoria auto ("Bad Car category for driver
+#      scr_server 1") e non apre mai la porta SCR
+#   2) connettersi solo dopo una breve attesa una volta aperta la porta,
+#      perché TORCS la apre un istante prima di essere davvero pronto a
+#      inviare i sensori, e connettersi prima causa un deadlock
 TORCS_EXE = Path(os.environ.get("TORCS_EXE", r"U:\AI-Partition\torcs\torcs\wtorcs.exe"))
 RACE_XML = PROJECT_ROOT / "torcs_env" / "race_config" / "corkscrew_solo.xml"
 _TORCS_PORT_TIMEOUT = 30.0
@@ -175,16 +158,11 @@ class TorcsSacEnv(gym.Env):
         self._standing_run = 0
 
         if self._auto_launch:
-            # DIFFERISCE il lancio+connessione di TORCS al primo step(). Con un
-            # training a update del gradiente per-episodio, SB3 esegue il
-            # (lungo) blocco di update del gradiente DOPO reset() e PRIMA del
-            # primo step(). Se lanciassimo+connettessimo TORCS qui, resterebbe
-            # fermo ad aspettare per tutta quella pausa, il che disturba la
-            # partenza da fermo e manda in crash l'episodio dopo ~300 step
-            # (verificato: succede anche con un'azione puro-BC). Differire
-            # significa che gli update del gradiente girano mentre nessun
-            # TORCS è in attesa; il primo step() lancia poi un processo nuovo.
-            # Vedi il commento sulla config SAC in train_sac.py.
+            # Differisce il lancio+connessione di TORCS al primo step(): SB3
+            # esegue il blocco di update del gradiente dopo reset() e prima
+            # del primo step(), e se TORCS fosse già in attesa qui resterebbe
+            # fermo per tutta quella pausa, mandando in crash l'episodio dopo
+            # circa 300 step (vedi il commento sulla config SAC in train_sac.py).
             self._needs_start = True
             self._last_state = None
             return np.zeros(FEATURE_DIM, dtype=np.float32), {}
@@ -314,13 +292,10 @@ class TorcsSacEnv(gym.Env):
     # ------------------------------------------------------------------
 
     def _await_fresh_state(self) -> SensorState:
-        # NOTA sul nome: attende il PROSSIMO pacchetto sensori (saltando le
-        # sentinelle RESTART), ma NON drena il buffer UDP fino all'ultimo
-        # pacchetto — se il client resta indietro, i pacchetti si accodano e
-        # questo restituisce stato stale. È esattamente il meccanismo del bug
-        # di latenza per-step documentato in train_sac.py; la mitigazione è
-        # tenere basso il tempo per-step (training per-episodio), non questa
-        # funzione.
+        # Attende il prossimo pacchetto sensori (saltando le sentinelle
+        # RESTART) ma non drena il buffer UDP: se il client resta indietro può
+        # restituire stato stale (bug di latenza documentato in train_sac.py;
+        # la mitigazione è il training per-episodio, non questa funzione).
         while True:
             result = self._client.receive()
             if result == RESTART:
@@ -330,16 +305,10 @@ class TorcsSacEnv(gym.Env):
             return result
 
     def _start_episode(self, retries: int = _EPISODE_START_RETRIES) -> SensorState:
-        """Porta l'auto a una partenza da fermo nuova e guidabile.
-
-        Ogni episodio ottiene il proprio processo TORCS (vedi il commento su
-        TORCS_EXE sul perché si rilancia invece di usare un restart in-gara
-        con meta=1). L'intera sequenza — (ri)lancio, connessione, esecuzione
-        del periodo di grazia con gas in avvio — viene ritentata come unità,
-        poiché il lancio di TORCS stesso può occasionalmente andare in crash
-        o l'handshake SCR può cadere su questo setup; un rilancio pulito
-        recupera situazioni in cui un restart in-gara non potrebbe.
-        """
+        """Porta l'auto a una partenza da fermo nuova e guidabile. L'intera
+        sequenza (lancio, connessione, avvio con gas) viene ritentata come
+        unità, perché sia il lancio di TORCS sia l'handshake SCR possono
+        occasionalmente fallire su questo setup."""
         last_exc: Optional[Exception] = None
         for attempt in range(1, retries + 1):
             try:

@@ -3,7 +3,7 @@ TORCS e, ad ogni tick, interroga in ombra il vecchio RuleBasedDriver
 (old_versions_drivers/project_V2) come oracolo per etichettare lo stato
 visitato con l'azione "corretta" secondo l'oracolo.
 
-L'oracolo NON guida l'auto — la sua azione viene solo calcolata e loggata
+L'oracolo NON guida l'auto: la sua azione viene solo calcolata e loggata
 per ogni stato realmente visitato dalla policy in rollout (questo è il punto
 del DAgger: correggere gli stati fuori distribuzione che la policy visita
 davvero, non solo quelli dell'oracolo).
@@ -73,7 +73,7 @@ def run(
     lap_times: list[float] = []
     lap_count = 0
     # Giro (state.lap) all'ultima registrazione: rileva un nuovo giro anche se
-    # due giri consecutivi hanno tempo identico (simulazione deterministica) —
+    # due giri consecutivi hanno tempo identico (simulazione deterministica),
     # stesso doppio criterio di scripts/eval/evaluate_common.py.
     lap_at_last_record = 0
     total_steps = 0
@@ -152,7 +152,7 @@ def run(
                     lap_at_last_record = state.lap
                     logger.info("Lap %d completed in %.3f s", lap_count, state.lastLapTime)
                     if lap_count >= laps:
-                        logger.info("Target laps reached — releasing control to TORCS.")
+                        logger.info("Target laps reached, releasing control to TORCS.")
                         break
     finally:
         _flush()

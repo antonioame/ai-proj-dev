@@ -23,7 +23,7 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# Virtual environments
+# Ambienti virtuali
 .venv/
 venv/
 ENV/
@@ -37,19 +37,19 @@ runs/
 wandb/
 lightning_logs/
 
-# Data files (recorded telemetry — large, keep only metadata)
+# Metadati telemetria registrata
 # data/*.csv
 data/*.parquet
 data/*.h5
 
-# Results
+# Risultati
 results/*.json
 
 # Jupyter
 .ipynb_checkpoints/
 *.ipynb
 
-# IDEs
+# IDE
 .vscode/
 .idea/
 *.swp
@@ -64,11 +64,10 @@ Thumbs.db
 .coverage
 htmlcov/
 
-# Distribution
+# Distribuzione
 *.tar.gz
 *.zip
-# ...except SB3 checkpoints (Phase 3 RL) — tracked on purpose so the full
-# training history (every episode checkpoint + tensorboard log) stays in git.
+# ...tranne i checkpoint SB3 (Fase 3 RL). Tracciati apposta per per mantenere la storia di addestramento.
 !training/rl/checkpoints/**/*.zip
 !drivers/rl/models/*.zip
 

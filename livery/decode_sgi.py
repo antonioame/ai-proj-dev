@@ -1,20 +1,8 @@
-"""Decodifica i file SGI/Radiance RGB in PNG per l'ispezione visiva.
+"""Decodifica i file SGI/Radiance RGB (texture livree TORCS, 512x512 RGBA) in
+PNG, per vedere l'anteprima prima di installarle in TORCS.
 
-UTILITÀ:
-  TORCS usa il formato SGI RGB (512x512 RGBA) per le texture delle auto.
-  Questo script decodifica i file .rgb in PNG standard per visualizzare
-  l'anteprima della livrea PRIMA di installarla in TORCS.
-
-  Usi comuni:
-  - Verificare come appare la nuova livrea
-  - Confrontare versioni diverse della livrea
-  - Debug: controllare che la conversione PNG→RGB sia corretta
-
-FORMATO SGI RGB:
-  - Header fisso di 512 bytes (metadati: dimensioni, canali, compressione)
-  - Dati pixel in formato planare: tutti i Red, poi Green, poi Blue
-  - TORCS richiede 512x512 RGBA (senza compressione)
-  - File size per car1-ow1: 512*512*4 + 512 = 1.049.088 bytes
+Formato: header fisso 512 bytes, poi pixel planari (tutti i Red, poi Green,
+poi Blue).
 """
 import struct, pathlib
 from PIL import Image
